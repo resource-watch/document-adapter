@@ -1,0 +1,8 @@
+{
+    "logger": {
+        "name": "rw-adapter-csv-TEST",
+        "level": "debug",
+        "toFile": false,
+        "dirLogFile": null
+    }
+}

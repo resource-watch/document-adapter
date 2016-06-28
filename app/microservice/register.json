@@ -1,0 +1,32 @@
+{
+    "id": "#(service.id)",
+    "name": "#(service.name)",
+    "urls": [{
+        "url": "/query/:dataset",
+        "method": "GET",
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+            "provider": "CSV"
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/query/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/mapping/:dataset",
+        "method": "GET",
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/mapping/:dataset"
+        }]
+    },{
+        "url": "/rest-datasets/csv",
+        "method": "POST",
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv"
+        }]
+    }]
+}

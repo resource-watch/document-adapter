@@ -1,0 +1,13 @@
+{
+    "redis": {
+        "host": "REDIS_PORT_6379_TCP_ADDR",
+        "port": "REDIS_PORT_6379_TCP_PORT"
+    },
+    "elasticsearch": {
+        "host": "ELASTIC_PORT_9200_TCP_ADDR",
+        "port": "ELASTIC_PORT_9200_TCP_PORT"
+    },
+    "service": {
+        "port": "PORT"
+    }
+}

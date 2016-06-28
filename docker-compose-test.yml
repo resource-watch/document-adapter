@@ -1,0 +1,34 @@
+test:
+  extends:
+    file: base.yml
+    service: base
+  ports:
+    - "4000"
+  container_name: rw-adapter-csv-test
+  environment:
+    NODE_ENV: test
+  command: test
+  links:
+    - mongo
+mongo:
+  image: mongo
+  container_name: rw-adapter-csv-mongo-test
+  command: --smallfiles
+  ports:
+    - "27017"
+  volumes:
+    # in osx the host machine volume directory cannot be under /Users
+    # http://stackoverflow.hex1.ru/questions/34390220/how-to-mount-external-volume-for-mongodb-using-docker-compose-and-docker-machine
+    - /var/docker/data/rw-adapter-csv:/data/db
+  restart: always
+elastic:
+  image: vizzuality/elasticsearch-sql:1.0.0
+  container_name: rw-adapter-csv-elastic-test
+  ports:
+    - "9200"
+    - "9300"
+  volumes:
+    # in osx the host machine volume directory cannot be under /Users
+    # http://stackoverflow.hex1.ru/questions/34390220/how-to-mount-external-volume-for-mongodb-using-docker-compose-and-docker-machine
+    - /var/docker/data/rw-adapter-csv-elastic:/usr/share/elasticsearch/data
+  restart: always

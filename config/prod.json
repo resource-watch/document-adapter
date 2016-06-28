@@ -1,0 +1,10 @@
+{
+    "logger": {
+        "name": "rw-adapter-csv",
+        "level": "info",
+        "toFile": false,
+        "dirLogFile": null
+    },
+    "service": {
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "logger": {
+        "name": "rw-adapter-csv-DEV",
+        "level": "debug",
+        "toFile": false,
+        "dirLogFile": null
+    },
+    "service": {
+        "id": "rw-adapter-csv_1.0.0",
+        "name": "RW Adapter CSV API",
+        "uri": "http://192.168.99.100:3100",
+        "port": 4000
+    },
+    "redis":{
+        "port": 6379,
+        "host": "192.168.99.100"
+    },
+    "elasticsearch": {
+        "port": 9200,
+        "host": "192.168.99.100"
+    }
+}
