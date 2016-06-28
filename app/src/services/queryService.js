@@ -28,6 +28,14 @@ class QueryService {
                         path: `${opts.index}/_mapping`
                     }, cb);
                 }.bind(this);
+            },
+            delete: function(opts){
+                return function(cb) {
+                    this.transport.request({
+                        method: 'DELETE',
+                        path: `${opts.index}`
+                    }, cb);
+                }.bind(this);
             }
         };
         elasticsearch.Client.apis.sql = sqlAPI;
@@ -165,11 +173,11 @@ class QueryService {
         return result.replace(/\s\s+/g, ' ').trim();
     }
 
-    * doQuery(select, order, aggrBy, filter, filterNot, limit, dataset, sql){
+    * doQuery(select, order, aggrBy, filter, filterNot, limit, index, sql){
         logger.info('Doing query...');
         let sqlGen = sql;
         if(!sqlGen){
-            sqlGen = this.convertToSQL(select, order, aggrBy, filter, filterNot, limit, dataset.attributes_path);
+            sqlGen = this.convertToSQL(select, order, aggrBy, filter, filterNot, limit, index);
         }
         logger.debug('Query ', sqlGen);
         let result = yield this.elasticClient.sql({sql: sqlGen});
@@ -179,7 +187,14 @@ class QueryService {
     * getMapping(index){
         logger.info('Obtaining mapping...');
 
-        let result = yield this.elasticClient.mapping({index: 'sample'});
+        let result = yield this.elasticClient.mapping({index: index});
+        return result;
+    }
+
+    * deleteIndex(index){
+        logger.info('Deleting index %s...', index);
+
+        let result = yield this.elasticClient.delete({index: index});
         return result;
     }
 }

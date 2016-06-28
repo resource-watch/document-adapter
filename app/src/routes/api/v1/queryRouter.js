@@ -11,7 +11,7 @@ var router = new Router({
 });
 
 
-class TaskRouter {
+class CSVRouter {
 
     static * import(){
         logger.info('Adding csv with dataset id: ', this.request.body.connector);
@@ -21,26 +21,28 @@ class TaskRouter {
 
     static * query(){
         logger.info('Do Query with dataset', this.request.body);
-        logger.debug('limit', this.query.select);
+
         let result = yield queryService.doQuery(this.query.select, this.query.order,
-            this.query.aggrBy, this.query.filter, this.query.filterNot, this.query.limit, this.request.body.dataset, this.query.sql);
+            this.query.aggrBy, this.query.filter, this.query.filterNot, this.query.limit, this.request.body.dataset.attributes_path, this.query.sql);
         this.body = csvSerializer.serialize(result);
     }
 
     static * mapping(){
-        logger.debug('Mapping');
-        let result = yield queryService.getMapping();
+        logger.info('Obtaining mapping with dataset', this.request.body);
+        let result = yield queryService.getMapping(this.request.body.dataset.attributes_path);
         this.body = result;
     }
 
     static * delete(){
-        logger.info('Deleting dataset');
+        logger.info('Deleting index with dataset', this.request.body);
+        let result = yield queryService.deleteIndex(this.params.index);
+        this.body = result;
     }
 }
 
-router.post('/query/:dataset', TaskRouter.query);
-router.post('/mapping/:dataset', TaskRouter.mapping);
-router.post('/', TaskRouter.import);
-router.delete('/:id', TaskRouter.delete);
+router.post('/query/:dataset', CSVRouter.query);
+router.post('/mapping/:dataset', CSVRouter.mapping);
+router.post('/', CSVRouter.import);
+router.delete('/:index', CSVRouter.delete);
 
 module.exports = router;
