@@ -19,7 +19,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT * FROM myTable';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -34,7 +34,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -50,7 +50,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable ORDER BY name ASC';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -66,7 +66,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable ORDER BY name DESC';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -82,7 +82,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable ORDER BY name DESC, surname ASC';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -98,7 +98,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable GROUP BY name, surname';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -114,7 +114,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable LIMIT 1';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -130,7 +130,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable WHERE id IN (1,2,4,5)';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -146,7 +146,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable WHERE id = 1';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -162,7 +162,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable WHERE value BETWEEN 350558 AND 9506590';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -178,7 +178,7 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable WHERE id IN (1,2,4,5) AND value BETWEEN 350558 AND 9506590';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);
@@ -194,7 +194,25 @@ describe('Generate correct SQL', function() {
         };
         let sqlResult = 'SELECT name, surname FROM myTable WHERE NOT (id IN (1,2,4,5) AND value BETWEEN 350558 AND 9506590)';
 
-        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.dataset.index);
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
+
+        query.should.be.a.String();
+        query.should.be.equal(sqlResult);
+    });
+
+
+    it('With aggrBy and aggrColumns', function() {
+        let data = {
+            select: ['state'],
+            aggrBy: ['country', 'state'],
+            aggrColumns: ['sum(age)', 'avg(age)'],
+            dataset:{
+                index: 'myTable'
+            }
+        };
+        let sqlResult = 'SELECT state, sum(age), avg(age) FROM myTable GROUP BY country, state';
+
+        let query = QueryService.convertToSQL(data.select, data.order, data.aggrBy, data.filter, data.filterNot, data.limit, data.aggrColumns, data.dataset.index);
 
         query.should.be.a.String();
         query.should.be.equal(sqlResult);

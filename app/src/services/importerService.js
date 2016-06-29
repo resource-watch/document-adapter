@@ -7,6 +7,7 @@ const ElasticsearchCSV = require('elasticsearch-csv');
 const fs = require('fs');
 const co = require('co');
 const DownloadService = require('services/downloadService');
+const queryService = require('services/queryService');
 
 var unlink = function(file) {
     return function(callback) {
@@ -21,6 +22,8 @@ class ImporterService {
         logger.info('Creating queue');
         this.importQueue = queue('importer', config.get('redis.port'), config.get('redis.host'));
         this.importQueue.process(this.processImport.bind(this));
+        this.deleteQueue = queue('delete', config.get('redis.port'), config.get('redis.host'));
+        this.deleteQueue.process(this.processDelete.bind(this));
         this.importQueue.empty();
         this.importQueue.on('error', function(error) {
             logger.error('Error in queue', error);
@@ -30,8 +33,8 @@ class ImporterService {
         });
     }
 
-    * addTask(url, index, id) {
-        logger.info('Adding task with message', url, ' and index ', index, ' and id ', id);
+    * addCSV(url, index, id) {
+        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id);
         this.importQueue.add({
             url: url,
             index: index,
@@ -43,8 +46,20 @@ class ImporterService {
         });
     }
 
+    * deleteCSV(id) {
+        logger.info('Adding delete csv task with id %id', id);
+        this.deleteQueue.add({
+            index: id,
+            id: id
+        }, {
+            attempts: 3,
+            timeout: 300000, //5 minutes
+            delay: 1000
+        });
+    }
+
     * loadCSVInDatabase(path, index) {
-        logger.debug('Importing csv in path %s and index %s', path, index);
+        logger.info('Importing csv in path %s and index %s', path, index);
         var esCSV = new ElasticsearchCSV({
             es: {
                 index: index,
@@ -60,8 +75,38 @@ class ImporterService {
 
     }
 
+    processDelete(job, done){
+        logger.info('Processing delete with data', job);
+        co(function*() {
+            yield queryService.deleteIndex(job.data.index);
+            logger.info('Deleted successfully. Updating state');
+            let result = yield require('microservice-client').requestToMicroservice({
+                uri: '/datasets/' + job.data.id,
+                body: {
+                    dataset: {
+                        dataset_attributes: {
+                            status: 3
+                        }
+                    }
+                },
+                method: 'PUT',
+                json: true
+            });
+            if (result.statusCode !== 200) {
+                logger.error('Error to updating dataset.', result);
+                throw new Error('Error to updating dataset');
+            }
+        }.bind(this)).then(function() {
+            logger.info('Finished deleted task successfully');
+            done();
+        }, function(error) {
+            logger.error(error);
+            done(new Error(error));
+        });
+    }
+
     processImport(job, done) {
-        logger.debug('Entra en el import');
+        logger.info('Processing import with data', job);
         co(function*() {
             let path = null;
             logger.info('Proccesing task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
@@ -96,14 +141,12 @@ class ImporterService {
             }
 
         }.bind(this)).then(function() {
-            logger.info('Finished task successfully');
+            logger.info('Finished imported task successfully');
             done();
         }, function(error) {
             logger.error(error);
             done(new Error(error));
         });
-
-
     }
 }
 

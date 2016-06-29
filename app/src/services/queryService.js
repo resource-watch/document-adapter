@@ -134,7 +134,24 @@ class QueryService {
         return where;
     }
 
-    convertToSQL(select, order, aggrBy, filter, filterNot, limit, tableName) {
+    parseSelect(select, aggrColumns){
+        let result = '';
+        if(!select && !aggrColumns){
+            return '*';
+        }
+        if(select){
+            result = select.join(', ');
+        }
+        if(result && aggrColumns){
+            result +=', ';
+        }
+        if(aggrColumns){
+            result += aggrColumns.join(', ');
+        }
+        return result;
+    }
+
+    convertToSQL(select, order, aggrBy, filter, filterNot, limit, aggrColums, tableName) {
         if(select){
             select = [].concat(select);
         }
@@ -143,6 +160,9 @@ class QueryService {
         }
         if(aggrBy){
             aggrBy = [].concat(aggrBy);
+        }
+        if(aggrColums){
+            aggrColums = [].concat(aggrColums);
         }
 
         let whereStatement = '';
@@ -154,8 +174,10 @@ class QueryService {
             whereNotStatement = this.parseFilter(filterNot);
         }
 
+        let selectStatement = this.parseSelect(select, aggrColums);
+
         let result = `SELECT
-            ${(select && select.length >= 0 )  ? select.join(', ') : '*' }
+            ${ selectStatement }
             FROM ${tableName}
             ${(whereStatement || whereNotStatement) ? 'WHERE' : ''}
             ${whereStatement ? `${whereStatement}`: ''}
@@ -167,7 +189,7 @@ class QueryService {
                 return value + ' ASC';
             }).join(', ')}` : '' }
             ${aggrBy && aggrBy.length > 0 ? `GROUP BY ${aggrBy.join(', ')}`: ''}
-            ${(limit && limit > 0) ? `LIMIT ${limit}` : ''}`;
+            ${(limit && !isNaN(limit) && limit > 0) ? `LIMIT ${limit}` : ''}`;
 
 
         return result.replace(/\s\s+/g, ' ').trim();

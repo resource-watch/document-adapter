@@ -15,7 +15,7 @@ class CSVRouter {
 
     static * import(){
         logger.info('Adding csv with dataset id: ', this.request.body.connector);
-        yield importerService.addTask(this.request.body.connector.connector_url, this.request.body.connector.attributes_path, this.request.body.connector.id);
+        yield importerService.addCSV(this.request.body.connector.connector_url, this.request.body.connector.id, this.request.body.connector.id);
         this.body = '';
     }
 
@@ -43,6 +43,6 @@ class CSVRouter {
 router.post('/query/:dataset', CSVRouter.query);
 router.post('/mapping/:dataset', CSVRouter.mapping);
 router.post('/', CSVRouter.import);
-router.delete('/:index', CSVRouter.delete);
+router.delete('/:id', CSVRouter.delete);
 
 module.exports = router;

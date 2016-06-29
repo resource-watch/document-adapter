@@ -29,11 +29,11 @@
             "path": "/api/v1/csv"
         }]
     }, {
-        "url": "/rest-datasets/csv/:index",
+        "url": "/rest-datasets/csv/:id",
         "method": "DELETE",
         "endpoints": [{
             "method": "DELETE",
-            "path": "/api/v1/csv/:index"
+            "path": "/api/v1/csv/:id"
         }]
     }]
 }
