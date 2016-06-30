@@ -3,34 +3,75 @@
 const logger = require('logger');
 const config = require('config');
 const queue = require('bull');
-const ElasticsearchCSV = require('elasticsearch-csv');
 const fs = require('fs');
 const co = require('co');
 const DownloadService = require('services/downloadService');
 const queryService = require('services/queryService');
 
+const CSVImporter = require('services/csvImporter');
+var microserviceClient = null;
 var unlink = function(file) {
     return function(callback) {
         fs.unlink(file, callback);
     };
 };
 
-
+var getKey = function(key){
+    return function(cb){
+        require('redis').createClient({port: config.get('redis.port'), host:config.get('redis.host')}).get(key, cb);
+    };
+};
 
 class ImporterService {
     constructor() {
         logger.info('Creating queue');
         this.importQueue = queue('importer', config.get('redis.port'), config.get('redis.host'));
-        this.importQueue.process(this.processImport.bind(this));
+
+        this.importQueue.on('on', function(err) {
+            logger.error('Error in importqueue', err);
+        });
         this.deleteQueue = queue('delete', config.get('redis.port'), config.get('redis.host'));
-        this.deleteQueue.process(this.processDelete.bind(this));
-        this.importQueue.empty();
+
         this.importQueue.on('error', function(error) {
+            logger.error('Error in queue', error);
+        });
+        this.importQueue.on('failed', function(error) {
             logger.error('Error in queue', error);
         });
         this.importQueue.on('completed', function(error) {
             logger.info('Completed');
         });
+    }
+
+    * updateState(id, state) {
+        logger.info('Updating state of dataset ', id, ' with status ', state);
+        let data = yield getKey('MICROSERVICE_CONFIG');
+        logger.debug(data);
+        data = JSON.parse(data);
+        let microserviceClient = require('microservice-client');
+        microserviceClient.setDataConnection(data);
+        let result = yield microserviceClient.requestToMicroservice({
+            uri: '/datasets/' + id,
+            body: {
+                dataset: {
+                    dataset_attributes: {
+                        status: state
+                    }
+                }
+            },
+            method: 'PUT',
+            json: true
+        });
+        if (result.statusCode !== 200) {
+            logger.error('Error to updating dataset.', result);
+            throw new Error('Error to updating dataset');
+        }
+    }
+
+    addProcess() {
+        //this processes are executed in separated forks
+        this.importQueue.process(this.processImport.bind(this));
+        this.deleteQueue.process(this.processDelete.bind(this));
     }
 
     * addCSV(url, index, id) {
@@ -41,15 +82,15 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 300000, //5 minutes
+            timeout: 1800000, //5 minutes
             delay: 1000
         });
     }
 
-    * deleteCSV(id) {
-        logger.info('Adding delete csv task with id %id', id);
+    * deleteCSV(index, id) {
+        logger.info('Adding delete csv task with id %id and index %s', id, index);
         this.deleteQueue.add({
-            index: id,
+            index: index,
             id: id
         }, {
             attempts: 3,
@@ -60,42 +101,17 @@ class ImporterService {
 
     * loadCSVInDatabase(path, index) {
         logger.info('Importing csv in path %s and index %s', path, index);
-        var esCSV = new ElasticsearchCSV({
-            es: {
-                index: index,
-                type: index,
-                host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port')
-            },
-            csv: {
-                filePath: path,
-                headers: true
-            }
-        });
-        let result = yield esCSV.import();
-
+        let importer = new CSVImporter(path, index, index);
+        yield importer.start();
     }
 
-    processDelete(job, done){
-        logger.info('Processing delete with data', job);
+    processDelete(job, done) {
+        logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
         co(function*() {
+            logger.debug('Job', job);
             yield queryService.deleteIndex(job.data.index);
             logger.info('Deleted successfully. Updating state');
-            let result = yield require('microservice-client').requestToMicroservice({
-                uri: '/datasets/' + job.data.id,
-                body: {
-                    dataset: {
-                        dataset_attributes: {
-                            status: 3
-                        }
-                    }
-                },
-                method: 'PUT',
-                json: true
-            });
-            if (result.statusCode !== 200) {
-                logger.error('Error to updating dataset.', result);
-                throw new Error('Error to updating dataset');
-            }
+            yield this.updateState(job.data.id, 3);
         }.bind(this)).then(function() {
             logger.info('Finished deleted task successfully');
             done();
@@ -106,30 +122,15 @@ class ImporterService {
     }
 
     processImport(job, done) {
-        logger.info('Processing import with data', job);
+        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
         co(function*() {
             let path = null;
-            logger.info('Proccesing task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
+            logger.debug('Job', job);
             try {
                 path = yield DownloadService.downloadFile(job.data.url);
                 yield this.loadCSVInDatabase(path, job.data.index);
                 logger.info('Imported successfully. Updating state');
-                let result = yield require('microservice-client').requestToMicroservice({
-                    uri: '/datasets/' + job.data.id,
-                    body: {
-                        dataset: {
-                            dataset_attributes: {
-                                status: 1
-                            }
-                        }
-                    },
-                    method: 'PUT',
-                    json: true
-                });
-                if (result.statusCode !== 200) {
-                    logger.error('Error to updating dataset.', result);
-                    throw new Error('Error to updating dataset');
-                }
+                yield this.updateState(job.data.id, 1);
             } catch (err) {
                 logger.error(err);
                 throw err;

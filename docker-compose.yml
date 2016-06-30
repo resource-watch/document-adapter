@@ -4,8 +4,26 @@ prod:
     - "4000"
   env_file:
     - prod.env
+  links:
+    - redis
   command: start
   restart: always
   log_driver: "gelf"
   log_opt:
     gelf-address: ${GELF_ADDRESS}
+worker:
+  image: vizzuality/rw-adapter-csv:1.0.0${STAGING}
+  env_file:
+    - prod.env
+  links:
+    - redis
+  command: startWorker
+  restart: always
+  log_driver: "gelf"
+  log_opt:
+    gelf-address: ${GELF_ADDRESS}
+redis:
+  image: redis
+  ports:
+    - "6379"
+  restart: always

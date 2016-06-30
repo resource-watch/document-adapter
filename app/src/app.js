@@ -60,8 +60,14 @@ server.listen(port, function() {
         dirConfig: path.join(__dirname, '../microservice'),
         dirPackage: path.join(__dirname, '../../'),
         logger: logger,
-        app: app
+        app: app,
+        callbackUpdate : function(info){
+            logger.info('Updating keys');
+            require('redis').createClient({port: config.get('redis.port'), host:config.get('redis.host')})
+            .set('MICROSERVICE_CONFIG', JSON.stringify(info));
+        }
     });
+
     p.then(function() {}, function(err) {
         logger.error(err);
         process.exit(1);

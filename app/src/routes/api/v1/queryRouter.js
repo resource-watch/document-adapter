@@ -15,7 +15,7 @@ class CSVRouter {
 
     static * import(){
         logger.info('Adding csv with dataset id: ', this.request.body.connector);
-        yield importerService.addCSV(this.request.body.connector.connector_url, this.request.body.connector.id, this.request.body.connector.id);
+        yield importerService.addCSV(this.request.body.connector.connector_url, 'index-' + this.request.body.connector.id, this.request.body.connector.id);
         this.body = '';
     }
 
@@ -23,19 +23,19 @@ class CSVRouter {
         logger.info('Do Query with dataset', this.request.body);
 
         let result = yield queryService.doQuery(this.query.select, this.query.order,
-            this.query.aggrBy, this.query.filter, this.query.filterNot, this.query.limit, this.request.body.dataset.attributes_path, this.query.sql);
+            this.query.aggrBy, this.query.filter, this.query.filterNot, this.query.limit, this.query.aggrColumns, 'index-' + this.request.body.dataset.id, this.query.sql);
         this.body = csvSerializer.serialize(result);
     }
 
     static * mapping(){
         logger.info('Obtaining mapping with dataset', this.request.body);
-        let result = yield queryService.getMapping(this.request.body.dataset.attributes_path);
+        let result = yield queryService.getMapping('index-' + this.request.body.dataset.id);
         this.body = result;
     }
 
     static * delete(){
         logger.info('Deleting index with dataset', this.request.body);
-        let result = yield queryService.deleteIndex(this.params.index);
+        let result = yield importerService.deleteCSV('index-' + this.params.id, this.params.id);
         this.body = result;
     }
 }

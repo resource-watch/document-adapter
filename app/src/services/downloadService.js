@@ -21,8 +21,7 @@ class DownloadService {
     static * checkIfCSV(url){
         logger.info('Checking if the content-type is text/csv');
         let result = yield coRequest.head(url);
-        logger.info(result.headers['content-type']);
-        logger.debug('POsition', result.headers['content-type'].indexOf('text/csv'));
+        logger.debug('Headers ', result.headers['content-type']);
         if (result.headers['content-type'] && result.headers['content-type'].indexOf('text/csv') === -1) {
             return false;
         }

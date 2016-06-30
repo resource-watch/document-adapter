@@ -4,8 +4,6 @@ const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
 
-
-
 class QueryService {
 
     constructor() {
@@ -195,11 +193,11 @@ class QueryService {
         return result.replace(/\s\s+/g, ' ').trim();
     }
 
-    * doQuery(select, order, aggrBy, filter, filterNot, limit, index, sql){
-        logger.info('Doing query...');
+    * doQuery(select, order, aggrBy, filter, filterNot, limit, aggrColumns, index, sql){
+        logger.info('Doing query...', aggrBy);
         let sqlGen = sql;
         if(!sqlGen){
-            sqlGen = this.convertToSQL(select, order, aggrBy, filter, filterNot, limit, index);
+            sqlGen = this.convertToSQL(select, order, aggrBy, filter, filterNot, limit, aggrColumns, index);
         }
         logger.debug('Query ', sqlGen);
         let result = yield this.elasticClient.sql({sql: sqlGen});

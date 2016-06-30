@@ -6,6 +6,10 @@ case "$1" in
         echo "Running Development Server"
         exec grunt --gruntfile app/Gruntfile.js | bunyan
         ;;
+    developWorker)
+        echo "Running Worker"
+        exec  node app/worker | bunyan
+        ;;
     startDev)
         echo "Running Start Dev"
         exec node app/index
@@ -17,6 +21,10 @@ case "$1" in
     start)
         echo "Running Start"
         exec node app/index
+        ;;
+    startWorker)
+        echo "Running Worker start"
+        exec node app/worker
         ;;
     *)
         exec "$@"
