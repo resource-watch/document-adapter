@@ -12,7 +12,9 @@ var koaLogger = require('koa-logger');
 var loader = require('loader');
 var validate = require('koa-validate');
 var ErrorSerializer = require('serializers/errorSerializer');
-
+var redis = require('redis');
+require('bluebird').promisifyAll(redis.RedisClient.prototype);
+var redisClient = redis.createClient({port: config.get('redis.port'), host:config.get('redis.host')});
 // instance of koa
 var app = koa();
 
@@ -39,6 +41,19 @@ app.use(function*(next) {
     }
     this.response.type = 'application/vnd.api+json';
 });
+//cache
+
+
+app.use(require('koa-cash')({
+  get (key, maxAge) {
+    return redisClient.getAsync(key);
+  },
+  set (key, value) {
+      logger.info('Setting key', key);
+    redisClient.set(key, value);
+    // redisClient.expireat(key, Date.now() + 1);
+  }
+}));
 
 //load custom validator
 app.use(validate());
@@ -63,8 +78,7 @@ server.listen(port, function() {
         app: app,
         callbackUpdate : function(info){
             logger.info('Updating keys');
-            require('redis').createClient({port: config.get('redis.port'), host:config.get('redis.host')})
-            .set('MICROSERVICE_CONFIG', JSON.stringify(info));
+            redisClient.set('MICROSERVICE_CONFIG', JSON.stringify(info));
         }
     });
 

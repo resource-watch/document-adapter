@@ -15,21 +15,14 @@
             "data": ["dataset"]
         }]
     },{
-        "url": "/mapping/:dataset",
-        "method": "GET",
-        "endpoints": [{
-            "method": "POST",
-            "path": "/api/v1/csv/mapping/:dataset"
-        }]
-    },{
-        "url": "/rest-datasets/csv",
+        "url": "/doc-datasets/csv",
         "method": "POST",
         "endpoints": [{
             "method": "POST",
             "path": "/api/v1/csv"
         }]
     }, {
-        "url": "/rest-datasets/csv/:id",
+        "url": "/doc-datasets/csv/:id",
         "method": "DELETE",
         "endpoints": [{
             "method": "DELETE",

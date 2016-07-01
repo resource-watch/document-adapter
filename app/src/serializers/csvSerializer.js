@@ -48,7 +48,6 @@ class CSVSerializer {
     }
 
     static serialize(data) {
-        logger.debug(data);
         if (data && data.length > 0) {
 
             if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
