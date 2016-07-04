@@ -18,5 +18,6 @@
     "elasticsearch": {
         "port": 9200,
         "host": "139.59.160.191"
-    }
+    },
+    "timeCache": 24 * 60 * 60
 }
