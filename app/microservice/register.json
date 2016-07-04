@@ -7,7 +7,7 @@
         "paramProvider": "dataset",
         "dataProvider": "dataset",
         "filters":{
-            "provider": "CSV"
+            "provider": "csv"
         },
         "endpoints": [{
             "method": "POST",
