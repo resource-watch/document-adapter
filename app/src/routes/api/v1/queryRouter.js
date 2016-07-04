@@ -62,7 +62,7 @@ const cacheMiddleware = function*(next){
     yield next;
     // save result
     logger.info('Caching data');
-    redisClient.setex(this.request.url, config.get("timeCache"), JSON.stringify(this.body));
+    redisClient.setex(this.request.url, config.get('timeCache'), JSON.stringify(this.body));
 
 };
 
