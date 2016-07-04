@@ -7,6 +7,7 @@ var config = require('config');
 var logger = require('logger');
 var path = require('path');
 var koa = require('koa');
+var compress = require('koa-compress')
 var bodyParser = require('koa-bodyparser');
 var koaLogger = require('koa-logger');
 var loader = require('loader');
@@ -18,6 +19,7 @@ var redisClient = redis.createClient({port: config.get('redis.port'), host:confi
 // instance of koa
 var app = koa();
 
+app.use(compress());
 //if environment is dev then load koa-logger
 if (process.env.NODE_ENV === 'dev') {
     app.use(koaLogger());
@@ -41,19 +43,6 @@ app.use(function*(next) {
     }
     this.response.type = 'application/vnd.api+json';
 });
-//cache
-
-
-app.use(require('koa-cash')({
-  get (key, maxAge) {
-    return redisClient.getAsync(key);
-  },
-  set (key, value) {
-      logger.info('Setting key', key);
-    redisClient.set(key, value);
-    // redisClient.expireat(key, Date.now() + 1);
-  }
-}));
 
 //load custom validator
 app.use(validate());

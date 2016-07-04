@@ -7,6 +7,7 @@ var importerService = require('services/importerService');
 var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var mappingSerializer = require('serializers/mappingSerializer');
+var redisClient = require('redis').createClient({port: config.get('redis.port'), host:config.get('redis.host')});
 var router = new Router({
     prefix: '/csv'
 });
@@ -22,11 +23,9 @@ class CSVRouter {
         }
 
     static * query() {
+        logger.debug(this.query);
         logger.info('Do Query with dataset', this.request.body);
-        if (yield this.cashed()) {
-            logger.info('Is cashed');
-            return;
-        }
+
         let result = yield queryService.doQuery(this.query.select, this.query.order,
             this.query.aggr_by, this.query.filter, this.query.filter_not, this.query.limit, this.query.aggr_columns, 'index-' + this.request.body.dataset.id, this.query.sql);
         let data = csvSerializer.serialize(result);
@@ -54,7 +53,20 @@ class CSVRouter {
     }
 }
 
-router.post('/query/:dataset', CSVRouter.query);
+const cacheMiddleware = function*(next){
+    let data = yield redisClient.getAsync(this.request.url);
+    if(data){
+        this.body = data;
+        return;
+    }
+    yield next;
+    // save result
+    logger.info('Caching data');
+    redisClient.setex(this.request.url, 1 * 60, JSON.stringify(this.body));
+
+};
+
+router.post('/query/:dataset', cacheMiddleware, CSVRouter.query);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
 
