@@ -33,8 +33,7 @@ class CSVRouter {
         this.body = data;
     }
 
-    static * query() {
-        logger.debug(this.query);
+    static * fields() {
         logger.info('Get fields of dataset', this.request.body);
 
         let fields = yield queryService.getMapping('index-' + this.request.body.dataset.id);
