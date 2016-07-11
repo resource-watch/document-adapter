@@ -193,14 +193,10 @@ class QueryService {
         return result.replace(/\s\s+/g, ' ').trim();
     }
 
-    * doQuery(select, order, aggrBy, filter, filterNot, limit, aggrColumns, index, sql){
-        logger.info('Doing query...', aggrBy);
-        let sqlGen = sql;
-        if(!sqlGen){
-            sqlGen = this.convertToSQL(select, order, aggrBy, filter, filterNot, limit, aggrColumns, index);
-        }
-        logger.debug('Query ', sqlGen);
-        let result = yield this.elasticClient.sql({sql: sqlGen});
+    * doQuery(sql){
+        logger.info('Doing query...', sql);
+
+        let result = yield this.elasticClient.sql({sql: sql});
         return result;
     }
 

@@ -43,14 +43,14 @@ class ImporterService {
         });
     }
 
-    * updateState(id, state) {
+    * updateState(id,  state, tableName) {
         logger.info('Updating state of dataset ', id, ' with status ', state);
         let data = yield getKey('MICROSERVICE_CONFIG');
-        logger.debug(data);
+
         data = JSON.parse(data);
         let microserviceClient = require('microservice-client');
         microserviceClient.setDataConnection(data);
-        let result = yield microserviceClient.requestToMicroservice({
+        let options = {
             uri: '/datasets/' + id,
             body: {
                 dataset: {
@@ -61,7 +61,12 @@ class ImporterService {
             },
             method: 'PUT',
             json: true
-        });
+        };
+        if(tableName){
+            options.body.dataset.table_name = tableName;
+        }
+        logger.info('Updating', options);
+        let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode !== 200) {
             logger.error('Error to updating dataset.', result);
             throw new Error('Error to updating dataset');
@@ -130,7 +135,7 @@ class ImporterService {
                 path = yield DownloadService.downloadFile(job.data.url);
                 yield this.loadCSVInDatabase(path, job.data.index);
                 logger.info('Imported successfully. Updating state');
-                yield this.updateState(job.data.id, 1);
+                yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {
                 logger.error(err);
                 throw err;
