@@ -8,7 +8,7 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name: ['GFW Geostore API'],
+  app_name: ['RW Adapter CSV'],
   /**
    * Your New Relic license key.
    */
