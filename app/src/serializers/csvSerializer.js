@@ -1,6 +1,7 @@
 'use strict';
 
 var logger = require('logger');
+var simpleSqlParser = require('simple-sql-parser');
 // var JSONAPISerializer = require('jsonapi-serializer').Serializer;
 // var csvSerializer = new JSONAPISerializer('csv', {
 // attributes: ['geojson', 'hash', 'providers'],
@@ -47,15 +48,46 @@ class CSVSerializer {
         return values;
     }
 
-    static serialize(data) {
+    static obtainASTFromSQL(sql){
+
+        let ast = simpleSqlParser.sql2ast(sql);
+        if (!ast.status){
+            return {
+                error: true,
+                ast: null
+            };
+        }
+        return {
+            error: false,
+            ast: ast.value
+        };
+    }
+
+    static formatAlias(el, aliases){
+        if(aliases && el){
+            for(let i = 0, length = aliases.length; i < length; i++){
+                el[aliases[i].alias] = el[aliases[i].column];
+                delete el[aliases[i].column];
+            }
+        }
+        return el;
+    }
+
+    static serialize(data, sql) {
+        let ast = null;
+        if(sql){
+            let result = CSVSerializer.obtainASTFromSQL(sql);
+            if(!result.error){
+                ast = result.ast.select;
+            }else {
+                logger.warn('Error parsing sql');
+            }
+        }
         if (data && data.length > 0) {
 
             if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
                 return {
-                    data: data[0].hits.hits.map((el) => ({
-                        type: 'csvs',
-                        attributes: el._source
-                    }))
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
                 };
             } else if (data[0].aggregations) {
 
@@ -64,10 +96,7 @@ class CSVSerializer {
                 if (!data[0].aggregations[keys[0]].buckets) {
                     attributes[keys[0]] = data[0].aggregations[keys[0]].value;
                     return {
-                        data: [{
-                            type: 'csvs',
-                            attributes: attributes
-                        }]
+                        data: [attributes]
                     };
                 } else {
                     return {

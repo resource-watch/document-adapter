@@ -29,7 +29,7 @@ class CSVRouter {
         logger.info('Do Query with dataset', this.request.body);
 
         let result = yield queryService.doQuery( this.query.sql);
-        let data = csvSerializer.serialize(result);
+        let data = csvSerializer.serialize(result, this.query.sql);
         let fields = yield queryService.getMapping(this.request.body.dataset.table_name);
         data.fields = fieldSerializer.serialize(fields);
         data.clone_url = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
