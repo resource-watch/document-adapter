@@ -48,7 +48,7 @@ class ImporterService {
         let data = yield getKey('MICROSERVICE_CONFIG');
 
         data = JSON.parse(data);
-        let microserviceClient = require('microservice-client');
+        let microserviceClient = require('vizz.microservice-client');
         microserviceClient.setDataConnection(data);
         let options = {
             uri: '/datasets/' + id,

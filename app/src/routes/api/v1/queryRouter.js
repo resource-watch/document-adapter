@@ -75,7 +75,7 @@ const cacheMiddleware = function*(next) {
 };
 
 const toSQLMiddleware = function*(next) {
-    let microserviceClient = require('microservice-client');
+    let microserviceClient = require('vizz.microservice-client');
     let options = {
         method: 'GET',
         json: true
