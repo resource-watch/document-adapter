@@ -52,10 +52,7 @@ class CSVSerializer {
 
             if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
                 return {
-                    data: data[0].hits.hits.map((el) => ({
-                        type: 'csvs',
-                        attributes: el._source
-                    }))
+                    data: data[0].hits.hits.map((el) => el._source)
                 };
             } else if (data[0].aggregations) {
 
@@ -64,10 +61,7 @@ class CSVSerializer {
                 if (!data[0].aggregations[keys[0]].buckets) {
                     attributes[keys[0]] = data[0].aggregations[keys[0]].value;
                     return {
-                        data: [{
-                            type: 'csvs',
-                            attributes: attributes
-                        }]
+                        data: [attributes]
                     };
                 } else {
                     return {
