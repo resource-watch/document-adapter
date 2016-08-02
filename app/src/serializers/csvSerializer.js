@@ -66,8 +66,10 @@ class CSVSerializer {
     static formatAlias(el, aliases){
         if(aliases && el){
             for(let i = 0, length = aliases.length; i < length; i++){
-                el[aliases[i].alias] = el[aliases[i].column];
-                delete el[aliases[i].column];
+                if(aliases[i].alias && aliases[i].alias!== null) {
+                    el[aliases[i].alias] = el[aliases[i].column];
+                    delete el[aliases[i].column];
+                }
             }
         }
         return el;
