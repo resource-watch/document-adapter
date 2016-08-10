@@ -75,7 +75,7 @@ class CSVSerializer {
         return el;
     }
 
-    static serialize(data, sql) {
+    static serialize(data, sql, id) {
         let ast = null;
         if(sql){
             let result = CSVSerializer.obtainASTFromSQL(sql);
@@ -89,7 +89,13 @@ class CSVSerializer {
 
             if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
                 return {
-                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                    data: {
+                        id: id,
+                        type: 'csv',
+                        attributes: {
+                            rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                        }
+                    }
                 };
             } else if (data[0].aggregations) {
 
@@ -98,11 +104,23 @@ class CSVSerializer {
                 if (!data[0].aggregations[keys[0]].buckets) {
                     attributes[keys[0]] = data[0].aggregations[keys[0]].value;
                     return {
-                        data: [attributes]
+                        data: {
+                            id: id,
+                            type: 'csv',
+                            attributes: {
+                                rows: [attributes]
+                            }
+                        }
                     };
                 } else {
                     return {
-                        data:CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
+                        data:{
+                            id: id,
+                            type: 'csv',
+                            attributes: {
+                                rows: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
+                            }
+                        }
                     };
                 }
 
