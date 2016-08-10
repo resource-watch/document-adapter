@@ -29,10 +29,10 @@ class CSVRouter {
         logger.info('Do Query with dataset', this.request.body);
 
         let result = yield queryService.doQuery( this.query.sql);
-        let data = csvSerializer.serialize(result, this.query.sql);
-        let fields = yield queryService.getMapping(this.request.body.dataset.table_name);
-        data.fields = fieldSerializer.serialize(fields);
-        data.clone_url = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
+        let data = csvSerializer.serialize(result, this.query.sql, this.request.body.dataset.id);
+        data.meta = {
+            cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
+        };
         this.body = data;
     }
 
@@ -40,7 +40,7 @@ class CSVRouter {
         logger.info('Get fields of dataset', this.request.body);
 
         let fields = yield queryService.getMapping(this.request.body.dataset.table_name);
-        this.body = fieldSerializer.serialize(fields);
+        this.body = fieldSerializer.serialize(fields, this.request.body.dataset.table_name, this.request.body.dataset.id);
     }
 
     static getCloneUrl(url, idDataset) {
@@ -70,7 +70,9 @@ const cacheMiddleware = function*(next) {
     yield next;
     // save result
     logger.info('Caching data');
-    redisClient.setex(this.request.url, config.get('timeCache'), JSON.stringify(this.body));
+    if(this.statusCode === 200){
+        redisClient.setex(this.request.url, config.get('timeCache'), JSON.stringify(this.body));
+    }
 
 };
 
@@ -80,6 +82,10 @@ const toSQLMiddleware = function*(next) {
         method: 'GET',
         json: true
     };
+    if(!this.query.sql && !this.query.outFields && !this.query.outStatistics){
+        this.throw(400, 'sql or fs required');
+        return;
+    }
 
     if (this.query.sql) {
         logger.debug('Checking sql correct');
@@ -92,6 +98,7 @@ const toSQLMiddleware = function*(next) {
             options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.table_name;
         }
     }
+
     logger.debug(options);
     try {
         let result = yield microserviceClient.requestToMicroservice(options);
