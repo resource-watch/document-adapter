@@ -15,6 +15,14 @@ var router = new Router({
     prefix: '/csv'
 });
 
+var JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
+
+var deserializer = function(obj) {
+    return function(callback) {
+        new JSONAPIDeserializer({keyForAttribute: 'camelCase'}).deserialize(obj, callback);
+    };
+};
+
 
 class CSVRouter {
 
@@ -75,6 +83,13 @@ const cacheMiddleware = function*(next) {
     }
 
 };
+
+const deserializeDataset = function*(next){
+    if(this.request.body.dataset){
+        this.request.body.dataset = yield deserializer(this.request.body.dataset);
+    }
+    yield next;
+}
 
 const toSQLMiddleware = function*(next) {
     let microserviceClient = require('vizz.microservice-client');
