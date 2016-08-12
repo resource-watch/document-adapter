@@ -88,14 +88,17 @@ class CSVSerializer {
         if (data && data.length > 0) {
 
             if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+                // return {
+                //     data: {
+                //         id: id,
+                //         type: 'csv',
+                //         attributes: {
+                //             rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                //         }
+                //     }
+                // };
                 return {
-                    data: {
-                        id: id,
-                        type: 'csv',
-                        attributes: {
-                            rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
-                        }
-                    }
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
                 };
             } else if (data[0].aggregations) {
 
@@ -103,25 +106,31 @@ class CSVSerializer {
                 let attributes = {};
                 if (!data[0].aggregations[keys[0]].buckets) {
                     attributes[keys[0]] = data[0].aggregations[keys[0]].value;
+                    // return {
+                    //     data: {
+                    //         id: id,
+                    //         type: 'csv',
+                    //         attributes: {
+                    //             rows: [attributes]
+                    //         }
+                    //     }
+                    // };
                     return {
-                        data: {
-                            id: id,
-                            type: 'csv',
-                            attributes: {
-                                rows: [attributes]
-                            }
-                        }
+                        data: [attributes]
                     };
                 } else {
                     return {
-                        data:{
-                            id: id,
-                            type: 'csv',
-                            attributes: {
-                                rows: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
-                            }
-                        }
+                        data: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
                     };
+                    // return {
+                    //     data:{
+                    //         id: id,
+                    //         type: 'csv',
+                    //         attributes: {
+                    //             rows: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
+                    //         }
+                    //     }
+                    // };
                 }
 
             }
