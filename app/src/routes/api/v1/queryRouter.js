@@ -38,9 +38,9 @@ class CSVRouter {
 
         let result = yield queryService.doQuery( this.query.sql);
         let data = csvSerializer.serialize(result, this.query.sql, this.request.body.dataset.id);
-        data.meta = {
-            cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
-        };
+        // data.meta = {
+        //     cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
+        // };
         this.body = data;
     }
 
