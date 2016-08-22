@@ -9,6 +9,8 @@ var uuid = require('uuid');
 var _ = require('lodash');
 var Promise = require('bluebird');
 
+const CONTAIN_SPACES = /\s/g;
+
 function isJSONObject(value) {
     if (isNaN(value) && /^[\],:{}\s]*$/.test(value.replace(/\\["\\\/bfnrtu]/g, '@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
         return true;
@@ -54,10 +56,17 @@ class CSVImporter {
                             }
                         });
                         _.forEach(data, function(value, key) {
+                            let newKey = key;
+                            if(CONTAIN_SPACES.test(key)){
+                                delete data[key];
+                                newKey = key.replace(CONTAIN_SPACES, '_');
+                            }
                             if (isJSONObject(value)) {
-                                data[key] = JSON.parse(value);
+                                data[newKey] = JSON.parse(value);
                             } else if (!isNaN(value)) {
-                                data[key] = Number(value);
+                                data[newKey] = Number(value);
+                            } else {
+                                data[newKey] = value;
                             }
                         });
                         request.body.push(data);
