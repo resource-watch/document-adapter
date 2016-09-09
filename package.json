@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/resource-watch/rw_adapter_csv#readme",
   "dependencies": {
-    "bluebird": "3.2.1",
+    "bluebird": "^3.2.1",
     "bull": "1.0.0",
     "bunyan": "1.7.1",
     "cluster": "^0.7.7",
@@ -36,7 +36,6 @@
     "co-request": "1.0.0",
     "config": "1.19.0",
     "elasticsearch-csv": "git+https://github.com/rrequero/elasticsearch-csv.git#timeout",
-    "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
     "fast-csv": "1.0.0",
     "jsonapi-serializer": "2.1.1",
     "koa": "1.1.2",
@@ -50,8 +49,9 @@
     "md5": "2.1.0",
     "newrelic": "1.27.1",
     "randomstring": "1.1.5",
+    "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
     "uuid": "2.0.1",
-    "vizz.microservice-client": "^1.2.5"
+    "vizz.microservice-client": "^1.3.0"
   },
   "devDependencies": {
     "co-mocha": "1.1.2",
