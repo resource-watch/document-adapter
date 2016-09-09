@@ -87,7 +87,7 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 1800000, //5 minutes
+            timeout: 108000000, //5 minutes
             delay: 1000
         });
     }
@@ -99,7 +99,7 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 300000, //5 minutes
+            timeout: 18000000, //5 minutes
             delay: 1000
         });
     }
