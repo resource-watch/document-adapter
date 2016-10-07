@@ -8,6 +8,7 @@ develop:
   environment:
     NODE_ENV: dev
     API_GATEWAY_URL: http://192.168.99.100:8000
+    GATEWAY_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWljcm9zZXJ2aWNlIn0.q4UisPhFqXElVjC-7tG1TO1aYmqI9sPxNqIg7h_01y4
   command: develop
   links:
     - redis
@@ -19,6 +20,8 @@ worker:
   environment:
     NODE_PATH: app/src
     NODE_ENV: dev
+    API_GATEWAY_URL: http://192.168.99.100:8000
+    GATEWAY_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWljcm9zZXJ2aWNlIn0.q4UisPhFqXElVjC-7tG1TO1aYmqI9sPxNqIg7h_01y4
   container_name: rw-adapter-csv-worker-develop
   command: developWorker
   links:
@@ -33,7 +36,7 @@ redis:
     - "6379"
   restart: always
 elastic:
-  image: vizzuality/elasticsearch-sql:1.0.0
+  image: vizzuality/elasticsearch-sql:latest
   container_name: rw-adapter-csv-elastic
   ports:
     - "9200"

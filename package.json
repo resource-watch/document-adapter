@@ -50,6 +50,7 @@
     "newrelic": "1.27.1",
     "randomstring": "1.1.5",
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
+    "terraformer-wkt-parser": "^1.1.2",
     "uuid": "2.0.1",
     "vizz.microservice-client": "1.4.0"
   },

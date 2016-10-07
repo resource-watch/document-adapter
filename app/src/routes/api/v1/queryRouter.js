@@ -29,7 +29,7 @@ class CSVRouter {
     static *
         import () {
             logger.info('Adding csv with dataset id: ', this.request.body.connector);
-            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id);
+            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
             this.body = '';
         }
 

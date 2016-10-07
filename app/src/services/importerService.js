@@ -45,11 +45,7 @@ class ImporterService {
 
     * updateState(id,  state, tableName) {
         logger.info('Updating state of dataset ', id, ' with status ', state);
-        let data = yield getKey('MICROSERVICE_CONFIG');
-
-        data = JSON.parse(data);
         let microserviceClient = require('vizz.microservice-client');
-        microserviceClient.setDataConnection(data);
         let options = {
             uri: '/datasets/' + id,
             body: {
@@ -68,7 +64,7 @@ class ImporterService {
         logger.info('Updating', options);
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode !== 200) {
-            logger.error('Error to updating dataset.', result);
+            logger.error('Error to updating dataset.', result.body.errors);
             throw new Error('Error to updating dataset');
         }
     }
@@ -79,10 +75,12 @@ class ImporterService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addCSV(url, index, id) {
-        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id);
+    * addCSV(url, index, id, polygon, point) {
+        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
         this.importQueue.add({
             url: url,
+            polygon: polygon,
+            point: point,
             index: index,
             id: id
         }, {
@@ -104,16 +102,17 @@ class ImporterService {
         });
     }
 
-    * loadCSVInDatabase(path, index) {
-        logger.info('Importing csv in path %s and index %s', path, index);
-        let importer = new CSVImporter(path, index, index);
+    * loadCSVInDatabase(path, index, polygon, point) {
+        logger.info('Importing csv in path %s and index %s; Polygon %s, point: %s', path, index, polygon, point);
+        let importer = new CSVImporter(path, index, index, polygon, point);
+
         yield importer.start();
     }
 
     processDelete(job, done) {
         logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
         co(function*() {
-            logger.debug('Job', job);
+            
             yield queryService.deleteIndex(job.data.index);
             logger.info('Deleted successfully. Updating state');
             yield this.updateState(job.data.id, 3);
@@ -127,13 +126,13 @@ class ImporterService {
     }
 
     processImport(job, done) {
-        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
+        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id, job.data.polygon, job.data.point);
         co(function*() {
             let path = null;
             logger.debug('Job', job);
             try {
                 path = yield DownloadService.downloadFile(job.data.url);
-                yield this.loadCSVInDatabase(path, job.data.index);
+                yield this.loadCSVInDatabase(path, job.data.index, job.data.polygon, job.data.point);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {
