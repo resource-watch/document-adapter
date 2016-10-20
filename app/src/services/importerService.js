@@ -45,21 +45,15 @@ class ImporterService {
 
     * updateState(id,  state, tableName) {
         logger.info('Updating state of dataset ', id, ' with status ', state);
-        let data = yield getKey('MICROSERVICE_CONFIG');
-
-        data = JSON.parse(data);
         let microserviceClient = require('vizz.microservice-client');
-        microserviceClient.setDataConnection(data);
         let options = {
-            uri: '/datasets/' + id,
+            uri: '/dataset/' + id,
             body: {
                 dataset: {
-                    dataset_attributes: {
-                        status: state
-                    }
+                    status: state
                 }
             },
-            method: 'PUT',
+            method: 'PATCH',
             json: true
         };
         if(tableName){
@@ -113,7 +107,7 @@ class ImporterService {
     processDelete(job, done) {
         logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
         co(function*() {
-            logger.debug('Job', job);
+
             yield queryService.deleteIndex(job.data.index);
             logger.info('Deleted successfully. Updating state');
             yield this.updateState(job.data.id, 3);
