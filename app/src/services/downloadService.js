@@ -5,7 +5,7 @@ const request = require('request');
 const fs = require('fs');
 const logger = require('logger');
 const randomstring = require('randomstring');
-const Promise = require('bluebird');
+const Bluebird = require('bluebird');
 const http = require('http');
 
 function humanFileSize(bytes, si) {
@@ -13,9 +13,7 @@ function humanFileSize(bytes, si) {
     if(Math.abs(bytes) < thresh) {
         return bytes + ' B';
     }
-    var units = si
-        ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
-        : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+    var units = si ? ['kB','MB','GB','TB','PB','EB','ZB','YB'] : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
     var u = -1;
     do {
         bytes /= thresh;
@@ -25,7 +23,7 @@ function humanFileSize(bytes, si) {
 }
 
 let requestDownloadFile = function(url, path) {
-    return new Promise(function(resolve, reject){
+    return new Bluebird(function(resolve, reject){
         logger.debug('Sending request');
         try {
             let oldSize = 0;

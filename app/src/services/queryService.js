@@ -3,6 +3,14 @@
 const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
+var Terraformer = require('terraformer-wkt-parser');
+
+const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
+const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
+
+function capitalizeFirstLetter(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 class QueryService {
 
@@ -15,6 +23,15 @@ class QueryService {
                     this.transport.request({
                         method: 'GET',
                         path: encodeURI('/_sql'),
+                        query: `sql=${encodeURI(opts.sql)}`
+                    }, cb);
+                }.bind(this);
+            },
+            explain: function(opts) {
+                return function(cb) {
+                    this.transport.request({
+                        method: 'GET',
+                        path: encodeURI('/_sql/_explain'),
                         query: `sql=${encodeURI(opts.sql)}`
                     }, cb);
                 }.bind(this);
@@ -46,156 +63,50 @@ class QueryService {
 
     }
 
-    parseNormalStatement(parts, symbol){
-        return `${parts[0]} ${symbol} ${parts[1]}`;
-    }
+    convert2GeoJSON(obj){
+        let result = obj;
+        if(obj.features){
+            result = obj.features[0].geometry;
+        } else if(obj.geometry){
+            result = obj.geometry;
+        }
+        result.type = capitalizeFirstLetter(result.type);
 
-    parseEquality(parts){
-        let inParts = null;
-        if((inParts = parts[1].split(',')).length > 1){
-            //in
-            return `${parts[0]} IN (${inParts.join(',')})`;
-        } else {
-            return `${parts[0]} = ${parts[1]}`;
-        }
-    }
-
-    parseBetween(parts){
-        let betParts = parts[1].split('..');
-        return `${parts[0]} BETWEEN ${betParts[0]} AND ${betParts[1]}`;
-
-    }
-
-    parseStatement(expr){
-        if(expr.indexOf('==') > -1){
-            return this.parseEquality(expr.split('=='));
-        } else if(expr.indexOf('>=') > -1){
-            return this.parseNormalStatement(expr.split('>='), '>=');
-        } else if(expr.indexOf('>>') > -1){
-            return this.parseNormalStatement(expr.split('>>'), '>');
-        } else if(expr.indexOf('<<') > -1){
-            return this.parseNormalStatement(expr.split('<<'), '<');
-        } else if(expr.indexOf('<=') > -1){
-            return this.parseNormalStatement(expr.split('<='), '<=');
-        } else if(expr.indexOf('><') > -1){
-            return this.parseBetween(expr.split('><'));
-        }
-    }
-
-    parseFilter(filter){
-        let result = '';
-        let parts = filter.split(/<and>|<or>/g);
-        let partsWithOp = [];
-        let lengthParts = parts.length;
-        for(let i = 0; i < lengthParts; i++){
-            partsWithOp.push(parts[i]);
-            let sum = 0;
-            for(let j = 0; j < (2*i+1); j++){
-                sum += partsWithOp[j].length;
-            }
-            if(sum < filter.length){
-                let oper = null;
-                let indexOfAnd = filter.indexOf('<and>', sum);
-                let indexOfOr = filter.indexOf('<or>', sum);
-                if(indexOfAnd > -1 || indexOfOr > -1){
-                    if(indexOfAnd > -1){
-                        oper = '<and>';
-                    } else{
-                        oper = '<or>';
-                    }
-                } else if(indexOfAnd > -1 && indexOfOr > -1){
-                    if(indexOfAnd <= indexOfOr){
-                        oper = '<and>';
-                    } else if(indexOfOr < indexOfAnd){
-                        oper = '<or>';
-                    }
-                }
-                if(oper){
-                    partsWithOp.push(oper);
-                }
-            }
-        }
-        let where = '';
-        for(let i=0, length=partsWithOp.length; i < length; i++){
-            switch (partsWithOp[i].trim()) {
-                case '<and>':
-                    where +=' AND ';
-                    break;
-                case '<or>':
-                    where += ' OR ';
-                    break;
-                default:
-                    where += this.parseStatement(partsWithOp[i].trim());
-                    break;
-            }
-        }
-        return where;
-    }
-
-    parseSelect(select, aggrColumns){
-        let result = '';
-        if(!select && !aggrColumns){
-            return '*';
-        }
-        if(select){
-            result = select.join(', ');
-        }
-        if(result && aggrColumns){
-            result +=', ';
-        }
-        if(aggrColumns){
-            result += aggrColumns.join(', ');
-        }
         return result;
     }
 
-    convertToSQL(select, order, aggrBy, filter, filterNot, limit, aggrColums, tableName) {
-        if(select){
-            select = [].concat(select);
+    convertGeoJSON2WKT(sql){
+        CONTAIN_INTERSEC.lastIndex = 0;
+        OBTAIN_GEOJSON.lastIndex = 0;
+        let sqlLower = sql.toLowerCase();
+        if (CONTAIN_INTERSEC.test(sqlLower)) {
+            logger.debug('Contain intersec');
+            CONTAIN_INTERSEC.lastIndex = 0;
+            let resultIntersec = CONTAIN_INTERSEC.exec(sqlLower)[0];
+            let pos = sqlLower.indexOf(resultIntersec);
+            let result = `${sql.substring(0, pos)} ${sql.substring(pos + resultIntersec.length, sql.length)}`.trim();
+            let intersec = '';
+            if(resultIntersec.startsWith('and')){
+                intersec += ' AND ';
+            } else if(resultIntersec.startsWith('or')) {
+                intersec += ' OR ';
+            }
+            let geojson = OBTAIN_GEOJSON.exec(sqlLower);
+            if (geojson && geojson.length > 1){
+                geojson = this.convert2GeoJSON(JSON.parse(geojson[1]));
+                let wkt = Terraformer.convert(geojson);
+                result += `${intersec} GEO_INTERSECTS(the_geom, "${wkt}")`;
+            }
+            logger.debug('Result sql', result);
+            return result;
         }
-        if(order){
-            order = [].concat(order);
-        }
-        if(aggrBy){
-            aggrBy = [].concat(aggrBy);
-        }
-        if(aggrColums){
-            aggrColums = [].concat(aggrColums);
-        }
+        return sql;
 
-        let whereStatement = '';
-        if(filter){
-            whereStatement = this.parseFilter(filter);
-        }
-        let whereNotStatement = '';
-        if(filterNot){
-            whereNotStatement = this.parseFilter(filterNot);
-        }
-
-        let selectStatement = this.parseSelect(select, aggrColums);
-
-        let result = `SELECT
-            ${ selectStatement }
-            FROM ${tableName}
-            ${(whereStatement || whereNotStatement) ? 'WHERE' : ''}
-            ${whereStatement ? `${whereStatement}`: ''}
-            ${whereNotStatement ? `NOT (${whereNotStatement})`: ''}
-            ${(order && order.length > 0) ? `ORDER BY ${order.map(function(value){
-                if(value.startsWith('-')){
-                    return value.substring(1, value.length) + ' DESC';
-                }
-                return value + ' ASC';
-            }).join(', ')}` : '' }
-            ${aggrBy && aggrBy.length > 0 ? `GROUP BY ${aggrBy.join(', ')}`: ''}
-            ${(limit && !isNaN(limit) && limit > 0) ? `LIMIT ${limit}` : ''}`;
-
-
-        return result.replace(/\s\s+/g, ' ').trim();
     }
 
     * doQuery(sql){
         logger.info('Doing query...', sql);
-
+        sql = this.convertGeoJSON2WKT(sql);
         let result = yield this.elasticClient.sql({sql: sql});
         return result;
     }

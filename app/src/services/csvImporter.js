@@ -19,9 +19,23 @@ function isJSONObject(value) {
     }
 }
 
+function createIndex(client, options){
+    return new Promise(function(resolve, reject){
+        client.indices.create(options, function(error, response){
+            if(error){
+                reject(error);
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
 class CSVImporter {
-    constructor(filePath, index, type) {
+    constructor(filePath, index, type, polygon, point) {
         this.filePath = filePath;
+        this.polygon = polygon;
+        this.point = point;
         this.options = {
             index: index,
             type: type,
@@ -29,14 +43,57 @@ class CSVImporter {
                 headers: true
             }
         };
-    }
-
-    start() {
-        var elasticClient = new elasticsearch.Client({
+        this.elasticClient = new elasticsearch.Client({
             host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port'),
             log: 'info'
         });
+    }
+
+    convertPointToGeoJSON(lat, long){
+        return {
+            type: 'point',
+            coordinates: [
+              long,
+              lat
+            ]
+        };
+    }
+
+    convertPolygonToGeoJSON(polygon){
+        let theGeom = null;
+        if(polygon.features){
+            theGeom = polygon.features[0].geometry;
+        } else if(polygon.geometry){
+            theGeom = polygon.geometry;
+        }
+        theGeom.type = theGeom.type.toLowerCase();
+        return theGeom;
+    }
+
+    * initImport(){
+        logger.info('Checking mapping');
+        if(this.polygon || this.point){
+            logger.info('Contain a geojson column', this.polygon, this.point);
+            let body = {
+                mappings:{
+                    [this.options.type]:{
+                        properties:{
+                            the_geom: {
+                                type: 'geo_shape'
+                            }
+                        }
+                    }
+                }
+            };
+
+            yield createIndex(this.elasticClient, { index: this.options.index, body: body});
+        }
+    }
+
+    * start() {
+        yield this.initImport();
         return new Promise(function(resolve, reject) {
+
             let request = {
                 body: []
             };
@@ -48,13 +105,15 @@ class CSVImporter {
                     stream.pause();
                     if (_.isPlainObject(data)) {
 
-                        request.body.push({
+                        let index = {
                             index: {
                                 _index: this.options.index,
                                 _type: this.options.type,
                                 _id: uuid.v4()
                             }
-                        });
+                        };
+
+                        request.body.push(index);
                         _.forEach(data, function(value, key) {
                             let newKey = key;
                             if(CONTAIN_SPACES.test(key)){
@@ -69,6 +128,11 @@ class CSVImporter {
                                 data[newKey] = value;
                             }
                         });
+                        if(this.point) {
+                            data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
+                        } else if (this.polygon){
+                            data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                        }
                         request.body.push(data);
 
                     } else {
@@ -78,7 +142,7 @@ class CSVImporter {
 
                     if (request.body && request.body.length >= 25000) {
                         logger.debug('Saving');
-                        elasticClient.bulk(request, function(err, res) {
+                        this.elasticClient.bulk(request, function(err, res) {
                             if (err) {
                                 logger.error('Error saving ', err);
                                 stream.end();
@@ -97,7 +161,7 @@ class CSVImporter {
                 }.bind(this))
                 .on('end', function() {
                     if(request.body && request.body.length > 0){
-                        elasticClient.bulk(request, function(err, res) {
+                        this.elasticClient.bulk(request, function(err, res) {
                             if (err) {
                                 reject(err);
                                 return;

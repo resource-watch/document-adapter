@@ -50,7 +50,9 @@ class ImporterService {
             uri: '/dataset/' + id,
             body: {
                 dataset: {
-                    status: state
+                    // dataset_attributes: {
+                        status: state
+                    // }
                 }
             },
             method: 'PATCH',
@@ -62,7 +64,7 @@ class ImporterService {
         logger.info('Updating', options);
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode !== 200) {
-            logger.error('Error to updating dataset.', result);
+            logger.error('Error to updating dataset.', result.body.errors);
             throw new Error('Error to updating dataset');
         }
     }
@@ -73,15 +75,33 @@ class ImporterService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addCSV(url, index, id) {
-        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id);
+    * addCSV(url, index, id, polygon, point) {
+        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
         this.importQueue.add({
             url: url,
+            polygon: polygon,
+            point: point,
             index: index,
             id: id
         }, {
             attempts: 3,
-            timeout: 108000000, //5 minutes
+            timeout: 7200000, //2 hours
+            delay: 1000
+        });
+    }
+
+    * overwriteCSV(url, index, id, polygon, point) {
+        logger.info('Adding overwrite csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
+        this.importQueue.add({
+            url: url,
+            polygon: polygon,
+            point: point,
+            index: index,
+            id: id,
+            overwrite: true
+        }, {
+            attempts: 3,
+            timeout: 7200000, //2 hours
             delay: 1000
         });
     }
@@ -93,14 +113,15 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 18000000, //5 minutes
+            timeout: 7200000, //2 hours
             delay: 1000
         });
     }
 
-    * loadCSVInDatabase(path, index) {
-        logger.info('Importing csv in path %s and index %s', path, index);
-        let importer = new CSVImporter(path, index, index);
+    * loadCSVInDatabase(path, index, polygon, point) {
+        logger.info('Importing csv in path %s and index %s; Polygon %s, point: %s', path, index, polygon, point);
+        let importer = new CSVImporter(path, index, index, polygon, point);
+
         yield importer.start();
     }
 
@@ -121,13 +142,18 @@ class ImporterService {
     }
 
     processImport(job, done) {
-        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
+        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id, job.data.polygon, job.data.point);
         co(function*() {
             let path = null;
             logger.debug('Job', job);
             try {
                 path = yield DownloadService.downloadFile(job.data.url);
-                yield this.loadCSVInDatabase(path, job.data.index);
+                if(job.data.overwrite){
+                    logger.info('Overwrite data. Remove old');
+                    yield queryService.deleteIndex(job.data.index);
+                    logger.info('Deleted successfully. Continue importing');
+                }
+                yield this.loadCSVInDatabase(path, job.data.index, job.data.polygon, job.data.point);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {
