@@ -55,7 +55,7 @@ class ImporterService {
                     // }
                 }
             },
-            method: 'PUT',
+            method: 'PATCH',
             json: true
         };
         if(tableName){
