@@ -9,9 +9,9 @@ prod:
   command: start
   dns: ${DNS_SERVER}
   restart: always
-  log_driver: "gelf"
-  log_opt:
-    gelf-address: ${GELF_ADDRESS}
+  # log_driver: "gelf"
+  # log_opt:
+  #   gelf-address: ${GELF_ADDRESS}
 worker:
   image: vizzuality/rw-adapter-csv:1.1.0${STAGING}
   env_file:
@@ -21,9 +21,9 @@ worker:
   command: startWorker
   dns: ${DNS_SERVER}
   restart: always
-  log_driver: "gelf"
-  log_opt:
-    gelf-address: ${GELF_ADDRESS}
+  # log_driver: "gelf"
+  # log_opt:
+  #   gelf-address: ${GELF_ADDRESS}
 redis:
   image: redis
   ports:
