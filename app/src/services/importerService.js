@@ -47,12 +47,12 @@ class ImporterService {
         logger.info('Updating state of dataset ', id, ' with status ', state);
         let microserviceClient = require('vizz.microservice-client');
         let options = {
-            uri: '/datasets/' + id,
+            uri: '/dataset/' + id,
             body: {
                 dataset: {
-                    dataset_attributes: {
+                    // dataset_attributes: {
                         status: state
-                    }
+                    // }
                 }
             },
             method: 'PUT',
@@ -85,7 +85,23 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 108000000, //5 minutes
+            timeout: 7200000, //2 hours
+            delay: 1000
+        });
+    }
+
+    * overwriteCSV(url, index, id, polygon, point) {
+        logger.info('Adding overwrite csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
+        this.importQueue.add({
+            url: url,
+            polygon: polygon,
+            point: point,
+            index: index,
+            id: id,
+            overwrite: true
+        }, {
+            attempts: 3,
+            timeout: 7200000, //2 hours
             delay: 1000
         });
     }
@@ -97,7 +113,7 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 18000000, //5 minutes
+            timeout: 7200000, //2 hours
             delay: 1000
         });
     }
@@ -112,7 +128,7 @@ class ImporterService {
     processDelete(job, done) {
         logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
         co(function*() {
-            
+
             yield queryService.deleteIndex(job.data.index);
             logger.info('Deleted successfully. Updating state');
             yield this.updateState(job.data.id, 3);
@@ -132,6 +148,11 @@ class ImporterService {
             logger.debug('Job', job);
             try {
                 path = yield DownloadService.downloadFile(job.data.url);
+                if(job.data.overwrite){
+                    logger.info('Overwrite data. Remove old');
+                    yield queryService.deleteIndex(job.data.index);
+                    logger.info('Deleted successfully. Continue importing');
+                }
                 yield this.loadCSVInDatabase(path, job.data.index, job.data.polygon, job.data.point);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);

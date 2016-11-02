@@ -3,7 +3,7 @@ develop:
     file: base.yml
     service: base
   ports:
-    - "35731:35729"
+    - "35831:35729"
   container_name: rw-adapter-csv-develop
   environment:
     NODE_ENV: dev

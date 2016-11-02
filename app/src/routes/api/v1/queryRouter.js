@@ -23,6 +23,10 @@ var deserializer = function(obj) {
     };
 };
 
+var serializeObjToQuery = function(obj){
+    return Object.keys(obj).reduce(function(a,k){a.push(k+'='+encodeURIComponent(obj[k]));return a;},[]).join('&');
+};
+
 
 class CSVRouter {
 
@@ -32,7 +36,11 @@ class CSVRouter {
             yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
             this.body = '';
         }
-
+    static * overwrite () {
+            logger.info('Overwrite csv with dataset id: ', this.params.id);
+            yield importerService.overwriteCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
+            this.body = '';
+        }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
 
@@ -91,24 +99,35 @@ const cacheMiddleware = function*(next) {
 //     yield next;
 // }
 
+
 const toSQLMiddleware = function*(next) {
     let microserviceClient = require('vizz.microservice-client');
     let options = {
         method: 'GET',
         json: true
     };
-    if(!this.query.sql && !this.query.outFields && !this.query.outStatistics){
+    if(!this.query.sql && !this.request.body.sql && !this.query.outFields && !this.query.outStatistics){
         this.throw(400, 'sql or fs required');
         return;
     }
 
-    if (this.query.sql) {
+    if (this.query.sql || this.request.body.sql) {
         logger.debug('Checking sql correct');
-        options.uri = '/convert/checkSQL?sql=' + this.query.sql;
+        let params = Object.assign({}, this.query, this.request.body);
+        options.uri = '/convert/sql2SQL?sql=' + params.sql;
+        if (params.geostore){
+            options.uri += '&geostore=' + params.geostore;
+        }
     } else {
         logger.debug('Obtaining sql from featureService');
-        if(this.request.search){
-            options.uri = '/convert/fs2SQL' + this.request.search + '&tableName=' + this.request.body.dataset.table_name;
+        let fs = Object.assign({}, this.request.body);
+        delete fs.dataset;
+        let query = serializeObjToQuery(this.request.query);
+        let body = serializeObjToQuery(fs);
+        let resultQuery = Object.assign({}, query, body);
+
+        if(resultQuery){
+            options.uri = '/convert/fs2SQL' + resultQuery + '&tableName=' + this.request.body.dataset.table_name;
         } else {
             options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.table_name;
         }
@@ -118,9 +137,9 @@ const toSQLMiddleware = function*(next) {
     try {
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode === 204 || result.statusCode === 200) {
-            if (!this.query.sql) {
-                this.query.sql = result.body.data.attributes.sql;
-            }
+            this.query.sql = result.body.data.attributes.query;
+
+            logger.debug(result.body);
             logger.debug('Doing query with sql: ', this.query.sql);
             yield next;
         } else {
@@ -145,5 +164,6 @@ router.post('/query/:dataset', cacheMiddleware, toSQLMiddleware, CSVRouter.query
 router.post('/fields/:dataset', cacheMiddleware, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
+router.post('/:id/data-overwrite', CSVRouter.overwrite);
 
 module.exports = router;
