@@ -159,7 +159,7 @@ class CSVImporter {
                             reject(new Error('Data and/or options have no headers specified'));
                         }
 
-                        if (request.body && request.body.length >= 25000) {
+                        if (request.body && request.body.length >= 40000) {
                             logger.debug('Saving');
                             this.elasticClient.bulk(request, function(err, res) {
                                 if (err) {
