@@ -99,7 +99,8 @@ class CSVImporter {
             };
             let stream = fs.createReadStream(this.filePath)
                 .pipe(csv({
-                    headers: true
+                    headers: true,
+                    discardUnmappedColumns: true
                 }))
                 .on('data', function(data) {
                     stream.pause();
