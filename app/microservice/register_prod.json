@@ -7,8 +7,9 @@
         "method": "GET",
         "paramProvider": "dataset",
         "dataProvider": "dataset",
+        "pathProvider": "/datasets/:idDataset",        
         "filters":{
-            "provider": "csv"
+            "provider": "csv"            
         },
         "endpoints": [{
             "method": "POST",
