@@ -70,9 +70,9 @@ class DownloadService {
         logger.info('Checking if the content-type is text/csv');
         let result = yield coRequest.head(url);
         logger.debug('Headers ', result.headers['content-type']);
-        if (result.headers['content-type'] && result.headers['content-type'].indexOf('text/csv') === -1 && result.headers['content-type'].indexOf('text/plain') === -1 && result.headers['content-type'].indexOf('text/tab-separated-values') === -1) {
-            return false;
-        }
+        // if (result.headers['content-type'] && result.headers['content-type'].indexOf('text/csv') === -1 && result.headers['content-type'].indexOf('text/plain') === -1 && result.headers['content-type'].indexOf('text/tab-separated-values') === -1) {
+        //     return false;
+        // }
         return true;
     }
 
