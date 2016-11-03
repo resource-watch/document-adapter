@@ -116,8 +116,9 @@ class CSVImporter {
 
                             request.body.push(index);
                             _.forEach(data, function(value, key) {
+                                let newKey = key;
                                 try{
-                                    let newKey = key;
+                                    
                                     if(CONTAIN_SPACES.test(key)){
                                         delete data[key];
                                         newKey = key.replace(CONTAIN_SPACES, '_');
