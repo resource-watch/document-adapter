@@ -84,7 +84,7 @@ class ImporterService {
             index: index,
             id: id
         }, {
-            attempts: 3,
+            attempts: 1,
             timeout: 7200000, //2 hours
             delay: 1000
         });
@@ -100,7 +100,7 @@ class ImporterService {
             id: id,
             overwrite: true
         }, {
-            attempts: 3,
+            attempts: 1,
             timeout: 7200000, //2 hours
             delay: 1000
         });

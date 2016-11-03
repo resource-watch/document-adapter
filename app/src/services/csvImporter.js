@@ -116,17 +116,24 @@ class CSVImporter {
 
                         request.body.push(index);
                         _.forEach(data, function(value, key) {
-                            let newKey = key;
-                            if(CONTAIN_SPACES.test(key)){
-                                delete data[key];
-                                newKey = key.replace(CONTAIN_SPACES, '_');
-                            }
-                            if (isJSONObject(value)) {
-                                data[newKey] = JSON.parse(value);
-                            } else if (!isNaN(value)) {
-                                data[newKey] = Number(value);
-                            } else {
-                                data[newKey] = value;
+                            try{
+                                let newKey = key;
+                                if(CONTAIN_SPACES.test(key)){
+                                    delete data[key];
+                                    newKey = key.replace(CONTAIN_SPACES, '_');
+                                }
+                                if (isJSONObject(value)) {
+                                    data[newKey] = JSON.parse(value);
+                                } else if (!isNaN(value)) {
+                                    data[newKey] = Number(value);
+                                } else {
+                                    data[newKey] = value;
+                                }
+                            }catch(e){
+                                logger.error(e);
+                                logger.error('value', value);
+                                logger.error('newkey', newKey);
+                                throw e;
                             }
                         });
                         if(this.point) {
