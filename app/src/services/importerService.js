@@ -157,10 +157,10 @@ class ImporterService {
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {
-                logger.error(err);
+                logger.error('Error in ProcessImport', err);
                 throw err;
             } finally {
-                logger.debug('Deleting file');
+                logger.info('Deleting file');
                 if (path) {
                     yield unlink(path);
                 }

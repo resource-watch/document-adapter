@@ -92,6 +92,7 @@ class CSVImporter {
 
     * start() {
         yield this.initImport();
+        let i = 0;
         return new Promise(function(resolve, reject) {
             try {
                 let request = {
@@ -115,34 +116,38 @@ class CSVImporter {
                             };
 
                             request.body.push(index);
-                            _.forEach(data, function(value, key) {
-                                let newKey = key;
-                                try{
-                                    
-                                    if(CONTAIN_SPACES.test(key)){
-                                        delete data[key];
-                                        newKey = key.replace(CONTAIN_SPACES, '_');
+                            try{
+                                _.forEach(data, function(value, key) {
+                                    let newKey = key;
+                                    try{
+                                        
+                                        if(CONTAIN_SPACES.test(key)){
+                                            delete data[key];
+                                            newKey = key.replace(CONTAIN_SPACES, '_');
+                                        }
+                                        if (isJSONObject(value)) {
+                                            data[newKey] = JSON.parse(value);
+                                        } else if (!isNaN(value)) {
+                                            data[newKey] = Number(value);
+                                        } else {
+                                            data[newKey] = value;
+                                        }
+                                    }catch(e){
+                                        logger.error(e);
+                                        throw new Error(e);                                        
                                     }
-                                    if (isJSONObject(value)) {
-                                        data[newKey] = JSON.parse(value);
-                                    } else if (!isNaN(value)) {
-                                        data[newKey] = Number(value);
-                                    } else {
-                                        data[newKey] = value;
-                                    }
-                                }catch(e){
-                                    logger.error(e);
-                                    logger.error('value', value);
-                                    logger.error('newkey', newKey);
-                                    reject(e);
-                                }
-                            });
-                            if(this.point) {
+                                });
+                                if(this.point) {
                                 data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
-                            } else if (this.polygon){
-                                data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                                } else if (this.polygon){
+                                    data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                                }
+                                request.body.push(data);
+
+                            } catch(e){
+                                // continue
                             }
-                            request.body.push(data);
+                            
 
                         } else {
                             stream.end();
@@ -160,7 +165,8 @@ class CSVImporter {
                                 }
                                 request.body = [];
                                 stream.resume();
-                                logger.debug('Pack saved successfully');
+                                i++;
+                                logger.debug('Pack saved successfully, num:', i);
                             });
                         }else {
                             stream.resume();
