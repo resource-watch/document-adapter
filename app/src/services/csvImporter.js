@@ -139,9 +139,9 @@ class CSVImporter {
                                         throw new Error(e);                                        
                                     }
                                 });
-                                logger.info('Variable error es', error);
+                                // logger.info('Variable error es', error);
                                 if (!error){
-                                    logger.info('Esta metiendo el elemento');
+                                    // logger.info('Esta metiendo el elemento');
                                     if(this.point) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
                                     } else if (this.polygon){
