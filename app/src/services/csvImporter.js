@@ -93,92 +93,96 @@ class CSVImporter {
     * start() {
         yield this.initImport();
         return new Promise(function(resolve, reject) {
+            try {
+                let request = {
+                    body: []
+                };
+                let stream = fs.createReadStream(this.filePath)
+                    .pipe(csv({
+                        headers: true,
+                        discardUnmappedColumns: true
+                    }))
+                    .on('data', function(data) {
+                        stream.pause();
+                        if (_.isPlainObject(data)) {
 
-            let request = {
-                body: []
-            };
-            let stream = fs.createReadStream(this.filePath)
-                .pipe(csv({
-                    headers: true,
-                    discardUnmappedColumns: true
-                }))
-                .on('data', function(data) {
-                    stream.pause();
-                    if (_.isPlainObject(data)) {
-
-                        let index = {
-                            index: {
-                                _index: this.options.index,
-                                _type: this.options.type,
-                                _id: uuid.v4()
-                            }
-                        };
-
-                        request.body.push(index);
-                        _.forEach(data, function(value, key) {
-                            try{
-                                let newKey = key;
-                                if(CONTAIN_SPACES.test(key)){
-                                    delete data[key];
-                                    newKey = key.replace(CONTAIN_SPACES, '_');
+                            let index = {
+                                index: {
+                                    _index: this.options.index,
+                                    _type: this.options.type,
+                                    _id: uuid.v4()
                                 }
-                                if (isJSONObject(value)) {
-                                    data[newKey] = JSON.parse(value);
-                                } else if (!isNaN(value)) {
-                                    data[newKey] = Number(value);
-                                } else {
-                                    data[newKey] = value;
+                            };
+
+                            request.body.push(index);
+                            _.forEach(data, function(value, key) {
+                                try{
+                                    let newKey = key;
+                                    if(CONTAIN_SPACES.test(key)){
+                                        delete data[key];
+                                        newKey = key.replace(CONTAIN_SPACES, '_');
+                                    }
+                                    if (isJSONObject(value)) {
+                                        data[newKey] = JSON.parse(value);
+                                    } else if (!isNaN(value)) {
+                                        data[newKey] = Number(value);
+                                    } else {
+                                        data[newKey] = value;
+                                    }
+                                }catch(e){
+                                    logger.error(e);
+                                    logger.error('value', value);
+                                    logger.error('newkey', newKey);
+                                    reject(e);
                                 }
-                            }catch(e){
-                                logger.error(e);
-                                logger.error('value', value);
-                                logger.error('newkey', newKey);
-                                throw e;
+                            });
+                            if(this.point) {
+                                data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
+                            } else if (this.polygon){
+                                data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
                             }
-                        });
-                        if(this.point) {
-                            data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
-                        } else if (this.polygon){
-                            data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                            request.body.push(data);
+
+                        } else {
+                            stream.end();
+                            reject(new Error('Data and/or options have no headers specified'));
                         }
-                        request.body.push(data);
 
-                    } else {
-                        stream.end();
-                        reject(new Error('Data and/or options have no headers specified'));
-                    }
-
-                    if (request.body && request.body.length >= 25000) {
-                        logger.debug('Saving');
-                        this.elasticClient.bulk(request, function(err, res) {
-                            if (err) {
-                                logger.error('Error saving ', err);
-                                stream.end();
-                                reject(err);
-                                return;
-                            }
-                            request.body = [];
+                        if (request.body && request.body.length >= 25000) {
+                            logger.debug('Saving');
+                            this.elasticClient.bulk(request, function(err, res) {
+                                if (err) {
+                                    logger.error('Error saving ', err);
+                                    stream.end();
+                                    reject(err);
+                                    return;
+                                }
+                                request.body = [];
+                                stream.resume();
+                                logger.debug('Pack saved successfully');
+                            });
+                        }else {
                             stream.resume();
-                            logger.debug('Pack saved successfully');
-                        });
-                    }else {
-                        stream.resume();
-                    }
+                        }
 
 
-                }.bind(this))
-                .on('end', function() {
-                    if(request.body && request.body.length > 0){
-                        this.elasticClient.bulk(request, function(err, res) {
-                            if (err) {
-                                reject(err);
-                                return;
-                            }
-                            resolve(res);
-                            logger.debug('Pack saved successfully');
-                        });
-                    }
-                }.bind(this));
+                    }.bind(this))
+                    .on('end', function() {
+                        if(request.body && request.body.length > 0){
+                            this.elasticClient.bulk(request, function(err, res) {
+                                if (err) {
+                                    reject(err);
+                                    return;
+                                }
+                                resolve(res);
+                                logger.debug('Pack saved successfully');
+                            });
+                        }
+                    }.bind(this));
+            } catch(e) {
+                logger.error(e);
+                reject(e);
+            }
 
         }.bind(this));
     }
