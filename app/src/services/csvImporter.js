@@ -116,7 +116,8 @@ class CSVImporter {
                             };
 
                             request.body.push(index);
-                            try{
+                            try {
+                                let error = false;
                                 _.forEach(data, function(value, key) {
                                     let newKey = key;
                                     try{
@@ -134,20 +135,21 @@ class CSVImporter {
                                         }
                                     }catch(e){
                                         logger.error(e);
+                                        error = true;
                                         throw new Error(e);                                        
                                     }
                                 });
-                                if(this.point) {
-                                data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
-                                } else if (this.polygon){
-                                    data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                                if (!error){
+                                    if(this.point) {
+                                        data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
+                                    } else if (this.polygon){
+                                        data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                                    }
+                                    request.body.push(data);
                                 }
-                                request.body.push(data);
-
                             } catch(e){
-                                // continue
+                                //continue
                             }
-                            
 
                         } else {
                             stream.end();
