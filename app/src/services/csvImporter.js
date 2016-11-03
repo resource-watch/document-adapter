@@ -115,7 +115,7 @@ class CSVImporter {
                                 }
                             };
 
-                            request.body.push(index);
+                            
                             try {
                                 let error = false;
                                 _.forEach(data, function(value, key) {
@@ -139,12 +139,15 @@ class CSVImporter {
                                         throw new Error(e);                                        
                                     }
                                 });
+                                logger.info('Variable error es', error);
                                 if (!error){
+                                    logger.info('Esta metiendo el elemento');
                                     if(this.point) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
                                     } else if (this.polygon){
                                         data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
                                     }
+                                    request.body.push(index);
                                     request.body.push(data);
                                 }
                             } catch(e){
