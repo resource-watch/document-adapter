@@ -39,18 +39,18 @@ class QueryService {
             sql: function(opts) {
                 return function(cb) {
                     this.transport.request({
-                        method: 'GET',
+                        method: 'POST',
                         path: encodeURI('/_sql'),
-                        query: `sql=${encodeURI(opts.sql)}`
+                        body: encodeURI(opts.sql)
                     }, cb);
                 }.bind(this);
             },
             explain: function(opts) {
                 return function(cb) {
                     this.transport.request({
-                        method: 'GET',
+                        method: 'POST',
                         path: encodeURI('/_sql/_explain'),
-                        query: `sql=${encodeURI(opts.sql)}`
+                        body: encodeURI(opts.sql)
                     }, cb);
                 }.bind(this);
             },
