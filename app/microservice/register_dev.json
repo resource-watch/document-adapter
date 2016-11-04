@@ -26,7 +26,11 @@
         "paramProvider": "dataset",
         "dataProvider": "dataset",
         "filters":{
-            "provider": "csv"
+            "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
         },
         "endpoints": [{
             "method": "POST",
@@ -39,7 +43,11 @@
         "paramProvider": "dataset",
         "dataProvider": "dataset",
         "filters":{
-            "provider": "csv"
+            "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
         },
         "endpoints": [{
             "method": "POST",

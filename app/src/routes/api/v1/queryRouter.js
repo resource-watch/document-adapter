@@ -55,8 +55,8 @@ class CSVRouter {
     static * fields() {
         logger.info('Get fields of dataset', this.request.body);
 
-        let fields = yield queryService.getMapping(this.request.body.dataset.table_name);
-        this.body = fieldSerializer.serialize(fields, this.request.body.dataset.table_name, this.request.body.dataset.id);
+        let fields = yield queryService.getMapping(this.request.body.dataset.tableName);
+        this.body = fieldSerializer.serialize(fields, this.request.body.dataset.tableName, this.request.body.dataset.id);
     }
 
     static getCloneUrl(url, idDataset) {
@@ -92,12 +92,14 @@ const cacheMiddleware = function*(next) {
 
 };
 
-// const deserializeDataset = function*(next){
-//     if(this.request.body.dataset){
-//         this.request.body.dataset = yield deserializer(this.request.body.dataset);
-//     }
-//     yield next;
-// }
+const deserializeDataset = function*(next){
+    if(this.request.body.dataset){
+        this.request.body.dataset = yield deserializer(this.request.body.dataset);
+    } else {
+        this.request.body.dataset.tableName = this.request.body.dataset.table_name;
+    }
+    yield next;
+}
 
 
 const toSQLMiddleware = function*(next) {
@@ -127,9 +129,9 @@ const toSQLMiddleware = function*(next) {
         let resultQuery = Object.assign({}, query, body);
 
         if(resultQuery){
-            options.uri = '/convert/fs2SQL' + resultQuery + '&tableName=' + this.request.body.dataset.table_name;
+            options.uri = '/convert/fs2SQL' + resultQuery + '&tableName=' + this.request.body.dataset.tableName;
         } else {
-            options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.table_name;
+            options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.tableName;
         }
     }
 
@@ -160,8 +162,8 @@ const toSQLMiddleware = function*(next) {
     }
 };
 
-router.post('/query/:dataset', cacheMiddleware, toSQLMiddleware, CSVRouter.query);
-router.post('/fields/:dataset', cacheMiddleware, CSVRouter.fields);
+router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, CSVRouter.query);
+router.post('/fields/:dataset', cacheMiddleware, deserializeDataset, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
 router.post('/:id/data-overwrite', CSVRouter.overwrite);
