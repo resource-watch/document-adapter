@@ -9,7 +9,25 @@ const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
 const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
 
 function capitalizeFirstLetter(text) {
-    return text.charAt(0).toUpperCase() + text.slice(1);
+    switch(text){
+        case 'multipolygon': 
+            return 'MultiPolygon';
+        case 'polygon':
+            return 'Polygon';
+        case 'point':
+            return 'Point';
+        case 'linestring':
+            return 'LineString';
+        case 'multipoint':
+            return 'MultiPoint';
+        case 'multilinestring':
+            return 'MultiPointString';
+        case 'geometrycollection':
+            return 'GeometryCollection';
+        default:
+            return text;
+    }
+
 }
 
 class QueryService {
@@ -64,6 +82,7 @@ class QueryService {
     }
 
     convert2GeoJSON(obj){
+        
         let result = obj;
         if(obj.features){
             result = obj.features[0].geometry;
