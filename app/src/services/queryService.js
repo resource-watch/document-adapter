@@ -41,7 +41,7 @@ class QueryService {
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI('/_sql'),
-                        body: encodeURI(opts.sql)
+                        body: opts.sql
                     }, cb);
                 }.bind(this);
             },
@@ -50,7 +50,7 @@ class QueryService {
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI('/_sql/_explain'),
-                        body: encodeURI(opts.sql)
+                        body: opts.sql
                     }, cb);
                 }.bind(this);
             },
