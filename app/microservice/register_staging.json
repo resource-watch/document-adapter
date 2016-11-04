@@ -31,7 +31,11 @@
         "endpoints": [{
             "method": "POST",
             "path": "/api/v1/csv/query/:dataset",
-            "data": ["dataset"]
+             "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
         }]
     },{
         "url": "/fields/:dataset",
@@ -39,7 +43,11 @@
         "paramProvider": "dataset",
         "dataProvider": "dataset",
         "filters":{
-            "provider": "csv"
+             "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
         },
         "endpoints": [{
             "method": "POST",
