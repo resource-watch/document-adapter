@@ -102,6 +102,9 @@ class QueryService {
             logger.debug('Contain intersec');
             CONTAIN_INTERSEC.lastIndex = 0;
             let resultIntersec = CONTAIN_INTERSEC.exec(sqlLower)[0];
+            if (resultIntersec) {
+                resultIntersec = resultIntersec.trim();
+            }
             let pos = sqlLower.indexOf(resultIntersec);
             let result = `${sql.substring(0, pos)} ${sql.substring(pos + resultIntersec.length, sql.length)}`.trim();
             let intersec = '';

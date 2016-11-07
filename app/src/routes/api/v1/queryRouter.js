@@ -93,7 +93,7 @@ const cacheMiddleware = function*(next) {
 };
 
 const deserializeDataset = function*(next){
-    if(this.request.body.dataset){
+    if(this.request.body.dataset && this.request.body.dataset.data){
         this.request.body.dataset = yield deserializer(this.request.body.dataset);
     } else {
         this.request.body.dataset.tableName = this.request.body.dataset.table_name;
