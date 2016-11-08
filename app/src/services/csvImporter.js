@@ -115,13 +115,13 @@ class CSVImporter {
                                 }
                             };
 
-                            
+
                             try {
                                 let error = false;
                                 _.forEach(data, function(value, key) {
                                     let newKey = key;
                                     try{
-                                        
+
                                         if(CONTAIN_SPACES.test(key)){
                                             delete data[key];
                                             newKey = key.replace(CONTAIN_SPACES, '_');
@@ -136,7 +136,7 @@ class CSVImporter {
                                     }catch(e){
                                         logger.error(e);
                                         error = true;
-                                        throw new Error(e);                                        
+                                        throw new Error(e);
                                     }
                                 });
                                 // logger.info('Variable error es', error);
@@ -159,7 +159,7 @@ class CSVImporter {
                             reject(new Error('Data and/or options have no headers specified'));
                         }
 
-                        if (request.body && request.body.length >= 40000) {
+                        if (request.body && request.body.length >= 80000) {
                             logger.debug('Saving');
                             this.elasticClient.bulk(request, function(err, res) {
                                 if (err) {
