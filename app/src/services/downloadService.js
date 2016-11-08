@@ -73,7 +73,7 @@ class DownloadService {
             throw new Error('File is not text/csv');
         }
         logger.debug('Type text/csv. Downloading....');
-        let path = '/opt/rw-adapter-csv/app/download/' + randomstring.generate() + '.csv';
+        let path = '/tmp/' + randomstring.generate() + '.csv';
         logger.debug('Temporal path', path, '. Downloading');
         let result = yield requestDownloadFile(url, path);
         logger.debug('Download file!!!');
