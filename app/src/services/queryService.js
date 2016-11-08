@@ -106,19 +106,21 @@ class QueryService {
                 resultIntersec = resultIntersec.trim();
             }
             let pos = sqlLower.indexOf(resultIntersec);
-            let result = `${sql.substring(0, pos)} ${sql.substring(pos + resultIntersec.length, sql.length)}`.trim();
-            let intersec = '';
+            
+            let intersectResult = '';
             if(resultIntersec.startsWith('and')){
-                intersec += ' AND ';
+                intersectResult += ' AND ';
             } else if(resultIntersec.startsWith('or')) {
-                intersec += ' OR ';
+                intersectResult += ' OR ';
             }
             let geojson = OBTAIN_GEOJSON.exec(sqlLower);
             if (geojson && geojson.length > 1){
                 geojson = this.convert2GeoJSON(JSON.parse(geojson[1]));
                 let wkt = Terraformer.convert(geojson);
-                result += `${intersec} GEO_INTERSECTS(the_geom, "${wkt}")`;
+                intersectResult += ` GEO_INTERSECTS(the_geom, "${wkt}")`;
             }
+            
+            const result = `${sql.substring(0, pos)} ${intersectResult} ${sql.substring(pos + resultIntersec.length, sql.length)}`.trim();
             logger.debug('Result sql', result);
             return result;
         }
