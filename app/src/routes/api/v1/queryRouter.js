@@ -99,7 +99,7 @@ const deserializeDataset = function*(next){
         this.request.body.dataset.tableName = this.request.body.dataset.table_name;
     }
     yield next;
-}
+};
 
 
 const toSQLMiddleware = function*(next) {

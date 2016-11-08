@@ -26,34 +26,26 @@ let requestDownloadFile = function(url, path) {
     return new Bluebird(function(resolve, reject){
         logger.debug('Sending request');
         try {
-            let oldSize = 0;
-            var requestserver = http.request(url, function(r) {
-                logger.debug('STATUS: ' + r.statusCode);
-                logger.debug('HEADERS: ' + JSON.stringify(r.headers));
-                logger.debug('Initializing downlaod data');
-                var fd = fs.openSync(path, 'w');
-                let size = 0;
-                r.on('data', function (chunk) {
-
-                    size += chunk.length;
-                    if(size - oldSize > (1024 * 1024 *100)) {
-                        oldSize = size;
-                        logger.debug(humanFileSize(size)+' received');
-                    }
-
-                    fs.write(fd, chunk, 0, chunk.length, null, function(er, written) {
-                    });
+            let dlprogress = 0;
+            var requestserver = http.request(url);
+            requestserver.addListener('response', function (response) {
+                var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
+                logger.info('File size: ' + humanFileSize(parseInt(response.headers['content-length'], 10)) );
+                response.addListener('data', function (chunk) {
+                    dlprogress += chunk.length;
+                    downloadfile.write(chunk, {encoding: 'binary'});
+                    logger.debug(humanFileSize(dlprogress)+' progress');
                 });
-                r.on('error',function(e){
+                response.addListener('end', function() {
+                    downloadfile.end();
+                    logger.info(humanFileSize(dlprogress)+' downloaded. Ended from server');
+                    resolve();
+                });
+                response.on('error',function(e){
                     logger.error('Error downloading file', e);
                     reject(e);
                 });
-                r.on('end',function(){
-                    logger.info(humanFileSize(size)+' downloaded. Ended from server');
-                    fs.closeSync(fd);
 
-                    resolve();
-                });
             });
             requestserver.end();
         } catch(err){
@@ -81,7 +73,7 @@ class DownloadService {
             throw new Error('File is not text/csv');
         }
         logger.debug('Type text/csv. Downloading....');
-        let path = '/tmp/' + randomstring.generate() + '.csv';
+        let path = '/opt/rw-adapter-csv/app/download/' + randomstring.generate() + '.csv';
         logger.debug('Temporal path', path, '. Downloading');
         let result = yield requestDownloadFile(url, path);
         logger.debug('Download file!!!');
