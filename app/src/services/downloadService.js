@@ -27,6 +27,7 @@ let requestDownloadFile = function(url, path) {
         logger.debug('Sending request');
         try {
             let dlprogress = 0;
+            let oldProgress = 0;
             var requestserver = http.request(url);
             requestserver.addListener('response', function (response) {
                 var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
@@ -34,7 +35,10 @@ let requestDownloadFile = function(url, path) {
                 response.addListener('data', function (chunk) {
                     dlprogress += chunk.length;
                     downloadfile.write(chunk, {encoding: 'binary'});
-                    logger.debug(humanFileSize(dlprogress)+' progress');
+                    if(dlprogress-oldProgress > 100*1024*1024){
+                        logger.debug(humanFileSize(dlprogress)+' progress');
+                        oldProgress = dlprogress;
+                    }
                 });
                 response.addListener('end', function() {
                     downloadfile.end();
