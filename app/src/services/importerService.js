@@ -119,10 +119,19 @@ class ImporterService {
     }
 
     * loadCSVInDatabase(path, index, polygon, point) {
-        logger.info('Importing csv in path %s and index %s; Polygon %s, point: %s', path, index, polygon, point);
-        let importer = new CSVImporter(path, index, index, polygon, point);
+        try {
+            logger.info('Importing csv in path %s and index %s; Polygon %s, point: %s', path, index, polygon, point);
+            let importer = new CSVImporter(path, index, index, polygon, point);
 
-        yield importer.start();
+            yield importer.start();
+
+            logger.info('Activating refresh index', index);
+            yield importer.activateRefreshIndex(index);
+        } catch(e) {
+            logger.info('Removing index');
+            yield queryService.deleteIndex(index);
+            throw e;
+        }
     }
 
     processDelete(job, done) {

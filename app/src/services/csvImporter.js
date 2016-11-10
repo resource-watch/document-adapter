@@ -4,6 +4,8 @@ const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
 const fs = require('fs');
+var sleep = require('co-sleep');
+var co = require('co');
 var csv = require('fast-csv');
 var uuid = require('uuid');
 var _ = require('lodash');
@@ -19,10 +21,63 @@ function isJSONObject(value) {
     }
 }
 
-function createIndex(client, options){
-    return new Promise(function(resolve, reject){
-        client.indices.create(options, function(error, response){
-            if(error){
+function saveBulk(client, requests) {
+    return new Promise(function(resolve, reject ){
+        client.bulk(requests, function(err, res) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(res);
+        });
+    });    
+}
+
+function createIndex(client, options) {
+    return new Promise(function(resolve, reject) {
+        client.indices.create(options, function(error, response) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
+
+function activateRefreshIndex(client, index){
+    return new Promise(function(resolve, reject) {
+        let options = {
+            index: index,
+            body: {
+                    index: {
+                        refresh_interval: '1s'
+                    }
+                }
+        };
+        client.indices.putSettings(options, function(error, response) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
+function desactivateRefreshIndex(client, index){
+    return new Promise(function(resolve, reject) {
+        let options = {
+            index: index,
+            body: {
+                    index: {
+                        refresh_interval: '-1'
+                    }
+                }
+        };
+        client.indices.putSettings(options, function(error, response) {
+            if (error) {
                 reject(error);
                 return;
             }
@@ -49,35 +104,39 @@ class CSVImporter {
         });
     }
 
-    convertPointToGeoJSON(lat, long){
+    * activateRefreshIndex(index) {
+        yield activateRefreshIndex(this.client, index);
+    }
+    convertPointToGeoJSON(lat, long) {
         return {
             type: 'point',
             coordinates: [
-              long,
-              lat
+                long,
+                lat
             ]
         };
     }
 
-    convertPolygonToGeoJSON(polygon){
+    convertPolygonToGeoJSON(polygon) {
         let theGeom = null;
-        if(polygon.features){
+        if (polygon.features) {
             theGeom = polygon.features[0].geometry;
-        } else if(polygon.geometry){
+        } else if (polygon.geometry) {
             theGeom = polygon.geometry;
         }
         theGeom.type = theGeom.type.toLowerCase();
         return theGeom;
     }
 
-    * initImport(){
+    *
+    initImport() {
         logger.info('Checking mapping');
-        if(this.polygon || this.point){
+        if (this.polygon || this.point) {
             logger.info('Contain a geojson column', this.polygon, this.point);
             let body = {
-                mappings:{
-                    [this.options.type]:{
-                        properties:{
+                mappings: {
+                    [this.options.type]: {
+                        properties: {
                             the_geom: {
                                 type: 'geo_shape'
                             }
@@ -86,11 +145,35 @@ class CSVImporter {
                 }
             };
 
-            yield createIndex(this.elasticClient, { index: this.options.index, body: body});
+            yield createIndex(this.elasticClient, {
+                index: this.options.index,
+                body: body
+            });
+            yield desactivateRefreshIndex(this.elasticClient, this.options.index);
         }
     }
 
-    * start() {
+    saveData(requests) {
+        return co(function*() {
+            for (let i = 1; i < 4; i++) {
+                try  {
+                    yield saveBulk(this.elasticClient, requests);
+                    return;
+                } catch (e) {
+                    if (e.status !== 408 || i === 3) {
+                        throw e;
+                    } else {
+                        logger.info('Waiting ', 30000 * i);
+                        yield sleep(30000 * i);
+                    }
+                }
+            }
+
+        });
+    }
+
+    *
+    start() {
         yield this.initImport();
         let i = 0;
         return new Promise(function(resolve, reject) {
@@ -120,9 +203,9 @@ class CSVImporter {
                                 let error = false;
                                 _.forEach(data, function(value, key) {
                                     let newKey = key;
-                                    try{
+                                    try {
 
-                                        if(CONTAIN_SPACES.test(key)){
+                                        if (CONTAIN_SPACES.test(key)) {
                                             delete data[key];
                                             newKey = key.replace(CONTAIN_SPACES, '_');
                                         }
@@ -133,24 +216,24 @@ class CSVImporter {
                                         } else {
                                             data[newKey] = value;
                                         }
-                                    }catch(e){
+                                    } catch (e) {
                                         logger.error(e);
                                         error = true;
                                         throw new Error(e);
                                     }
                                 });
                                 // logger.info('Variable error es', error);
-                                if (!error){
+                                if (!error) {
                                     // logger.info('Esta metiendo el elemento');
-                                    if(this.point) {
+                                    if (this.point) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
-                                    } else if (this.polygon){
+                                    } else if (this.polygon) {
                                         data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
                                     }
                                     request.body.push(index);
                                     request.body.push(data);
                                 }
-                            } catch(e){
+                            } catch (e) {
                                 //continue
                             }
 
@@ -161,37 +244,35 @@ class CSVImporter {
 
                         if (request.body && request.body.length >= 80000) {
                             logger.debug('Saving');
-                            this.elasticClient.bulk(request, function(err, res) {
-                                if (err) {
-                                    logger.error('Error saving ', err);
-                                    stream.end();
-                                    reject(err);
-                                    return;
-                                }
+                            this.saveData(request).then(function(){
                                 request.body = [];
                                 stream.resume();
                                 i++;
                                 logger.debug('Pack saved successfully, num:', i);
+                            }, function(err){
+                                logger.error('Error saving ', err);
+                                stream.end();
+                                reject(err);
                             });
-                        }else {
+                        } else {
                             stream.resume();
                         }
 
 
                     }.bind(this))
                     .on('end', function() {
-                        if(request.body && request.body.length > 0){
-                            this.elasticClient.bulk(request, function(err, res) {
-                                if (err) {
-                                    reject(err);
-                                    return;
-                                }
+                        if (request.body && request.body.length > 0) {
+                            this.saveData(request).then(function(res){
                                 resolve(res);
                                 logger.debug('Pack saved successfully');
+                            }, function(err){
+                                logger.error('Error saving ', err);
+                                reject(err);
+                                return;
                             });
                         }
                     }.bind(this));
-            } catch(e) {
+            } catch (e)  {
                 logger.error(e);
                 reject(e);
             }

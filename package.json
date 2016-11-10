@@ -34,6 +34,7 @@
     "cluster": "^0.7.7",
     "co": "4.6.0",
     "co-request": "1.0.0",
+    "co-sleep": "0.0.1",
     "config": "1.19.0",
     "elasticsearch-csv": "git+https://github.com/rrequero/elasticsearch-csv.git#timeout",
     "fast-csv": "1.0.0",
