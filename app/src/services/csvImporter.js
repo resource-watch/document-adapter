@@ -52,7 +52,8 @@ function activateRefreshIndex(client, index){
             index: index,
             body: {
                     index: {
-                        refresh_interval: '1s'
+                        refresh_interval: '1s',
+                        number_of_replicas: 1
                     }
                 }
         };
@@ -72,7 +73,8 @@ function desactivateRefreshIndex(client, index){
             index: index,
             body: {
                     index: {
-                        refresh_interval: '-1'
+                        refresh_interval: '-1',
+                        number_of_replicas: 0
                     }
                 }
         };
@@ -193,8 +195,8 @@ class CSVImporter {
                             let index = {
                                 index: {
                                     _index: this.options.index,
-                                    _type: this.options.type,
-                                    _id: uuid.v4()
+                                    _type: this.options.type
+                                    //_id: uuid.v4()
                                 }
                             };
 

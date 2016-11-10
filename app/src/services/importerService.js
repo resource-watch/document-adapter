@@ -85,7 +85,7 @@ class ImporterService {
             id: id
         }, {
             attempts: 1,
-            timeout: 7200000, //2 hours
+            timeout: 86400000, //2 hours
             delay: 1000
         });
     }
