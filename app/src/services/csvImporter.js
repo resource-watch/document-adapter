@@ -30,7 +30,7 @@ function saveBulk(client, requests) {
             }
             resolve(res);
         });
-    });    
+    });
 }
 
 function createIndex(client, options) {
@@ -105,7 +105,7 @@ class CSVImporter {
     }
 
     * activateRefreshIndex(index) {
-        yield activateRefreshIndex(this.client, index);
+        yield activateRefreshIndex(this.elasticClient, index);
     }
     convertPointToGeoJSON(lat, long) {
         return {
@@ -169,7 +169,7 @@ class CSVImporter {
                 }
             }
 
-        });
+        }.bind(this));
     }
 
     *
