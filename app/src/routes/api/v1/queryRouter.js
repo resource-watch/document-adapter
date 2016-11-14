@@ -181,9 +181,6 @@ const toSQLMiddleware = function*(next) {
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode === 204 || result.statusCode === 200) {
             this.query.sql = result.body.data.attributes.query;
-
-            logger.debug(result.body);
-            logger.debug('Doing query with sql: ', this.query.sql);
             yield next;
         } else {
             if(result.statusCode === 400){

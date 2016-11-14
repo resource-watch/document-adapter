@@ -191,7 +191,7 @@ class QueryService {
         sql = this.convertGeoJSON2WKT(sql);
         logger.debug('Doing explain');
         let resultQueryElastic = yield this.elasticClient.explain({sql: sql});
-        logger.debug('Creating params to scroll');
+        logger.debug('Creating params to scroll with query', resultQueryElastic);
         let params = {
             query: resultQueryElastic,
             duration: '1m',
