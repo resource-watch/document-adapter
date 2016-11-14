@@ -7,13 +7,21 @@ var importerService = require('services/importerService');
 var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var fieldSerializer = require('serializers/fieldSerializer');
+const randomstring = require('randomstring');
 var redisClient = require('redis').createClient({
     port: config.get('redis.port'),
     host: config.get('redis.host')
 });
+var fs = require('fs');
 var router = new Router({
     prefix: '/csv'
 });
+
+var unlink = function(file) {
+    return function(callback) {
+        fs.unlink(file, callback);
+    };
+};
 
 var JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
@@ -50,6 +58,36 @@ class CSVRouter {
             cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
         };
         this.body = data;
+    }
+
+    static * download() {
+        logger.info('Dowload data with dataset', this.request.body);
+        const format = this.query.format ? this.query.format : 'csv';
+        let path = '/tmp/' + randomstring.generate() + '.' + format;
+        yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, path, format);
+        try {
+            this.body = fs.createReadStream(path);
+            this.set('Content-disposition', `attachment; filename=${this.request.body.dataset.id}.${format}`);
+            let mimetype;
+            switch (format) {
+                case 'csv':
+                    mimetype = 'text/csv';
+                    break;
+                case 'json':
+                    mimetype = 'application/json';
+                    break;
+            }
+            this.set('Content-type', mimetype);
+        } catch (e){
+            logger.error(e);            
+        } finally {
+            if (path) {
+                logger.info('Removing file');
+                yield unlink(path);
+                logger.info('Removed correctly');
+            }
+        }
+        
     }
 
     static * fields() {
@@ -93,10 +131,13 @@ const cacheMiddleware = function*(next) {
 };
 
 const deserializeDataset = function*(next){
+    logger.debug('Body', this.request.body);
     if(this.request.body.dataset && this.request.body.dataset.data){
         this.request.body.dataset = yield deserializer(this.request.body.dataset);
     } else {
-        this.request.body.dataset.tableName = this.request.body.dataset.table_name;
+        if (this.request.body.dataset && this.request.body.dataset.table_name){
+            this.request.body.dataset.tableName = this.request.body.dataset.table_name;
+        }
     }
     yield next;
 };
@@ -163,6 +204,7 @@ const toSQLMiddleware = function*(next) {
 };
 
 router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, CSVRouter.query);
+router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, CSVRouter.download);
 router.post('/fields/:dataset', cacheMiddleware, deserializeDataset, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);

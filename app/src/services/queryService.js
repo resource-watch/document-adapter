@@ -3,11 +3,18 @@
 const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
+const json2csv = require('json2csv');
+const fs = require('fs');
 var Terraformer = require('terraformer-wkt-parser');
-
+const csvSerializer = require('serializers/csvSerializer');
 const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
 const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
 
+var unlink = function(file) {
+    return function(callback) {
+        fs.unlink(file, callback);
+    };
+};
 function capitalizeFirstLetter(text) {
     switch(text){
         case 'multipolygon': 
@@ -47,11 +54,14 @@ class QueryService {
             },
             explain: function(opts) {
                 return function(cb) {
+                    var call = function(err, data){                        
+                        cb(err, data ? JSON.parse(data) : null);
+                    };
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI('/_sql/_explain'),
                         body: opts.sql
-                    }, cb);
+                    }, call);
                 }.bind(this);
             },
             mapping: function(opts) {
@@ -67,6 +77,24 @@ class QueryService {
                     this.transport.request({
                         method: 'DELETE',
                         path: `${opts.index}`
+                    }, cb);
+                }.bind(this);
+            },
+            createScroll: function(opts){
+                return function(cb) {                   
+                    this.transport.request({
+                        method: 'POST',
+                        path: encodeURI(`${opts.index}/_search?scroll=${opts.duration}`),
+                        body: JSON.stringify( opts.query)
+                    }, cb);
+                }.bind(this);
+            },
+            getScroll: function(opts){
+                logger.debug('GETSCROLL ', opts);
+                return function(cb) {
+                    this.transport.request({
+                        method: 'GET',
+                        path: encodeURI(`_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
                     }, cb);
                 }.bind(this);
             }
@@ -133,6 +161,72 @@ class QueryService {
         sql = this.convertGeoJSON2WKT(sql);
         let result = yield this.elasticClient.sql({sql: sql});
         return result;
+    }
+
+    convertDataToDownload(data, type, first, more){
+        
+        if (type === 'csv') {
+            let json =  json2csv({
+                data: data.data,
+                hasCSVColumnTitle: first
+            });
+           return json;
+        } else if (type === 'json'){
+            let dataString = JSON.stringify(data);
+            dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
+            if (first) {
+                dataString = '{"data":[' + dataString;
+            }
+            if (more) {
+                dataString +=',';
+            } else {
+                dataString += ']}';
+            }
+            return dataString;
+        }
+    }
+
+    * downloadQuery(sql, index, datasetId, path, type='json') {
+        logger.info('Download with query...', sql);
+        sql = this.convertGeoJSON2WKT(sql);
+        logger.debug('Doing explain');
+        let resultQueryElastic = yield this.elasticClient.explain({sql: sql});
+        logger.debug('Creating params to scroll');
+        let params = {
+            query: resultQueryElastic,
+            duration: '1m',
+            index: index
+        };
+        logger.debug('Generating file');
+        
+        try{            
+            var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
+            logger.debug('Creating scroll');
+            let resultScroll = yield this.elasticClient.createScroll(params);
+            let first = true;
+            while (resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0){
+                logger.debug('Writting data');
+                let more = false;
+                const data = csvSerializer.serialize(resultScroll, sql, datasetId);
+                first = true;
+                resultScroll = yield this.elasticClient.getScroll({
+                    scroll: '1m',
+                    scroll_id: resultScroll[0]._scroll_id,
+                });
+                if(resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0) {
+                    more = true;
+                }
+                downloadfile.write(this.convertDataToDownload(data, type, first, more), {encoding: 'binary'});
+                
+            }
+            
+            downloadfile.end();
+            logger.info('File generated correctly');
+            return path;
+        } catch(err){
+            logger.error('Error generating file', err);
+            throw err;
+        }
     }
 
     * getMapping(index){

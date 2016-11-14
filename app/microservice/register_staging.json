@@ -55,6 +55,23 @@
             "data": ["dataset"]
         }]
     },{
+        "url": "/download/:dataset",
+        "method": "GET",
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+             "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/download/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
         "url": "/doc-datasets/csv",
         "method": "POST",
         "endpoints": [{

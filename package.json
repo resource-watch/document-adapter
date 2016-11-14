@@ -53,7 +53,8 @@
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
     "terraformer-wkt-parser": "^1.1.2",
     "uuid": "2.0.1",
-    "vizz.microservice-client": "1.5.2"
+    "vizz.microservice-client": "1.5.2",
+    "json2csv": "^3.6.3"
   },
   "devDependencies": {
     "co-mocha": "1.1.2",

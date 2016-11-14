@@ -9,11 +9,9 @@
         "dataProvider": "dataset",
         "pathProvider": "/dataset/:idDataset",        
         "filters":{
-            "data": {
-                "attributes": {
+            
                     "provider": "csv"
-                }
-            }
+                
         },
         "endpoints": [{
             "method": "POST",
@@ -35,6 +33,22 @@
         "endpoints": [{
             "method": "POST",
             "path": "/api/v1/csv/query/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/download/:dataset",
+        "method": "GET",
+        "binary": true,
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+            
+                    "provider": "csv"
+               
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/download/:dataset",
             "data": ["dataset"]
         }]
     },{
