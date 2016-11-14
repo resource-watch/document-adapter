@@ -59,6 +59,7 @@
         "method": "GET",
         "paramProvider": "dataset",
         "dataProvider": "dataset",
+        "binary": true,
         "filters":{
              "data": {
                 "attributes": {

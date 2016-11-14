@@ -34,6 +34,7 @@
         "method": "POST",
         "paramProvider": "dataset",
         "dataProvider": "dataset",
+        "binary": true,
         "filters":{
             "provider": "csv"
         },
