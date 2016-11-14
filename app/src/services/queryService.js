@@ -191,6 +191,15 @@ class QueryService {
         sql = this.convertGeoJSON2WKT(sql);
         logger.debug('Doing explain');
         let resultQueryElastic = yield this.elasticClient.explain({sql: sql});
+        
+        let limit = -1;
+        if (sql.indexOf('limit') >= 0){
+            limit = resultQueryElastic.size;
+        } 
+        
+        if (resultQueryElastic.size > 1000 || limit === -1){
+            resultQueryElastic.size = 1000;
+        }
         logger.debug('Creating params to scroll with query', resultQueryElastic);
         let params = {
             query: resultQueryElastic,
@@ -200,21 +209,28 @@ class QueryService {
         logger.debug('Generating file');
         
         try{            
+            let size = resultQueryElastic.size;
             var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
             logger.debug('Creating scroll');
             let resultScroll = yield this.elasticClient.createScroll(params);
             let first = true;
-            while (resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0){
+            let total = 0;
+            while (resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0 && (total < limit || limit === -1)){
                 logger.debug('Writting data');
                 let more = false;
                 const data = csvSerializer.serialize(resultScroll, sql, datasetId);
                 first = true;
-                resultScroll = yield this.elasticClient.getScroll({
-                    scroll: '1m',
-                    scroll_id: resultScroll[0]._scroll_id,
-                });
-                if(resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0) {
-                    more = true;
+                total += resultScroll[0].hits.hits.length;
+                if (total < limit || limit === -1) {
+                    resultScroll = yield this.elasticClient.getScroll({
+                        scroll: '1m',
+                        scroll_id: resultScroll[0]._scroll_id,
+                    });
+                    if(resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0) {
+                        more = true;                    
+                    }
+                } else {
+                    more = false;
                 }
                 downloadfile.write(this.convertDataToDownload(data, type, first, more), {encoding: 'binary'});
                 
