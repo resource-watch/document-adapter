@@ -5,6 +5,7 @@ const config = require('config');
 const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
 const fs = require('fs');
+
 var Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
 const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
@@ -186,7 +187,7 @@ class QueryService {
         }
     }
 
-    * downloadQuery(sql, index, datasetId, path, type='json') {
+    * downloadQuery(sql, index, datasetId, stream, type='json') {
         logger.info('Download with query...', sql);
         sql = this.convertGeoJSON2WKT(sql);
         logger.debug('Doing explain');
@@ -210,7 +211,6 @@ class QueryService {
         
         try{            
             let size = resultQueryElastic.size;
-            var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
             logger.debug('Creating scroll');
             let resultScroll = yield this.elasticClient.createScroll(params);
             let first = true;
@@ -232,13 +232,13 @@ class QueryService {
                 } else {
                     more = false;
                 }
-                downloadfile.write(this.convertDataToDownload(data, type, first, more), {encoding: 'binary'});
+                stream.write(this.convertDataToDownload(data, type, first, more), {encoding: 'binary'});
                 
             }
             
-            downloadfile.end();
-            logger.info('File generated correctly');
-            return path;
+            stream.end();
+            logger.info('Download correctly');
+            
         } catch(err){
             logger.error('Error generating file', err);
             throw err;

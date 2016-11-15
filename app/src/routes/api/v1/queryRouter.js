@@ -7,7 +7,8 @@ var importerService = require('services/importerService');
 var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var fieldSerializer = require('serializers/fieldSerializer');
-const randomstring = require('randomstring');
+var write = require('koa-write');
+var passThrough = require('stream').PassThrough;
 var redisClient = require('redis').createClient({
     port: config.get('redis.port'),
     host: config.get('redis.host')
@@ -61,32 +62,21 @@ class CSVRouter {
     }
 
     static * download() {
-        logger.info('Dowload data with dataset', this.request.body);
+        this.body = passThrough();    
         const format = this.query.format ? this.query.format : 'csv';
-        let path = '/tmp/' + randomstring.generate() + '.' + format;
-        yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, path, format);
-        try {
-            this.body = fs.createReadStream(path);
-            this.set('Content-disposition', `attachment; filename=${this.request.body.dataset.id}.${format}`);
-            let mimetype;
-            switch (format) {
-                case 'csv':
-                    mimetype = 'text/csv';
-                    break;
-                case 'json':
-                    mimetype = 'application/json';
-                    break;
-            }
-            this.set('Content-type', mimetype);
-        } catch (e){
-            logger.error(e);            
-        } finally {
-            if (path) {
-                logger.info('Removing file');
-                yield unlink(path);
-                logger.info('Removed correctly');
-            }
+        this.set('Content-disposition', `attachment; filename=${this.request.body.dataset.id}.${format}`);
+        let mimetype;
+        switch (format) {
+            case 'csv':
+                mimetype = 'text/csv';
+                break;
+            case 'json':
+                mimetype = 'application/json';
+                break;
         }
+        this.set('Content-type', mimetype);
+        yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
+        
         
     }
 
