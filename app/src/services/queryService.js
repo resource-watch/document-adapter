@@ -198,8 +198,8 @@ class QueryService {
             limit = resultQueryElastic.size;
         } 
         
-        if (resultQueryElastic.size > 1000 || limit === -1){
-            resultQueryElastic.size = 1000;
+        if (resultQueryElastic.size > 10000 || limit === -1){
+            resultQueryElastic.size = 10000;
         }
         logger.debug('Creating params to scroll with query', resultQueryElastic);
         let params = {
