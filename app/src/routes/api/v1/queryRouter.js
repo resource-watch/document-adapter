@@ -62,7 +62,7 @@ class CSVRouter {
     }
 
     static * download() {
-        this.body = passThrough();    
+        this.body = passThrough();
         const format = this.query.format ? this.query.format : 'csv';
         this.set('Content-disposition', `attachment; filename=${this.request.body.dataset.id}.${format}`);
         let mimetype;
@@ -76,8 +76,8 @@ class CSVRouter {
         }
         this.set('Content-type', mimetype);
         yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
-        
-        
+
+
     }
 
     static * fields() {
@@ -90,7 +90,7 @@ class CSVRouter {
     static getCloneUrl(url, idDataset) {
         return {
             http_method: 'POST',
-            url: `/datasets/${idDataset}/clone`,
+            url: `/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
                     dataset_url: url.replace('/csv', '')
