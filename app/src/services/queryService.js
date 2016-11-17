@@ -38,6 +38,108 @@ function capitalizeFirstLetter(text) {
 
 }
 
+class Scroll {
+    constructor(elasticClient, sql, index, datasetId, stream, download, cloneUrl, type){
+        this.elasticClient = elasticClient;
+        this.sql = sql;
+        this.index = index;
+        this.datasetId = datasetId;
+        this.stream = stream;
+        this.download = download;
+        this.cloneUrl = cloneUrl;
+        this.type = type || 'json';
+    }
+
+    * init(){
+        let resultQueryElastic = yield this.elasticClient.explain({sql: this.sql});
+        
+        this.limit = -1;
+        if (this.sql.indexOf('this.limit') >= 0){
+            this.limit = resultQueryElastic.size;
+        } 
+        
+        if (resultQueryElastic.size > 10000 || this.limit === -1){
+            resultQueryElastic.size = 10000;
+        }
+        logger.debug('Creating params to scroll with query', resultQueryElastic);
+        let params = {
+            query: resultQueryElastic,
+            duration: '1m',
+            index: this.index
+        };
+        
+        try{            
+            let size = resultQueryElastic.size;
+            logger.debug('Creating scroll');
+            this.resultScroll = yield this.elasticClient.createScroll(params);
+            this.first = true;
+            this.total = 0;        
+            
+        } catch(err){
+            logger.error('Error generating file', err);
+            throw err;
+        }
+    }
+
+    convertDataToDownload(data, type, first, more, cloneUrl){
+        
+        if (type === 'csv') {
+            let json =  json2csv({
+                data: data.data,
+                hasCSVColumnTitle: first
+            });
+           return json;
+        } else if (type === 'json'){
+            let dataString = JSON.stringify(data);
+            dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
+            if (first) {
+                dataString = '{"data":[' + dataString;
+            }
+            if (more) {
+                dataString +=',';
+            } else {
+                
+                if(!this.download) {
+                    dataString += '],';
+                    var meta= {
+                        cloneUrl: cloneUrl
+                    };
+                    
+                    dataString += `"meta": ${JSON.stringify(meta)} }`;
+                } else { 
+                    dataString += ']}';
+                }                
+            }
+            logger.debug('Writting', dataString);
+            return dataString;
+        }
+    }
+    * continue(){
+        while (this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)){
+                logger.debug('Writting data');
+                let more = false;
+                const data = csvSerializer.serialize(this.resultScroll, this.sql, this.datasetId);
+                this.first = true;
+                this.total += this.resultScroll[0].hits.hits.length;
+                if (this.total < this.limit || this.limit === -1) {
+                    this.resultScroll = yield this.elasticClient.getScroll({
+                        scroll: '1m',
+                        scroll_id: this.resultScroll[0]._scroll_id,
+                    });
+                    if(this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0) {
+                        more = true;                    
+                    }
+                } else {
+                    more = false;
+                }
+                this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl, {encoding: 'binary'}));
+                
+        }
+        this.stream.end();
+        logger.info('Write correctly');
+    }
+}
+
 class QueryService {
 
     constructor() {
@@ -157,92 +259,22 @@ class QueryService {
 
     }
 
-    * doQuery(sql){
+    * doQuery(sql, index, datasetId, body, cloneUrl){
         logger.info('Doing query...', sql);
         sql = this.convertGeoJSON2WKT(sql);
-        let result = yield this.elasticClient.sql({sql: sql});
-        return result;
-    }
+        var scroll = new Scroll(this.elasticClient, sql, index, datasetId, body, false, cloneUrl);
+        yield scroll.init();
+        yield scroll.continue();
+        logger.info('Finished query');        
+    }    
 
-    convertDataToDownload(data, type, first, more){
-        
-        if (type === 'csv') {
-            let json =  json2csv({
-                data: data.data,
-                hasCSVColumnTitle: first
-            });
-           return json;
-        } else if (type === 'json'){
-            let dataString = JSON.stringify(data);
-            dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
-            if (first) {
-                dataString = '{"data":[' + dataString;
-            }
-            if (more) {
-                dataString +=',';
-            } else {
-                dataString += ']}';
-            }
-            return dataString;
-        }
-    }
-
-    * downloadQuery(sql, index, datasetId, stream, type='json') {
+    * downloadQuery(sql, index, datasetId, body, type='json') {
         logger.info('Download with query...', sql);
         sql = this.convertGeoJSON2WKT(sql);
-        logger.debug('Doing explain');
-        let resultQueryElastic = yield this.elasticClient.explain({sql: sql});
-        
-        let limit = -1;
-        if (sql.indexOf('limit') >= 0){
-            limit = resultQueryElastic.size;
-        } 
-        
-        if (resultQueryElastic.size > 10000 || limit === -1){
-            resultQueryElastic.size = 10000;
-        }
-        logger.debug('Creating params to scroll with query', resultQueryElastic);
-        let params = {
-            query: resultQueryElastic,
-            duration: '1m',
-            index: index
-        };
-        logger.debug('Generating file');
-        
-        try{            
-            let size = resultQueryElastic.size;
-            logger.debug('Creating scroll');
-            let resultScroll = yield this.elasticClient.createScroll(params);
-            let first = true;
-            let total = 0;
-            while (resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0 && (total < limit || limit === -1)){
-                logger.debug('Writting data');
-                let more = false;
-                const data = csvSerializer.serialize(resultScroll, sql, datasetId);
-                first = true;
-                total += resultScroll[0].hits.hits.length;
-                if (total < limit || limit === -1) {
-                    resultScroll = yield this.elasticClient.getScroll({
-                        scroll: '1m',
-                        scroll_id: resultScroll[0]._scroll_id,
-                    });
-                    if(resultScroll[0].hits && resultScroll[0].hits &&  resultScroll[0].hits.hits.length > 0) {
-                        more = true;                    
-                    }
-                } else {
-                    more = false;
-                }
-                stream.write(this.convertDataToDownload(data, type, first, more), {encoding: 'binary'});
-                
-            }
-            
-            stream.end();
-            logger.info('Download correctly');
-            
-        } catch(err){
-            logger.error('Error generating file', err);
-            throw err;
-        }
+        var scroll = new Scroll(this.elasticClient, sql, index, datasetId, body, false, null, type);
+        yield scroll.init();
+        yield scroll.continue();
+        logger.info('Finished query');
     }
 
     * getMapping(index){

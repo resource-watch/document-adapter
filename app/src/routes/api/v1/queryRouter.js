@@ -52,13 +52,10 @@ class CSVRouter {
         }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
-
-        let result = yield queryService.doQuery( this.query.sql);
-        let data = csvSerializer.serialize(result, this.query.sql, this.request.body.dataset.id);
-        data.meta = {
-            cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
-        };
-        this.body = data;
+        this.body = passThrough();   
+        const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
+        logger.debug(this.request.body.dataset);
+        yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
     }
 
     static * download() {
