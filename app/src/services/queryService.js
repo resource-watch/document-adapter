@@ -5,6 +5,7 @@ const config = require('config');
 const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
 const fs = require('fs');
+const coSleep = require('co-sleep');
 
 var Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
@@ -48,9 +49,13 @@ class Scroll {
         this.download = download;
         this.cloneUrl = cloneUrl;
         this.type = type || 'json';
+        this.timeout = false;
     }
 
     * init(){
+        this.timeoutFunc = setTimeout(function(){
+            this.timeout = true;
+        }.bind(this), 60000);
         let resultQueryElastic = yield this.elasticClient.explain({sql: this.sql});
         
         this.limit = -1;
@@ -110,32 +115,44 @@ class Scroll {
                     dataString += ']}';
                 }                
             }
-            logger.debug('Writting', dataString);
             return dataString;
         }
     }
     * continue(){
-        while (this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)){
-                logger.debug('Writting data');
-                let more = false;
-                const data = csvSerializer.serialize(this.resultScroll, this.sql, this.datasetId);
-                this.first = true;
-                this.total += this.resultScroll[0].hits.hits.length;
-                if (this.total < this.limit || this.limit === -1) {
-                    this.resultScroll = yield this.elasticClient.getScroll({
-                        scroll: '1m',
-                        scroll_id: this.resultScroll[0]._scroll_id,
-                    });
-                    if(this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0) {
-                        more = true;                    
+        
+        if (this.resultScroll[0].aggregations) {
+            const data = csvSerializer.serialize(this.resultScroll, this.sql, this.datasetId);
+            this.stream.write(this.convertDataToDownload(data, this.type, true, false, this.cloneUrl, {encoding: 'binary'}));
+        } else {
+           
+            while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)){
+                    logger.debug('Writting data');
+                    let more = false;
+                    const data = csvSerializer.serialize(this.resultScroll, this.sql, this.datasetId);
+                    
+                    this.first = true;
+                    this.total += this.resultScroll[0].hits.hits.length;
+                    if (this.total < this.limit || this.limit === -1) {
+                        this.resultScroll = yield this.elasticClient.getScroll({
+                            scroll: '1m',
+                            scroll_id: this.resultScroll[0]._scroll_id,
+                        });
+                        if(this.resultScroll[0].hits && this.resultScroll[0].hits &&  this.resultScroll[0].hits.hits.length > 0) {
+                            more = true;                    
+                        }
+                    } else {
+                        more = false;
                     }
-                } else {
-                    more = false;
-                }
-                this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl, {encoding: 'binary'}));
-                
+                    this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl, {encoding: 'binary'}));
+                    
+            }
         }
         this.stream.end();
+        if(this.timeout){
+            throw new Error('Timeout exceed');
+        }
+        clearTimeout(this.timeoutFunc);
+        
         logger.info('Write correctly');
     }
 }

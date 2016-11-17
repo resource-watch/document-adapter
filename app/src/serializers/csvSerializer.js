@@ -87,20 +87,7 @@ class CSVSerializer {
         }
         if (data && data.length > 0) {
 
-            if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
-                // return {
-                //     data: {
-                //         id: id,
-                //         type: 'csv',
-                //         attributes: {
-                //             rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
-                //         }
-                //     }
-                // };
-                return {
-                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
-                };
-            } else if (data[0].aggregations) {
+            if (data[0].aggregations) {
 
                 let keys = Object.keys(data[0].aggregations);
                 let attributes = {};
@@ -133,6 +120,19 @@ class CSVSerializer {
                     // };
                 }
 
+            } else if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+                // return {
+                //     data: {
+                //         id: id,
+                //         type: 'csv',
+                //         attributes: {
+                //             rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                //         }
+                //     }
+                // };
+                return {
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                };
             }
         }
         return {
