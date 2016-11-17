@@ -260,7 +260,7 @@ class QueryService {
     }
 
     * doQuery(sql, index, datasetId, body, cloneUrl){
-        logger.info('Doing query...', sql);
+        logger.info('Doing query...');
         sql = this.convertGeoJSON2WKT(sql);
         var scroll = new Scroll(this.elasticClient, sql, index, datasetId, body, false, cloneUrl);
         yield scroll.init();
@@ -269,7 +269,7 @@ class QueryService {
     }    
 
     * downloadQuery(sql, index, datasetId, body, type='json') {
-        logger.info('Download with query...', sql);
+        logger.info('Download with query...');
         sql = this.convertGeoJSON2WKT(sql);
         var scroll = new Scroll(this.elasticClient, sql, index, datasetId, body, false, null, type);
         yield scroll.init();
