@@ -13,7 +13,7 @@ prod:
   # log_opt:
   #   gelf-address: ${GELF_ADDRESS}
 worker:
-  image: vizzuality/rw-adapter-csv:1.1.1${STAGING}
+  image: vizzuality/rw-adapter-csv:1.1.2${STAGING}
   env_file:
     - prod.env
   links:
