@@ -59,7 +59,7 @@ class Scroll {
         let resultQueryElastic = yield this.elasticClient.explain({sql: this.sql});
         
         this.limit = -1;
-        if (this.sql.indexOf('this.limit') >= 0){
+        if (this.sql.toLowerCase().indexOf('limit') >= 0){
             this.limit = resultQueryElastic.size;
         } 
         
