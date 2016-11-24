@@ -52,7 +52,7 @@ class CSVRouter {
         }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
-        this.body = passThrough();   
+        this.body = passThrough();
         const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
         logger.debug(this.request.body.dataset);
         yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
@@ -90,7 +90,8 @@ class CSVRouter {
             url: `/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
-                    dataset_url: url.replace('/csv', '')
+                    datasetUrl: url.replace('/csv', ''),
+                    application: ['your','apps']
                 }
             }
         };
