@@ -12,7 +12,7 @@ prod:
   log_driver: "syslog"
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-dataset${STAGING}
+    tag: rw-adapter-csv${STAGING}
 worker:
   image: vizzuality/rw-adapter-csv:1.0.0${STAGING}
   env_file:
@@ -24,7 +24,7 @@ worker:
   log_driver: "syslog"
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-dataset${STAGING}
+    tag: rw-adapter-csv${STAGING}
 redis:
   image: redis
   ports:
