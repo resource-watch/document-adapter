@@ -9,9 +9,10 @@ prod:
   command: start
   dns: ${DNS_SERVER}
   restart: always
-  log_driver: "gelf"
+  log_driver: "syslog"
   log_opt:
-    gelf-address: ${GELF_ADDRESS}
+    syslog-address: ${SYSLOG_ADDRESS}
+    tag: rw-dataset${STAGING}
 worker:
   image: vizzuality/rw-adapter-csv:1.0.0${STAGING}
   env_file:
@@ -20,9 +21,10 @@ worker:
     - redis
   command: startWorker
   restart: always
-  log_driver: "gelf"
+  log_driver: "syslog"
   log_opt:
-    gelf-address: ${GELF_ADDRESS}
+    syslog-address: ${SYSLOG_ADDRESS}
+    tag: rw-dataset${STAGING}
 redis:
   image: redis
   ports:
