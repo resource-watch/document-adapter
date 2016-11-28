@@ -14,7 +14,7 @@ prod:
       syslog-address: ${SYSLOG_ADDRESS}
       tag: rw-adapter-csv${STAGING}
 worker:
-  image: vizzuality/rw-adapter-csv:1.1.2${STAGING}
+  image: vizzuality/rw-adapter-csv:1.1.3${STAGING}
   env_file:
     - prod.env
   links:
@@ -22,9 +22,10 @@ worker:
   command: startWorker
   dns: ${DNS_SERVER}
   restart: always
-  # log_driver: "gelf"
-  # log_opt:
-  #   gelf-address: ${GELF_ADDRESS}
+  log_driver: "syslog"
+  log_opt:
+      syslog-address: ${SYSLOG_ADDRESS}
+      tag: rw-adapter-csv${STAGING}
 redis:
   image: redis
   ports:
