@@ -212,7 +212,11 @@ class CSVImporter {
                                             newKey = key.replace(CONTAIN_SPACES, '_');
                                         }
                                         if (isJSONObject(value)) {
-                                            data[newKey] = JSON.parse(value);
+                                            try{
+                                                data[newKey] = JSON.parse(value);
+                                            } catch(e){
+                                                data[newKey] = value;
+                                            }
                                         } else if (!isNaN(value)) {
                                             data[newKey] = Number(value);
                                         } else {
