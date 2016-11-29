@@ -11,18 +11,6 @@ class FieldSerializer {
         return el.properties;
     }
 
-    static convertToArray(obj) {
-        let list = [];
-        if (obj) {
-            let keys = Object.keys(obj);
-            for (let i = 0, length = keys.length; i < length; i++) {
-                let object = {};
-                object[keys[i]] = obj[keys[i]];
-                list.push(object);
-            }
-        }
-        return list;
-    }
     static serialize(data, tableName, id) {
         if (data && data.length > 0) {
             // return {
@@ -37,7 +25,7 @@ class FieldSerializer {
             // };
             return {
                 tableName: tableName,
-                fields: FieldSerializer.convertToArray(FieldSerializer.searchProperties(data[0]))
+                fields: FieldSerializer.searchProperties(data[0])
             };
         }
     }
