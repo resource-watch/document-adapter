@@ -92,7 +92,9 @@ class CSVSerializer {
                 let keys = Object.keys(data[0].aggregations);
                 let attributes = {};
                 if (!data[0].aggregations[keys[0]].buckets) {
-                    attributes[keys[0]] = data[0].aggregations[keys[0]].value;
+                    for (let i = 0, length = keys.length; i < length; i++){
+                        attributes[keys[i]] = data[0].aggregations[keys[i]].value;
+                    }
                     // return {
                     //     data: {
                     //         id: id,
