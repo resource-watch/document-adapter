@@ -47,7 +47,7 @@ class CSVRouter {
         }
     static * overwrite () {
             logger.info('Overwrite csv with dataset id: ', this.params.id);
-            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.table_name, this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
+            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.dataset.table_name, this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
             this.body = '';
         }
     static * query() {
