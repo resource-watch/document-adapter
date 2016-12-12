@@ -42,12 +42,12 @@ class CSVRouter {
     static *
         import () {
             logger.info('Adding csv with dataset id: ', this.request.body.connector);
-            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
+            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
             this.body = '';
         }
     static * overwrite () {
             logger.info('Overwrite csv with dataset id: ', this.params.id);
-            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.polygon, this.request.body.connector.point);
+            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
             this.body = '';
         }
     static * query() {

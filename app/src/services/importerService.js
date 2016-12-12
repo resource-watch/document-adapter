@@ -75,12 +75,11 @@ class ImporterService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addCSV(url, index, id, polygon, point) {
-        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
+    * addCSV(url, index, id, legend) {
+        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id, ' and legend ', legend);
         this.importQueue.add({
             url: url,
-            polygon: polygon,
-            point: point,
+            legend: legend,
             index: index,
             id: id
         }, {
@@ -90,12 +89,11 @@ class ImporterService {
         });
     }
 
-    * overwriteCSV(url, index, id, polygon, point) {
-        logger.info('Adding overwrite csv task with url', url, ' and index ', index, ' and id ', id, ' and polygon ', polygon, 'and point ', point);
+    * overwriteCSV(url, index, id, legend) {
+        logger.info('Adding overwrite csv task with url', url, ' and index ', index, ' and id ', id, ' and legend ', legend);
         this.importQueue.add({
             url: url,
-            polygon: polygon,
-            point: point,
+            legend: legend,
             index: index,
             id: id,
             overwrite: true
@@ -162,7 +160,7 @@ class ImporterService {
                     yield queryService.deleteIndex(job.data.index);
                     logger.info('Deleted successfully. Continue importing');
                 }
-                yield this.loadCSVInDatabase(path, job.data.index, job.data.polygon, job.data.point);
+                yield this.loadCSVInDatabase(path, job.data.index, job.data.legend);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {

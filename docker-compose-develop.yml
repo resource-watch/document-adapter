@@ -7,7 +7,7 @@ develop:
   container_name: rw-adapter-csv-develop
   environment:
     NODE_ENV: dev
-    API_GATEWAY_URL: http://mymachine:8000
+    API_GATEWAY_URL: http://mymachine:9000
     GATEWAY_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWljcm9zZXJ2aWNlIn0.q4UisPhFqXElVjC-7tG1TO1aYmqI9sPxNqIg7h_01y4
   command: develop
   links:
@@ -20,7 +20,7 @@ worker:
   environment:
     NODE_PATH: app/src
     NODE_ENV: dev
-    API_GATEWAY_URL: http://mymachine:8000
+    API_GATEWAY_URL: http://mymachine:9000
     GATEWAY_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTWljcm9zZXJ2aWNlIn0.q4UisPhFqXElVjC-7tG1TO1aYmqI9sPxNqIg7h_01y4
   container_name: rw-adapter-csv-worker-develop
   command: developWorker

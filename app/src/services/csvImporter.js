@@ -89,10 +89,9 @@ function desactivateRefreshIndex(client, index){
 }
 
 class CSVImporter {
-    constructor(filePath, index, type, polygon, point) {
+    constructor(filePath, index, type, legend) {
         this.filePath = filePath;
-        this.polygon = polygon;
-        this.point = point;
+        this.legend = legend;
         this.options = {
             index: index,
             type: type,
@@ -133,26 +132,36 @@ class CSVImporter {
     *
     initImport() {
         logger.info('Checking mapping');
-        if (this.polygon || this.point) {
-            logger.info('Contain a geojson column', this.polygon, this.point);
-            let body = {
-                mappings: {
-                    [this.options.type]: {
-                        properties: {
-                            the_geom: {
-                                type: 'geo_shape'
-                            }
-                        }
+        let body = {
+            mappings: {
+                [this.options.type]: {
+                    properties: {
+
                     }
                 }
-            };
-
-            yield createIndex(this.elasticClient, {
-                index: this.options.index,
-                body: body
-            });
-            yield desactivateRefreshIndex(this.elasticClient, this.options.index);
+            }
+        };
+        if(this.legend && this.legend.date && this.legend.date.length > 0){
+            for (let i = 0, length = this.legend.date.length; i < length; i++) {
+                body.mappings[this.options.type].properties[this.legend.date[i]] = {
+                    type: 'date'
+                };
+            }
         }
+        
+        if (this.legend && ( this.legend.lat || this.legend.long) ){
+            logger.info('Contain a geojson column', this.legend.lat);
+            body.mappings[this.options.type].properties.the_geom = {
+                type: 'geo_shape'
+            };
+        }
+        
+        logger.info('Creating index ', this.options.index);
+        yield createIndex(this.elasticClient, {
+            index: this.options.index,
+            body: body
+        });
+        yield desactivateRefreshIndex(this.elasticClient, this.options.index);        
     }
 
     saveData(requests) {
@@ -231,11 +240,12 @@ class CSVImporter {
                                 // logger.info('Variable error es', error);
                                 if (!error) {
                                     // logger.info('Esta metiendo el elemento');
-                                    if (this.point) {
+                                    if (this.legend.lat || this.legend.long) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.point.lat], data[this.point.long]);
-                                    } else if (this.polygon) {
-                                        data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
-                                    }
+                                    } 
+                                    // else if (this.polygon) {
+                                    //     data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
+                                    // }
                                     request.body.push(index);
                                     request.body.push(data);
                                 }
