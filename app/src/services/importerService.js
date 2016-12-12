@@ -116,10 +116,10 @@ class ImporterService {
         });
     }
 
-    * loadCSVInDatabase(path, index, polygon, point) {
+    * loadCSVInDatabase(path, index, legend) {
         try {
-            logger.info('Importing csv in path %s and index %s; Polygon %s, point: %s', path, index, polygon, point);
-            let importer = new CSVImporter(path, index, index, polygon, point);
+            logger.info('Importing csv in path %s and index %s;', path, index, legend);
+            let importer = new CSVImporter(path, index, index, legend);
 
             yield importer.start();
 
