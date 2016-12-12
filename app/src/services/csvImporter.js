@@ -251,6 +251,7 @@ class CSVImporter {
                                 }
                             } catch (e) {
                                 //continue
+                                logger.error('Error generating');
                             }
 
                         } else {
