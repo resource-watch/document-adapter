@@ -1,0 +1,93 @@
+{
+    "id": "#(service.id)",
+    "name": "#(service.name)",
+    "tags": ["rw"],
+    "urls": [{
+        "url": "/query/:dataset",
+        "method": "GET",
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "pathProvider": "/dataset/:idDataset",        
+        "filters":{
+            
+                    "provider": "csv"
+                
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/query/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/query/:dataset",
+        "method": "POST",
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+            "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/query/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/download/:dataset",
+        "method": "GET",
+        "binary": true,
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+            
+                    "provider": "csv"
+               
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/download/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/fields/:dataset",
+        "method": "GET",
+        "paramProvider": "dataset",
+        "dataProvider": "dataset",
+        "filters":{
+            "data": {
+                "attributes": {
+                    "provider": "csv"
+                }
+            }
+        },
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/fields/:dataset",
+            "data": ["dataset"]
+        }]
+    },{
+        "url": "/doc-datasets/csv",
+        "method": "POST",
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv"
+        }]
+    }, {
+        "url": "/doc-datasets/csv/:id",
+        "method": "DELETE",
+        "endpoints": [{
+            "method": "DELETE",
+            "path": "/api/v1/csv/:id"
+        }]
+    }, {
+        "url": "/doc-datasets/csv/:id/data-overwrite",
+        "method": "POST",
+        "endpoints": [{
+            "method": "POST",
+            "path": "/api/v1/csv/:id/data-overwrite"
+        }]
+    }]
+}

@@ -45,21 +45,17 @@ class ImporterService {
 
     * updateState(id,  state, tableName) {
         logger.info('Updating state of dataset ', id, ' with status ', state);
-        let data = yield getKey('MICROSERVICE_CONFIG');
-
-        data = JSON.parse(data);
         let microserviceClient = require('vizz.microservice-client');
-        microserviceClient.setDataConnection(data);
         let options = {
-            uri: '/datasets/' + id,
+            uri: '/dataset/' + id,
             body: {
                 dataset: {
-                    dataset_attributes: {
+                    // dataset_attributes: {
                         status: state
-                    }
+                    // }
                 }
             },
-            method: 'PUT',
+            method: 'PATCH',
             json: true
         };
         if(tableName){
@@ -68,7 +64,7 @@ class ImporterService {
         logger.info('Updating', options);
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode !== 200) {
-            logger.error('Error to updating dataset.', result);
+            logger.error('Error to updating dataset.', result.body.errors);
             throw new Error('Error to updating dataset');
         }
     }
@@ -79,15 +75,31 @@ class ImporterService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addCSV(url, index, id) {
-        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id);
+    * addCSV(url, index, id, legend) {
+        logger.info('Adding import csv task with url', url, ' and index ', index, ' and id ', id, ' and legend ', legend);
         this.importQueue.add({
             url: url,
+            legend: legend,
             index: index,
             id: id
         }, {
-            attempts: 3,
-            timeout: 108000000, //5 minutes
+            attempts: 1,
+            timeout: 86400000, //2 hours
+            delay: 1000
+        });
+    }
+
+    * overwriteCSV(url, index, id, legend) {
+        logger.info('Adding overwrite csv task with url', url, ' and index ', index, ' and id ', id, ' and legend ', legend);
+        this.importQueue.add({
+            url: url,
+            legend: legend,
+            index: index,
+            id: id,
+            overwrite: true
+        }, {
+            attempts: 1,
+            timeout: 86400000, //2 hours
             delay: 1000
         });
     }
@@ -99,21 +111,31 @@ class ImporterService {
             id: id
         }, {
             attempts: 3,
-            timeout: 18000000, //5 minutes
+            timeout: 86400000, //2 hours
             delay: 1000
         });
     }
 
-    * loadCSVInDatabase(path, index) {
-        logger.info('Importing csv in path %s and index %s', path, index);
-        let importer = new CSVImporter(path, index, index);
-        yield importer.start();
+    * loadCSVInDatabase(path, index, legend) {
+        try {
+            logger.info('Importing csv in path %s and index %s;', path, index, legend);
+            let importer = new CSVImporter(path, index, index, legend);
+
+            yield importer.start();
+
+            logger.info('Activating refresh index', index);
+            yield importer.activateRefreshIndex(index);
+        } catch(e) {
+            logger.info('Removing index');
+            yield queryService.deleteIndex(index);
+            throw e;
+        }
     }
 
     processDelete(job, done) {
         logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
         co(function*() {
-            logger.debug('Job', job);
+
             yield queryService.deleteIndex(job.data.index);
             logger.info('Deleted successfully. Updating state');
             yield this.updateState(job.data.id, 3);
@@ -127,20 +149,25 @@ class ImporterService {
     }
 
     processImport(job, done) {
-        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id);
+        logger.info('Proccesing import task with url: %s and index: %s and id: %s', job.data.url, job.data.index, job.data.id, job.data.polygon, job.data.point);
         co(function*() {
             let path = null;
             logger.debug('Job', job);
             try {
                 path = yield DownloadService.downloadFile(job.data.url);
-                yield this.loadCSVInDatabase(path, job.data.index);
+                if(job.data.overwrite){
+                    logger.info('Overwrite data. Remove old');
+                    yield queryService.deleteIndex(job.data.index);
+                    logger.info('Deleted successfully. Continue importing');
+                }
+                yield this.loadCSVInDatabase(path, job.data.index, job.data.legend);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
             } catch (err) {
-                logger.error(err);
+                logger.error('Error in ProcessImport', err);
                 throw err;
             } finally {
-                logger.debug('Deleting file');
+                logger.info('Deleting file');
                 if (path) {
                     yield unlink(path);
                 }

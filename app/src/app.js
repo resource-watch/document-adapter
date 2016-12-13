@@ -16,6 +16,8 @@ var ErrorSerializer = require('serializers/errorSerializer');
 var redis = require('redis');
 require('bluebird').promisifyAll(redis.RedisClient.prototype);
 var redisClient = redis.createClient({port: config.get('redis.port'), host:config.get('redis.host')});
+var registerClient = require('vizz.microservice-client');
+var co = require('co');
 // instance of koa
 var app = koa();
 
@@ -50,6 +52,17 @@ app.use(validate());
 //load routes
 loader.loadRoutes(app);
 
+registerClient.register({
+    id: config.get('service.id'),
+    name: config.get('service.name'),
+    uri: config.get('service.uri'),
+    dirConfig: path.join(__dirname, '../microservice'),
+    register: require('../microservice/register_' + process.env.NODE_ENV.toLowerCase()),
+    dirPackage: path.join(__dirname, '../../'),
+    logger: logger,
+    app: app
+});
+
 //Instance of http module
 var server = require('http').Server(app.callback());
 
@@ -58,23 +71,14 @@ var server = require('http').Server(app.callback());
 var port = process.env.PORT || config.get('service.port');
 
 server.listen(port, function() {
-    var p = require('vizz.microservice-client').register({
-        id: config.get('service.id'),
-        name: config.get('service.name'),
-        dirConfig: path.join(__dirname, '../microservice'),
-        dirPackage: path.join(__dirname, '../../'),
-        logger: logger,
-        app: app,
-        callbackUpdate : function(info){
-            logger.info('Updating keys');
-            redisClient.set('MICROSERVICE_CONFIG', JSON.stringify(info));
-        }
-    });
-
-    p.then(function() {}, function(err) {
-        logger.error(err);
-        process.exit(1);
-    });
+    if (process.env.NODE_ENV === 'dev'){
+        co(function *(){
+            yield registerClient.autoDiscovery();
+        }).then(function(){}, function(e){
+            logger.error('Error auto discovery', e);
+            process.exit(1);
+        });
+    }
 });
 
 logger.info('Server started in port:' + port);

@@ -87,25 +87,14 @@ class CSVSerializer {
         }
         if (data && data.length > 0) {
 
-            if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
-                // return {
-                //     data: {
-                //         id: id,
-                //         type: 'csv',
-                //         attributes: {
-                //             rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
-                //         }
-                //     }
-                // };
-                return {
-                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
-                };
-            } else if (data[0].aggregations) {
+            if (data[0].aggregations) {
 
                 let keys = Object.keys(data[0].aggregations);
                 let attributes = {};
                 if (!data[0].aggregations[keys[0]].buckets) {
-                    attributes[keys[0]] = data[0].aggregations[keys[0]].value;
+                    for (let i = 0, length = keys.length; i < length; i++){
+                        attributes[keys[i]] = data[0].aggregations[keys[i]].value;
+                    }
                     // return {
                     //     data: {
                     //         id: id,
@@ -133,6 +122,19 @@ class CSVSerializer {
                     // };
                 }
 
+            } else if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+                // return {
+                //     data: {
+                //         id: id,
+                //         type: 'csv',
+                //         attributes: {
+                //             rows:data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                //         }
+                //     }
+                // };
+                return {
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                };
             }
         }
         return {

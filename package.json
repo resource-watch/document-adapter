@@ -1,6 +1,6 @@
 {
   "name": "rw-adapter-csv",
-  "version": "1.0.0",
+  "version": "1.1.4",
   "description": "Resource Watch - Adapter CSV",
   "main": "index.js",
   "scripts": {
@@ -34,9 +34,11 @@
     "cluster": "^0.7.7",
     "co": "4.6.0",
     "co-request": "1.0.0",
+    "co-sleep": "0.0.1",
     "config": "1.19.0",
     "elasticsearch-csv": "git+https://github.com/rrequero/elasticsearch-csv.git#timeout",
     "fast-csv": "1.0.0",
+    "json2csv": "^3.6.3",
     "jsonapi-serializer": "2.1.1",
     "koa": "1.1.2",
     "koa-bodyparser": "2.0.1",
@@ -45,13 +47,15 @@
     "koa-mount": "1.3.0",
     "koa-router": "5.4.0",
     "koa-validate": "0.2.11",
+    "koa-write": "0.0.2",
     "lodash": "4.2.0",
     "md5": "2.1.0",
     "newrelic": "1.27.1",
     "randomstring": "1.1.5",
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
+    "terraformer-wkt-parser": "^1.1.2",
     "uuid": "2.0.1",
-    "vizz.microservice-client": "1.4.0"
+    "vizz.microservice-client": "1.5.2"
   },
   "devDependencies": {
     "co-mocha": "1.1.2",

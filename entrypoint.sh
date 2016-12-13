@@ -24,7 +24,8 @@ case "$1" in
         ;;
     startWorker)
         echo "Running Worker start"
-        exec pm2 start --env NODE_PATH:app/src app/worker.js --no-daemon -i ${WORKERS}
+        NODE_PATH=app/src
+        exec  node app/worker.js
         ;;
     *)
         exec "$@"

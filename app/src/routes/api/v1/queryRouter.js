@@ -7,13 +7,22 @@ var importerService = require('services/importerService');
 var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var fieldSerializer = require('serializers/fieldSerializer');
+var write = require('koa-write');
+var passThrough = require('stream').PassThrough;
 var redisClient = require('redis').createClient({
     port: config.get('redis.port'),
     host: config.get('redis.host')
 });
+var fs = require('fs');
 var router = new Router({
     prefix: '/csv'
 });
+
+var unlink = function(file) {
+    return function(callback) {
+        fs.unlink(file, callback);
+    };
+};
 
 var JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
@@ -23,41 +32,66 @@ var deserializer = function(obj) {
     };
 };
 
+var serializeObjToQuery = function(obj){
+    return Object.keys(obj).reduce(function(a,k){a.push(k+'='+encodeURIComponent(obj[k]));return a;},[]).join('&');
+};
+
 
 class CSVRouter {
 
     static *
         import () {
             logger.info('Adding csv with dataset id: ', this.request.body.connector);
-            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id);
+            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
             this.body = '';
         }
-
+    static * overwrite () {
+            logger.info('Overwrite csv with dataset id: ', this.params.id);
+            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
+            this.body = '';
+        }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
+        this.body = passThrough();
+        const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
+        logger.debug(this.request.body.dataset);
+        yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
+    }
 
-        let result = yield queryService.doQuery( this.query.sql);
-        let data = csvSerializer.serialize(result, this.query.sql, this.request.body.dataset.id);
-        data.meta = {
-            cloneUrl: CSVRouter.getCloneUrl(this.request.url, this.params.dataset)
-        };
-        this.body = data;
+    static * download() {
+        this.body = passThrough();
+        const format = this.query.format ? this.query.format : 'csv';
+        this.set('Content-disposition', `attachment; filename=${this.request.body.dataset.id}.${format}`);
+        let mimetype;
+        switch (format) {
+            case 'csv':
+                mimetype = 'text/csv';
+                break;
+            case 'json':
+                mimetype = 'application/json';
+                break;
+        }
+        this.set('Content-type', mimetype);
+        yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
+
+
     }
 
     static * fields() {
         logger.info('Get fields of dataset', this.request.body);
 
-        let fields = yield queryService.getMapping(this.request.body.dataset.table_name);
-        this.body = fieldSerializer.serialize(fields, this.request.body.dataset.table_name, this.request.body.dataset.id);
+        let fields = yield queryService.getMapping(this.request.body.dataset.tableName);
+        this.body = fieldSerializer.serialize(fields, this.request.body.dataset.tableName, this.request.body.dataset.id);
     }
 
     static getCloneUrl(url, idDataset) {
         return {
             http_method: 'POST',
-            url: `/datasets/${idDataset}/clone`,
+            url: `/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
-                    dataset_url: url.replace('/csv', '')
+                    datasetUrl: url.replace('/csv', ''),
+                    application: ['your','apps']
                 }
             }
         };
@@ -84,12 +118,18 @@ const cacheMiddleware = function*(next) {
 
 };
 
-// const deserializeDataset = function*(next){
-//     if(this.request.body.dataset){
-//         this.request.body.dataset = yield deserializer(this.request.body.dataset);
-//     }
-//     yield next;
-// }
+const deserializeDataset = function*(next){
+    logger.debug('Body', this.request.body);
+    if(this.request.body.dataset && this.request.body.dataset.data){
+        this.request.body.dataset = yield deserializer(this.request.body.dataset);
+    } else {
+        if (this.request.body.dataset && this.request.body.dataset.table_name){
+            this.request.body.dataset.tableName = this.request.body.dataset.table_name;
+        }
+    }
+    yield next;
+};
+
 
 const toSQLMiddleware = function*(next) {
     let microserviceClient = require('vizz.microservice-client');
@@ -97,20 +137,30 @@ const toSQLMiddleware = function*(next) {
         method: 'GET',
         json: true
     };
-    if(!this.query.sql && !this.query.outFields && !this.query.outStatistics){
+    if(!this.query.sql && !this.request.body.sql && !this.query.outFields && !this.query.outStatistics){
         this.throw(400, 'sql or fs required');
         return;
     }
 
-    if (this.query.sql) {
+    if (this.query.sql || this.request.body.sql) {
         logger.debug('Checking sql correct');
-        options.uri = '/convert/checkSQL?sql=' + this.query.sql;
+        let params = Object.assign({}, this.query, this.request.body);
+        options.uri = '/convert/sql2SQL?sql=' + params.sql;
+        if (params.geostore){
+            options.uri += '&geostore=' + params.geostore;
+        }
     } else {
         logger.debug('Obtaining sql from featureService');
-        if(this.request.search){
-            options.uri = '/convert/fs2SQL' + this.request.search + '&tableName=' + this.request.body.dataset.table_name;
+        let fs = Object.assign({}, this.request.body);
+        delete fs.dataset;
+        let query = serializeObjToQuery(this.request.query);
+        let body = serializeObjToQuery(fs);
+        let resultQuery = Object.assign({}, query, body);
+
+        if(resultQuery){
+            options.uri = '/convert/fs2SQL' + resultQuery + '&tableName=' + this.request.body.dataset.tableName;
         } else {
-            options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.table_name;
+            options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.tableName;
         }
     }
 
@@ -118,10 +168,7 @@ const toSQLMiddleware = function*(next) {
     try {
         let result = yield microserviceClient.requestToMicroservice(options);
         if (result.statusCode === 204 || result.statusCode === 200) {
-            if (!this.query.sql) {
-                this.query.sql = result.body.data.attributes.sql;
-            }
-            logger.debug('Doing query with sql: ', this.query.sql);
+            this.query.sql = result.body.data.attributes.query;
             yield next;
         } else {
             if(result.statusCode === 400){
@@ -141,9 +188,11 @@ const toSQLMiddleware = function*(next) {
     }
 };
 
-router.post('/query/:dataset', cacheMiddleware, toSQLMiddleware, CSVRouter.query);
-router.post('/fields/:dataset', cacheMiddleware, CSVRouter.fields);
+router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, CSVRouter.query);
+router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, CSVRouter.download);
+router.post('/fields/:dataset', cacheMiddleware, deserializeDataset, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
+router.post('/:id/data-overwrite', CSVRouter.overwrite);
 
 module.exports = router;
