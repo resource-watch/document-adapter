@@ -57,7 +57,7 @@ registerClient.register({
     name: config.get('service.name'),
     uri: config.get('service.uri'),
     dirConfig: path.join(__dirname, '../microservice'),
-    register: require('../microservice/register_' + process.env.NODE_ENV.toLowerCase()),
+    register: require('../microservice/register.json'),
     dirPackage: path.join(__dirname, '../../'),
     logger: logger,
     app: app
