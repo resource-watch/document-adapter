@@ -1,23 +1,25 @@
 'use strict';
 //load modules
-if(process.env.NODE_ENV === 'prod'){
+if (process.env.NODE_ENV === 'prod') {
     require('newrelic');
 }
-var config = require('config');
-var logger = require('logger');
-var path = require('path');
-var koa = require('koa');
-var compress = require('koa-compress');
-var bodyParser = require('koa-bodyparser');
-var koaLogger = require('koa-logger');
-var loader = require('loader');
-var validate = require('koa-validate');
-var ErrorSerializer = require('serializers/errorSerializer');
-var redis = require('redis');
+const config = require('config');
+const logger = require('logger');
+const path = require('path');
+const koa = require('koa');
+const compress = require('koa-compress');
+const bodyParser = require('koa-bodyparser');
+const koaLogger = require('koa-logger');
+const loader = require('loader');
+const validate = require('koa-validate');
+const ErrorSerializer = require('serializers/errorSerializer');
+const redis = require('redis');
 require('bluebird').promisifyAll(redis.RedisClient.prototype);
-var redisClient = redis.createClient({port: config.get('redis.port'), host:config.get('redis.host')});
-var registerClient = require('vizz.microservice-client');
-var co = require('co');
+const redisClient = redis.createClient({
+    port: config.get('redis.port'),
+    host: config.get('redis.host')
+});
+const ctRegisterMicroservice = require('ct-register-microservice-node');
 // instance of koa
 var app = koa();
 
@@ -32,7 +34,7 @@ app.use(bodyParser({
 }));
 
 //catch errors and send in jsonapi standard. Always return vnd.api+json
-app.use(function*(next) {
+app.use(function* (next) {
     try {
         yield next;
     } catch (err) {
@@ -51,18 +53,6 @@ app.use(validate());
 
 //load routes
 loader.loadRoutes(app);
-
-registerClient.register({
-    id: config.get('service.id'),
-    name: config.get('service.name'),
-    uri: config.get('service.uri'),
-    dirConfig: path.join(__dirname, '../microservice'),
-    register: require('../microservice/register.json'),
-    dirPackage: path.join(__dirname, '../../'),
-    logger: logger,
-    app: app
-});
-
 //Instance of http module
 var server = require('http').Server(app.callback());
 
@@ -70,15 +60,23 @@ var server = require('http').Server(app.callback());
 // In production environment, the port must be declared in environment variable
 var port = process.env.PORT || config.get('service.port');
 
-server.listen(port, function() {
-    if (process.env.NODE_ENV === 'dev'){
-        co(function *(){
-            yield registerClient.autoDiscovery();
-        }).then(function(){}, function(e){
-            logger.error('Error auto discovery', e);
-            process.exit(1);
-        });
-    }
+server.listen(port, function () {
+    ctRegisterMicroservice.register({
+        info: require('../microservice/register.json'),
+        swagger: require('../microservice/public-swagger.json'),
+        mode: process.env.NODE_ENV === 'dev' ? ctRegisterMicroservice.MODE_AUTOREGISTER : ctRegisterMicroservice.MODE_NORMAL,
+        framework: ctRegisterMicroservice.KOA1,
+        app,
+        logger,
+        name: config.get('service.name'),
+        ctUrl: process.env.CT_URL,
+        url: process.env.LOCAL_URL,
+        token: process.env.CT_TOKEN,
+        active: true,
+    }).then(() => {}, (err) => {
+        logger.error(err);
+        process.exit(1);
+    });
 });
 
 logger.info('Server started in port:' + port);
