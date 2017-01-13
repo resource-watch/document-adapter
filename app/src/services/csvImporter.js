@@ -240,7 +240,7 @@ class CSVImporter {
                                 // logger.info('Variable error es', error);
                                 if (!error) {
                                     // logger.info('Esta metiendo el elemento');
-                                    if (this.legend && this.legend.lat || this.legend.long) {
+                                    if (this.legend && (this.legend.lat || this.legend.long)) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.legend.lat], data[this.legend.long]);
                                     } 
                                     // else if (this.polygon) {
