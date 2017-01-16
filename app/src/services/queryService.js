@@ -12,7 +12,7 @@ const DeleteSerializer = require('serializers/deleteSerializer');
 const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
 const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
 
-const IndexNotFound = require('errors/IndexNotFound');
+const IndexNotFound = require('errors/indexNotFound');
 
 var unlink = function(file) {
     return function(callback) {
