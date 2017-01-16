@@ -276,8 +276,13 @@ const checkPermissionModify = function *(next){
     const user = this.request.body.loggedUser;
     const dataset = this.request.body.dataset;
     if (checkUserHasPermission(user, dataset)){
-        yield next;
+        if (dataset.overwrite) {
+            yield next;
+            return;
+        }
+        this.throw(409, 'Dataset locked. Overwrite false.');
         return;
+        
     } else {
         this.throw(403, 'Not authorized');
         return;
