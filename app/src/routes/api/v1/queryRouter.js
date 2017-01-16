@@ -8,11 +8,15 @@ var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var fieldSerializer = require('serializers/fieldSerializer');
 var write = require('koa-write');
+var simpleSqlParser = require('simple-sql-parser');
 var passThrough = require('stream').PassThrough;
 var redisClient = require('redis').createClient({
     port: config.get('redis.port'),
     host: config.get('redis.host')
 });
+var IndexNotFound = require('errors/indexNotFound');
+
+const ctRegisterMicroservice = require('ct-register-microservice-node');
 var fs = require('fs');
 var router = new Router({
     prefix: '/csv'
@@ -39,23 +43,59 @@ var serializeObjToQuery = function(obj){
 
 class CSVRouter {
 
-    static *
-        import () {
-            logger.info('Adding csv with dataset id: ', this.request.body.connector);
-            yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
-            this.body = '';
-        }
+    static * import () {
+        logger.info('Adding csv with dataset id: ', this.request.body.connector);
+        yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
+        this.body = '';
+    }
+
     static * overwrite () {
-            logger.info('Overwrite csv with dataset id: ', this.params.id);
-            yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
-            this.body = '';
+        logger.info('Overwrite csv with dataset id: ', this.params.id);
+        yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
+        this.body = '';
+    }
+
+    static * concat () {
+        logger.info('Concat csv with dataset id: ', this.params.dataset);
+        this.assert(this.request.body.url, 400, 'Url is required');
+        yield importerService.concatCSV(this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
+        this.body = '';
+    }
+    
+    static obtainASTFromSQL(sql){
+        let ast = simpleSqlParser.sql2ast(sql);
+        if (!ast.status){
+            return {
+                error: true,
+                ast: null
+            };
         }
+        return {
+            error: false,
+            ast: ast.value
+        };
+    }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
-        this.body = passThrough();
-        const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
-        logger.debug(this.request.body.dataset);
-        yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
+        logger.debug('Checking if is delete or select');
+
+        try {
+            if (this.state.ast.type === 'delete') {
+                logger.debug('Doing delete');
+                this.body = yield queryService.doDeleteQuery(this.state.ast.where, this.request.body.dataset.tableName);
+            } else  if (this.state.ast.type === 'select') {
+                this.body = passThrough();
+                const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
+                logger.debug(this.request.body.dataset);
+                yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
+            } else {
+                this.throw(400, 'Query not valid');
+                return;
+            }
+        } catch(err) {
+            logger.error(err);
+            throw err;            
+        }
     }
 
     static * download() {
@@ -132,7 +172,7 @@ const deserializeDataset = function*(next){
 
 
 const toSQLMiddleware = function*(next) {
-    let microserviceClient = require('vizz.microservice-client');
+    
     let options = {
         method: 'GET',
         json: true
@@ -166,33 +206,90 @@ const toSQLMiddleware = function*(next) {
 
     logger.debug(options);
     try {
-        let result = yield microserviceClient.requestToMicroservice(options);
-        if (result.statusCode === 204 || result.statusCode === 200) {
-            this.query.sql = result.body.data.attributes.query;
-            yield next;
-        } else {
-            if(result.statusCode === 400){
-                this.status = result.statusCode;
-                this.body = result.body;
-            } else {
-                this.throw(result.statusCode, result.body);
-            }
-        }
+        let result = yield ctRegisterMicroservice.requestToMicroservice(options);
+        this.query.sql = result.data.attributes.query;
+        yield next;
+        
     } catch (e) {
-        if (e.errors && e.errors.length > 0 && e.errors[0].status >= 400 && e.errors[0].status < 500) {
-            this.status = e.errors[0].status;
-            this.body = e;
-        } else {
-            throw e;
+        if(e.statusCode === 400){
+            this.status = e.statusCode;
+            this.body = e.body;
         }
+        throw e;
     }
 };
 
-router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, CSVRouter.query);
+const classifyQuery = function *(next) {
+    let result = CSVRouter.obtainASTFromSQL(this.query.sql);
+    if (result.error) {
+        this.throw(400, 'Query not valid');
+        return;
+    }
+    this.state.ast = result.ast;
+    yield next;
+};
+const containApps = function(apps1, apps2) {
+    if (!apps1 || !apps2){
+        return false;
+    }
+    for (let i = 0, length = apps1.length; i < length; i++) {
+        for (let j = 0, length2 = apps2.length; j < length2; j++){
+            if (apps1[i] === apps2[j]){
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+const checkUserHasPermission = function(user, dataset) {
+    if (user && dataset) {        
+         // check if user is admin of any application of the dataset or manager and owner of the dataset
+        if (user.role === 'MANAGER' && user.id === dataset.userId){
+            return true;
+        } else  if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
+            return true;
+        }
+        
+    }
+    return false;
+};
+
+const checkPermissionDelete = function *(next) {
+    if (this.state.ast.type === 'delete') {
+        if (this.request.body && this.request.body.loggedUser) {
+
+            if (checkUserHasPermission(this.request.body.loggedUser, this.request.body.dataset)){
+                yield next;
+                return;
+            } else {
+                this.throw(403, 'Not authorized to execute DELETE query');
+                return;
+            }
+        }        
+    } 
+    yield next;
+};
+
+const checkPermissionModify = function *(next){
+    logger.debug('Checking if the user has permissions');
+    const user = this.request.body.loggedUser;
+    const dataset = this.request.body.dataset;
+    if (checkUserHasPermission(user, dataset)){
+        yield next;
+        return;
+    } else {
+        this.throw(403, 'Not authorized');
+        return;
+    }
+};
+
+router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, classifyQuery, checkPermissionDelete, CSVRouter.query);
 router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, CSVRouter.download);
 router.post('/fields/:dataset', cacheMiddleware, deserializeDataset, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
 router.post('/:id/data-overwrite', CSVRouter.overwrite);
+router.post('/concat/:dataset', deserializeDataset, checkPermissionModify, CSVRouter.concat);
 
 module.exports = router;

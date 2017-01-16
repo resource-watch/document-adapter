@@ -5,12 +5,14 @@ const config = require('config');
 const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
 const fs = require('fs');
-const coSleep = require('co-sleep');
 
 var Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
+const DeleteSerializer = require('serializers/deleteSerializer');
 const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
 const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
+
+const IndexNotFound = require('errors/IndexNotFound');
 
 var unlink = function(file) {
     return function(callback) {
@@ -81,7 +83,9 @@ class Scroll {
             this.total = 0;        
             
         } catch(err){
-            logger.error('Error generating file', err);
+            if (err.statusCode === 404) {
+                throw new IndexNotFound(404, 'Table not found');
+            }
             throw err;
         }
     }
@@ -89,14 +93,17 @@ class Scroll {
     convertDataToDownload(data, type, first, more, cloneUrl){
         
         if (type === 'csv') {
-            let json =  json2csv({
+            let json = json2csv({
                 data: data.data,
                 hasCSVColumnTitle: first
-            });
+            }) + '\n';
            return json;
         } else if (type === 'json'){
-            let dataString = JSON.stringify(data);
-            dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
+            let dataString = '';
+            if (data) {
+                dataString = JSON.stringify(data);
+                dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
+            }
             if (first) {
                 dataString = '{"data":[' + dataString;
             }
@@ -146,6 +153,9 @@ class Scroll {
                     this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl, {encoding: 'binary'}));
                     
             }
+            if (this.total === 0) {
+                this.stream.write(this.convertDataToDownload(null, this.type, true, false, this.cloneUrl, {encoding: 'binary'}));
+            }
         }
         this.stream.end();
         if(this.timeout){
@@ -174,8 +184,15 @@ class QueryService {
             },
             explain: function(opts) {
                 return function(cb) {
-                    var call = function(err, data){                        
-                        cb(err, data ? JSON.parse(data) : null);
+                    var call = function(err, data){  
+                        if (data) {
+                            try{
+                                data = JSON.parse(data);
+                            } catch(e){
+                                data = null;
+                            }
+                        }                    
+                        cb(err, data);
                     };
                     this.transport.request({
                         method: 'POST',
@@ -215,6 +232,16 @@ class QueryService {
                     this.transport.request({
                         method: 'GET',
                         path: encodeURI(`_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
+                    }, cb);
+                }.bind(this);
+            },
+            deleteByQuery: function(opts){
+                logger.debug('Delete by query ', opts);
+                return function(cb) {
+                    this.transport.request({
+                        method: 'POST',
+                        path: encodeURI(`${opts.index}/_delete_by_query`),
+                        body: JSON.stringify( opts.body)
                     }, cb);
                 }.bind(this);
             }
@@ -276,14 +303,32 @@ class QueryService {
 
     }
 
-    * doQuery(sql, index, datasetId, body, cloneUrl){
+    * doQuery(sql, index, datasetId, body, cloneUrl){        
         logger.info('Doing query...');
         sql = this.convertGeoJSON2WKT(sql);
         var scroll = new Scroll(this.elasticClient, sql, index, datasetId, body, false, cloneUrl);
         yield scroll.init();
         yield scroll.continue();
-        logger.info('Finished query');        
+        logger.info('Finished query');    
     }    
+
+    * doDeleteQuery(where, tableName) {
+        logger.info(`Doing delete to ${tableName} with where `, where);
+        logger.debug('Obtaining explain with select ', `select * from ${tableName} where ${where.expression}`);
+        try {
+            let resultQueryElastic = yield this.elasticClient.explain({sql: `select * from ${tableName} where ${where.expression}`});
+            delete resultQueryElastic.from;
+            delete resultQueryElastic.size;
+            logger.debug('Doing query');
+            let result = yield this.elasticClient.deleteByQuery({index: tableName, body: resultQueryElastic});
+            logger.debug(result[0]);
+            return DeleteSerializer.serialize(result[0]);
+        } catch(e){
+            logger.error(e);
+            throw new Error('Query not valid');
+        }
+        
+    }
 
     * downloadQuery(sql, index, datasetId, body, type='json') {
         logger.info('Download with query...');

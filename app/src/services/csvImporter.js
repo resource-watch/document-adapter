@@ -11,6 +11,7 @@ var uuid = require('uuid');
 var _ = require('lodash');
 var Promise = require('bluebird');
 
+
 const CONTAIN_SPACES = /\s/g;
 
 function isJSONObject(value) {
@@ -101,7 +102,7 @@ class CSVImporter {
         };
         this.elasticClient = new elasticsearch.Client({
             host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port'),
-            log: 'info'
+            log: 'error'
         });
     }
 
@@ -130,38 +131,43 @@ class CSVImporter {
     }
 
     *
-    initImport() {
-        logger.info('Checking mapping');
-        let body = {
-            mappings: {
-                [this.options.type]: {
-                    properties: {
+    initImport(generateIndex) {
+        
+        if (generateIndex) {
+            logger.info('Checking mapping');
+            let body = {
+                mappings: {
+                    [this.options.type]: {
+                        properties: {
 
+                        }
                     }
                 }
+            };
+            if(this.legend && this.legend.date && this.legend.date.length > 0){
+                for (let i = 0, length = this.legend.date.length; i < length; i++) {
+                    body.mappings[this.options.type].properties[this.legend.date[i]] = {
+                        type: 'date'
+                    };
+                }
             }
-        };
-        if(this.legend && this.legend.date && this.legend.date.length > 0){
-            for (let i = 0, length = this.legend.date.length; i < length; i++) {
-                body.mappings[this.options.type].properties[this.legend.date[i]] = {
-                    type: 'date'
+            
+            if (this.legend && ( this.legend.lat || this.legend.long) ){
+                logger.info('Contain a geojson column', this.legend.lat);
+                body.mappings[this.options.type].properties.the_geom = {
+                    type: 'geo_shape'
                 };
             }
+            
+            logger.info('Creating index ', this.options.index);
+            yield createIndex(this.elasticClient, {
+                index: this.options.index,
+                body: body
+            });
         }
-        
-        if (this.legend && ( this.legend.lat || this.legend.long) ){
-            logger.info('Contain a geojson column', this.legend.lat);
-            body.mappings[this.options.type].properties.the_geom = {
-                type: 'geo_shape'
-            };
-        }
-        
-        logger.info('Creating index ', this.options.index);
-        yield createIndex(this.elasticClient, {
-            index: this.options.index,
-            body: body
-        });
-        yield desactivateRefreshIndex(this.elasticClient, this.options.index);        
+
+        logger.debug('Deactivating refresh index');
+        yield desactivateRefreshIndex(this.elasticClient, this.options.index);
     }
 
     saveData(requests) {
@@ -184,11 +190,13 @@ class CSVImporter {
     }
 
     *
-    start() {
-        yield this.initImport();
+    start(generateIndex) {
+        
+        yield this.initImport(generateIndex);
         let i = 0;
         return new Promise(function(resolve, reject) {
             try {
+                logger.debug('Starting read file');
                 let request = {
                     body: []
                 };
@@ -198,6 +206,7 @@ class CSVImporter {
                         discardUnmappedColumns: true
                     }))
                     .on('data', function(data) {
+                        logger.debug('data');
                         stream.pause();
                         if (_.isPlainObject(data)) {
 
@@ -237,15 +246,10 @@ class CSVImporter {
                                         throw new Error(e);
                                     }
                                 });
-                                // logger.info('Variable error es', error);
                                 if (!error) {
-                                    // logger.info('Esta metiendo el elemento');
                                     if (this.legend && (this.legend.lat || this.legend.long)) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.legend.lat], data[this.legend.long]);
                                     } 
-                                    // else if (this.polygon) {
-                                    //     data.the_geom = this.convertPolygonToGeoJSON(data[this.polygon]);
-                                    // }
                                     request.body.push(index);
                                     request.body.push(data);
                                 }

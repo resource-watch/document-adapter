@@ -6,6 +6,7 @@ const fs = require('fs');
 const logger = require('logger');
 const randomstring = require('randomstring');
 const Bluebird = require('bluebird');
+const https = require('https');
 const http = require('http');
 
 function humanFileSize(bytes, si) {
@@ -28,7 +29,12 @@ let requestDownloadFile = function(url, path) {
         try {
             let dlprogress = 0;
             let oldProgress = 0;
-            var requestserver = http.request(url);
+            var requestserver = null;
+            if (url.trim().startsWith('https')) {
+                requestserver = https.request(url);
+            } else {
+                requestserver = http.request(url);
+            }
             requestserver.addListener('response', function (response) {
                 var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
                 logger.info('File size: ' + humanFileSize(parseInt(response.headers['content-length'], 10)) );
