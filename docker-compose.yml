@@ -11,8 +11,8 @@ prod:
   restart: always
   log_driver: "syslog"
   log_opt:
-      syslog-address: ${SYSLOG_ADDRESS}
-      tag: rw-adapter-csv${STAGING}
+    syslog-address: ${SYSLOG_ADDRESS}
+    tag: rw-adapter-csv${STAGING}
 worker:
   image: vizzuality/rw-adapter-csv:1.1.4${STAGING}
   env_file:
@@ -24,8 +24,8 @@ worker:
   restart: always
   log_driver: "syslog"
   log_opt:
-      syslog-address: ${SYSLOG_ADDRESS}
-      tag: rw-adapter-csv${STAGING}
+    syslog-address: ${SYSLOG_ADDRESS}
+    tag: rw-adapter-csv${STAGING}
 redis:
   image: redis
   ports:
