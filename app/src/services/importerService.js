@@ -186,12 +186,14 @@ class ImporterService {
             let path = null;
             
             try {
+                yield updateState(job.data.id, 0, job.data.index); //pending
                 path = yield DownloadService.downloadFile(job.data.url);
                 if (job.data.overwrite) {
                     logger.info('Overwrite data. Remove old');
                     yield queryService.deleteIndex(job.data.index);
                     logger.info('Deleted successfully. Continue importing');
                 }
+                
                 yield this.loadCSVInDatabase(path, job.data.index, job.data.legend, job.data.concat);
                 logger.info('Imported successfully. Updating state');
                 yield this.updateState(job.data.id, 1, job.data.index);
