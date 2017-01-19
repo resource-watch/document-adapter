@@ -186,7 +186,7 @@ class ImporterService {
             let path = null;
             
             try {
-                yield updateState(job.data.id, 0, job.data.index); //pending
+                yield this.updateState(job.data.id, 0, job.data.index); //pending
                 path = yield DownloadService.downloadFile(job.data.url);
                 if (job.data.overwrite) {
                     logger.info('Overwrite data. Remove old');
