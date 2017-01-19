@@ -206,7 +206,6 @@ class CSVImporter {
                         discardUnmappedColumns: true
                     }))
                     .on('data', function(data) {
-                        logger.debug('data');
                         stream.pause();
                         if (_.isPlainObject(data)) {
 
