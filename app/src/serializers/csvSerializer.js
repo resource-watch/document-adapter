@@ -1,7 +1,7 @@
 'use strict';
 
 var logger = require('logger');
-var simpleSqlParser = require('simple-sql-parser');
+const Json2sql = require('sql2json').json2sql;
 // var JSONAPISerializer = require('jsonapi-serializer').Serializer;
 // var csvSerializer = new JSONAPISerializer('csv', {
 // attributes: ['geojson', 'hash', 'providers'],
@@ -18,9 +18,8 @@ var simpleSqlParser = require('simple-sql-parser');
 
 class CSVSerializer {
 
-    static serializeBucket(key, buckets) {
+    static serializeBucket(key, buckets, parsed) {
         let values = [];
-
         buckets.map((el) => {
             let value = el.key;
 
@@ -29,7 +28,7 @@ class CSVSerializer {
                 let keys = Object.keys(el);
                 newKey = keys.filter((key) => (key!== 'key' && key !== 'doc_count'));
 
-                if(el[newKey].buckets){
+                if(newKey && el[newKey] && el[newKey].buckets){
 
                     let childs = CSVSerializer.serializeBucket(newKey, el[newKey].buckets);
 
@@ -38,57 +37,52 @@ class CSVSerializer {
                     });
                     values = values.concat(childs);
                 }else{
+                    if (key.toLowerCase().indexOf('geohash') >= 0) {
+                        key = 'geohash';
+                    }
                     let obj = {};
                     obj[key] = value;
                     obj[newKey] = el[newKey].value;
                     values.push(obj);
                 }
+            } else if (Object.keys(el).length === 2) {
+                // geohash grid
+                values.push({
+                    geohash: value,
+                    count: el.doc_count
+                });
             }
         });
-        return values;
+        return values.map((el) => {
+            return CSVSerializer.formatAlias(el, parsed);
+        });
     }
 
-    static obtainASTFromSQL(sql){
-
-        let ast = simpleSqlParser.sql2ast(sql);
-        if (!ast.status){
-            return {
-                error: true,
-                ast: null
-            };
-        }
-        return {
-            error: false,
-            ast: ast.value
-        };
-    }
-
-    static formatAlias(el, aliases){
-        if(aliases && el){
-            for(let i = 0, length = aliases.length; i < length; i++){
-                if(aliases[i].alias && aliases[i].alias!== null) {
-                    if (aliases[i].column.toUpperCase().trim() === 'DISTINCT') {
-                        el[aliases[i].alias] = el[aliases[i].alias];
-                    } else {
-                        el[aliases[i].alias] = el[aliases[i].column];
+    static formatAlias(el, parsed){
+        if(parsed && el){
+            for(let i = 0, length = parsed.select.length; i < length; i++){
+                const sel = parsed.select[i];
+                if(sel.alias) {
+                    if (sel.type === 'literal') {
+                        el[sel.alias] = el[sel.value];
+                        delete el[sel.value];
+                    } else if (sel.type === 'function') {
+                        const name = Json2sql.parseFunction(sel);
+                        if (el[name]) {
+                            el[sel.alias] = el[name];
+                            delete el[name];
+                        }
                     }
-                    delete el[aliases[i].column];
+                    
                 }
             }
         }
         return el;
     }
 
-    static serialize(data, sql, id) {
+    static serialize(data, parsed, id) {
         let ast = null;
-        if(sql){
-            let result = CSVSerializer.obtainASTFromSQL(sql);
-            if(!result.error){
-                ast = result.ast.select;
-            }else {
-                logger.warn('Error parsing sql');
-            }
-        }
+        
         if (data && data.length > 0) {
 
             if (data[0].aggregations) {
@@ -113,7 +107,7 @@ class CSVSerializer {
                     };
                 } else {
                     return {
-                        data: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets)
+                        data: CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets, parsed)
                     };
                     // return {
                     //     data:{
@@ -137,7 +131,7 @@ class CSVSerializer {
                 //     }
                 // };
                 return {
-                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, ast))
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, parsed))
                 };
             }
         }

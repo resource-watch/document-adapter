@@ -153,11 +153,27 @@
             "path": "/api/v1/csv/:id"
         }
     }, {
-        "path": "/doc-datasets/csv/:id/data-overwrite",
+        "path": "/dataset/:id/data-overwrite",
         "method": "POST",
+		"authenticated": true,
         "redirect": {
             "method": "POST",
             "path": "/api/v1/csv/:id/data-overwrite"
-        }
+        },
+		"filters": [{
+			"name": "dataset",
+			"path": "/dataset/:dataset",
+			"method": "GET",
+			"params": {
+				"dataset": "dataset"
+			},
+			"compare": {
+				"data": {
+					"attributes": {
+						"provider": "csv"
+					}
+				}
+			}
+		}]
     }]
 }
