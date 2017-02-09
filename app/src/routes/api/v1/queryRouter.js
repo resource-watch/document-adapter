@@ -45,13 +45,13 @@ class CSVRouter {
 
     static * import () {
         logger.info('Adding csv with dataset id: ', this.request.body);
-        yield importerService.addCSV(this.request.body.connectorUrl, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
+        yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
         this.body = '';
     }
 
     static * overwrite () {
         logger.info('Overwrite csv with dataset id: ', this.params.id);
-        yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
+        yield importerService.overwriteCSV(this.request.body.dataset.connectorUrl, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
         this.body = '';
     }
 
