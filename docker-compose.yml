@@ -14,7 +14,7 @@ prod:
     syslog-address: ${SYSLOG_ADDRESS}
     tag: rw-adapter-csv${STAGING}
 worker:
-  image: vizzuality/rw-adapter-csv:1.1.4${STAGING}
+  image: vizzuality/rw-adapter-csv:1.2.0${STAGING}
   env_file:
     - prod.env
   links:
