@@ -157,6 +157,7 @@ class CSVImporter {
                 body.mappings[this.options.type].properties.the_geom = {
                     type: 'geo_shape'
                 };
+                logger.info('Generating the_geom_point column');
                 body.mappings[this.options.type].properties.the_geom_point = {
                     type: 'geo_point'
                 };
