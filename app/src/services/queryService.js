@@ -268,17 +268,17 @@ class QueryService {
 
     }
 
-    
+
 
     findIntersect(node, finded, result) {
         if (node && node.type === 'string' && node.value && finded) {
             try {
                 const geojson = JSON.parse(node.value);
-                
+
                 const newResult = Object.assign({}, result || {}, {
                     geojson
                 });
-                
+
                 return newResult;
             } catch (e) {
                 return result;
@@ -313,8 +313,8 @@ class QueryService {
         if (node && node.type === 'function' && node.value.toLowerCase() === 'st_intersects') {
             return {
                 type: 'function',
-                value:'GEO_INTERSECTS',
-                arguments: [{
+                value: 'GEO_INTERSECTS',
+                arguments:  [{
                     type: 'literal',
                     value: 'the_geom'
                 }, {
@@ -381,9 +381,9 @@ class QueryService {
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl) {
         logger.info('Doing query...');
         parsed = this.convertQueryToElastic(parsed);
-        sql =  Json2sql.toSQL(parsed);
-        logger.debug('sql', sql);        
-        
+        sql = Json2sql.toSQL(parsed);
+        logger.debug('sql', sql);
+
         var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl);
         yield scroll.init();
         yield scroll.continue();
@@ -394,8 +394,14 @@ class QueryService {
         logger.info(`Doing delete to ${sql}`);
         logger.debug('Obtaining explain with select ', `${sql}`);
         parsed = this.convertQueryToElastic(parsed);
+        parsed.select = [{
+            value: '*',
+            alias: null,
+            type: 'wildcard'
+        }];
+        delete parsed.delete;
         logger.debug('sql', sql);
-        sql =  Json2sql.toSQL(parsed);
+        sql = Json2sql.toSQL(parsed);
         try {
             let resultQueryElastic = yield this.elasticClient.explain({
                 sql
@@ -420,7 +426,7 @@ class QueryService {
         logger.info('Download with query...');
         parsed = this.convertQueryToElastic(parsed);
         logger.debug('sql', sql);
-        sql =  Json2sql.toSQL(parsed);
+        sql = Json2sql.toSQL(parsed);
         var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, null, type);
         yield scroll.init();
         yield scroll.continue();
