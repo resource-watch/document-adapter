@@ -6,11 +6,10 @@ const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
 const fs = require('fs');
 const Json2sql = require('sql2json').json2sql;
-var Terraformer = require('terraformer-wkt-parser');
+const Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
 const DeleteSerializer = require('serializers/deleteSerializer');
-const OBTAIN_GEOJSON = /[.]*st_geomfromgeojson*\( *['|"]([^\)]*)['|"] *\)/g;
-const CONTAIN_INTERSEC = /[.]*([and | or]*st_intersects.*)\)/g;
+const DocumentNotFound = require('errors/documentNotFound');
 
 const IndexNotFound = require('errors/indexNotFound');
 
@@ -146,6 +145,7 @@ class Scroll {
                     const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId);
 
                     this.first = true;
+                    
                     this.total += this.resultScroll[0].hits.hits.length;
                     if (this.total < this.limit || this.limit === -1) {
                         this.resultScroll = yield this.elasticClient.getScroll({
@@ -256,6 +256,16 @@ class QueryService {
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
+            },
+            update: function (opts) {
+                logger.debug('Update element ', opts);
+                return function (cb) {
+                    this.transport.request({
+                        method: 'POST',
+                        path: encodeURI(`${opts.index}/${opts.type}/${opts.id}/_update`),
+                        body: JSON.stringify(opts.body)
+                    }, cb);
+                }.bind(this);
             }
         };
         elasticsearch.Client.apis.sql = sqlAPI;
@@ -268,6 +278,25 @@ class QueryService {
 
     }
 
+    * updateElement(index, id, data) {
+        logger.info(`Updating index ${index} and id ${id} with data`, data);
+        try {
+            const result = yield this.elasticClient.update({
+                index, 
+                type: index,
+                id: id,
+                body: {
+                    doc: data
+                }
+            });
+            return result;
+        } catch(err) {
+            if (err && err.status === 404){
+                throw new DocumentNotFound(404, `Document with id ${id} not found`);
+            }
+            throw err;
+        }
+    }
 
 
     findIntersect(node, finded, result) {
@@ -411,6 +440,8 @@ class QueryService {
             logger.debug('Doing query');
             let result = yield this.elasticClient.deleteByQuery({
                 index: tableName,
+                timeout: 120000,
+                requestTimeout: 120000,
                 body: resultQueryElastic
             });
             logger.debug(result[0]);

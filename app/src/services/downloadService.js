@@ -4,7 +4,6 @@ const coRequest = require('co-request');
 const request = require('request');
 const fs = require('fs');
 const logger = require('logger');
-const randomstring = require('randomstring');
 const Bluebird = require('bluebird');
 const https = require('https');
 const http = require('http');
@@ -68,22 +67,17 @@ let requestDownloadFile = function(url, path) {
 
 class DownloadService {
 
-    static * checkIfCSV(url){
-        logger.info('Checking if the content-type is text/csv');
+    static * checkIfExists(url){
+        logger.info('Checking if the url exists');
         let result = yield coRequest.head(url);
-        logger.debug('Headers ', result.headers['content-type']);
-        // if (result.headers['content-type'] && result.headers['content-type'].indexOf('text/csv') === -1 && result.headers['content-type'].indexOf('text/plain') === -1 && result.headers['content-type'].indexOf('text/tab-separated-values') === -1) {
-        //     return false;
-        // }
-        return true;
+        logger.debug('Headers ', result.headers['content-type'], result.statusCode);
+        
+        return result.statusCode === 200;
     }
 
-    static * downloadFile(url) {
-        if(! (yield DownloadService.checkIfCSV(url))){
-            throw new Error('File is not text/csv');
-        }
+    static * downloadFile(url, name) {
         logger.debug('Type text/csv. Downloading....');
-        let path = '/tmp/' + randomstring.generate() + '.csv';
+        let path = '/tmp/' + name;
         logger.debug('Temporal path', path, '. Downloading');
         let result = yield requestDownloadFile(url, path);
         logger.debug('Download file!!!');

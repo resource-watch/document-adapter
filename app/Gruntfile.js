@@ -37,6 +37,15 @@ module.exports = function (grunt) {
                     port: process.env.PORT,
                     output: 'started'
                 }
+            },
+            worker: {
+                options: {
+                    script: 'app/worker.js',
+                    'node_env': 'dev',
+                    port: process.env.PORT,
+                    output: 'started',
+                    spawn: true
+                }
             }
         },
 
@@ -68,7 +77,7 @@ module.exports = function (grunt) {
                 files: [
                     'app/src/**/*.js',
                 ],
-                tasks: ['jshint:js', 'mochaTest:unit', 'express:dev'],
+                tasks: ['jshint:js', 'mochaTest:unit', 'express'],
                 options: {
                     spawn: false
                 }
@@ -98,11 +107,11 @@ module.exports = function (grunt) {
 
     grunt.registerTask('unitTest', ['mochaTest:unit']);
 
-    grunt.registerTask('e2eTest', ['express:dev', 'mochaTest:e2e']);
+    grunt.registerTask('e2eTest', ['express', 'mochaTest:e2e']);
 
     grunt.registerTask('test', ['jshint', 'unitTest']);
 
-    grunt.registerTask('serve', ['express:dev', 'watch']);
+    grunt.registerTask('serve', ['express', 'watch']);
 
     grunt.registerTask('default', 'serve');
 

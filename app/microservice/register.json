@@ -7,7 +7,7 @@
 		"binary": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/query/:dataset"
+			"path": "/api/v1/document/query/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -19,7 +19,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}
@@ -30,7 +30,7 @@
 		"binary": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/query/:dataset"
+			"path": "/api/v1/document/query/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -42,7 +42,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}
@@ -53,7 +53,7 @@
 		"binary": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/download/:dataset"
+			"path": "/api/v1/document/download/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -65,7 +65,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}
@@ -76,7 +76,7 @@
 		"binary": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/download/:dataset"
+			"path": "/api/v1/document/download/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -88,7 +88,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}
@@ -98,7 +98,7 @@
 		"method": "GET",
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/fields/:dataset"
+			"path": "/api/v1/document/fields/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -110,7 +110,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}
@@ -121,7 +121,7 @@
 		"authenticated": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv/concat/:dataset"
+			"path": "/api/v1/document/concat/:dataset"
 		},
 		"filters": [{
 			"name": "dataset",
@@ -133,32 +133,55 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
+					}
+				}
+			}
+		}]
+	},{
+		"path": "/dataset/:dataset/data/:id",
+		"method": "POST",
+		"authenticated": true,
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/document/data/:dataset/:id"
+		},
+		"filters": [{
+			"name": "dataset",
+			"path": "/dataset/:dataset",
+			"method": "GET",
+			"params": {
+				"dataset": "dataset"
+			},
+			"compare": {
+				"data": {
+					"attributes": {
+						"connectorType": "document"
 					}
 				}
 			}
 		}]
 	}, {
-		"path": "/doc-datasets/csv",
+		"path": "/doc-datasets/:provider",
 		"method": "POST",
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/csv"
+			"path": "/api/v1/document/:provider"
 		}
 	}, {
-        "path": "/doc-datasets/csv/:id",
+        "path": "/doc-datasets/:provider/:id",
         "method": "DELETE",
         "redirect": {
             "method": "DELETE",
-            "path": "/api/v1/csv/:id"
+            "path": "/api/v1/document/:id"
         }
     }, {
-        "path": "/dataset/:id/data-overwrite",
+        "path": "/dataset/:dataset/data-overwrite",
         "method": "POST",
 		"authenticated": true,
         "redirect": {
             "method": "POST",
-            "path": "/api/v1/csv/:id/data-overwrite"
+            "path": "/api/v1/document/:dataset/data-overwrite"
         },
 		"filters": [{
 			"name": "dataset",
@@ -170,7 +193,7 @@
 			"compare": {
 				"data": {
 					"attributes": {
-						"provider": "csv"
+						"connectorType": "document"
 					}
 				}
 			}

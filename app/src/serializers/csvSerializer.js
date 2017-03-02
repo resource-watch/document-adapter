@@ -131,7 +131,7 @@ class CSVSerializer {
                 //     }
                 // };
                 return {
-                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(el._source, parsed))
+                    data: data[0].hits.hits.map((el) => CSVSerializer.formatAlias(Object.assign(el._source, {_id: el._id}), parsed))// jshint ignore:line
                 };
             }
         }
