@@ -51,7 +51,7 @@ class CSVRouter {
 
     static * overwrite () {
         logger.info('Overwrite csv with dataset id: ', this.params.id);
-        yield importerService.overwriteCSV(this.request.body.dataset.connectorUrl, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
+        yield importerService.overwriteCSV(this.request.body.connectorUrl, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
         this.body = '';
     }
 
