@@ -153,12 +153,12 @@
             "path": "/api/v1/csv/:id"
         }
     }, {
-        "path": "/dataset/:id/data-overwrite",
+        "path": "/dataset/:dataset/data-overwrite",
         "method": "POST",
 		"authenticated": true,
         "redirect": {
             "method": "POST",
-            "path": "/api/v1/csv/:id/data-overwrite"
+            "path": "/api/v1/csv/:dataset/data-overwrite"
         },
 		"filters": [{
 			"name": "dataset",
