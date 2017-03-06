@@ -8,7 +8,7 @@ var queryService = require('services/queryService');
 var csvSerializer = require('serializers/csvSerializer');
 var fieldSerializer = require('serializers/fieldSerializer');
 var write = require('koa-write');
-var simpleSqlParser = require('simple-sql-parser');
+const Json2sql = require('sql2json').json2sql;
 var passThrough = require('stream').PassThrough;
 var redisClient = require('redis').createClient({
     port: config.get('redis.port'),
@@ -44,14 +44,14 @@ var serializeObjToQuery = function(obj){
 class CSVRouter {
 
     static * import () {
-        logger.info('Adding csv with dataset id: ', this.request.body.connector);
+        logger.info('Adding csv with dataset id: ', this.request.body);
         yield importerService.addCSV(this.request.body.connector.connector_url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend);
         this.body = '';
     }
 
     static * overwrite () {
         logger.info('Overwrite csv with dataset id: ', this.params.id);
-        yield importerService.overwriteCSV(this.request.body.connector.connector_url, this.request.body.connector.table_name, this.request.body.connector.id, this.request.body.connector.legend);
+        yield importerService.overwriteCSV(this.request.body.connectorUrl, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.dataset.legend);
         this.body = '';
     }
 
@@ -62,32 +62,21 @@ class CSVRouter {
         this.body = '';
     }
     
-    static obtainASTFromSQL(sql){
-        let ast = simpleSqlParser.sql2ast(sql);
-        if (!ast.status){
-            return {
-                error: true,
-                ast: null
-            };
-        }
-        return {
-            error: false,
-            ast: ast.value
-        };
-    }
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
         logger.debug('Checking if is delete or select');
 
         try {
-            if (this.state.ast.type === 'delete') {
+            if (this.state.parsed.delete) {
                 logger.debug('Doing delete');
-                this.body = yield queryService.doDeleteQuery(this.state.ast.where, this.request.body.dataset.tableName);
-            } else  if (this.state.ast.type === 'select') {
+                this.state.parsed.from = this.request.body.dataset.tableName;
+                const sql = Json2sql.toSQL(this.state.parsed);
+                this.body = yield queryService.doDeleteQuery(sql, this.state.parsed, this.request.body.dataset.tableName);
+            } else  if (this.state.parsed.select) {
                 this.body = passThrough();
                 const cloneUrl = CSVRouter.getCloneUrl(this.request.url, this.params.dataset);
                 logger.debug(this.request.body.dataset);
-                yield queryService.doQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
+                yield queryService.doQuery( this.query.sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
             } else {
                 this.throw(400, 'Query not valid');
                 return;
@@ -112,7 +101,7 @@ class CSVRouter {
                 break;
         }
         this.set('Content-type', mimetype);
-        yield queryService.downloadQuery( this.query.sql, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
+        yield queryService.downloadQuery( this.query.sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
 
 
     }
@@ -208,6 +197,8 @@ const toSQLMiddleware = function*(next) {
     try {
         let result = yield ctRegisterMicroservice.requestToMicroservice(options);
         this.query.sql = result.data.attributes.query;
+        this.state.parsed = result.data.attributes.jsonSql;
+        logger.debug(this.query.sql);
         yield next;
         
     } catch (e) {
@@ -219,15 +210,7 @@ const toSQLMiddleware = function*(next) {
     }
 };
 
-const classifyQuery = function *(next) {
-    let result = CSVRouter.obtainASTFromSQL(this.query.sql);
-    if (result.error) {
-        this.throw(400, 'Query not valid');
-        return;
-    }
-    this.state.ast = result.ast;
-    yield next;
-};
+
 const containApps = function(apps1, apps2) {
     if (!apps1 || !apps2){
         return false;
@@ -256,7 +239,7 @@ const checkUserHasPermission = function(user, dataset) {
 };
 
 const checkPermissionDelete = function *(next) {
-    if (this.state.ast.type === 'delete') {
+    if (this.state.parsed.delete) {
         if (this.request.body && this.request.body.loggedUser) {
 
             if (checkUserHasPermission(this.request.body.loggedUser, this.request.body.dataset)){
@@ -289,12 +272,12 @@ const checkPermissionModify = function *(next){
     }
 };
 
-router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, classifyQuery, checkPermissionDelete, CSVRouter.query);
+router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, checkPermissionDelete, CSVRouter.query);
 router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, CSVRouter.download);
 router.post('/fields/:dataset', cacheMiddleware, deserializeDataset, CSVRouter.fields);
 router.post('/', CSVRouter.import);
 router.delete('/:id', CSVRouter.delete);
-router.post('/:id/data-overwrite', CSVRouter.overwrite);
+router.post('/:id/data-overwrite', deserializeDataset, checkPermissionModify, CSVRouter.overwrite);
 router.post('/concat/:dataset', deserializeDataset, checkPermissionModify, CSVRouter.concat);
 
 module.exports = router;

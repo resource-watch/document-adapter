@@ -1,6 +1,6 @@
 {
   "name": "rw-adapter-csv",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Resource Watch - Adapter CSV",
   "main": "index.js",
   "scripts": {
@@ -55,6 +55,7 @@
     "newrelic": "1.27.1",
     "randomstring": "1.1.5",
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
+    "sql2json": "1.4.2",
     "terraformer-wkt-parser": "^1.1.2",
     "uuid": "2.0.1"
   },

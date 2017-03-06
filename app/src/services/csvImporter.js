@@ -157,6 +157,10 @@ class CSVImporter {
                 body.mappings[this.options.type].properties.the_geom = {
                     type: 'geo_shape'
                 };
+                logger.info('Generating the_geom_point column');
+                body.mappings[this.options.type].properties.the_geom_point = {
+                    type: 'geo_point'
+                };
             }
             
             logger.info('Creating index ', this.options.index);
@@ -248,6 +252,10 @@ class CSVImporter {
                                 if (!error) {
                                     if (this.legend && (this.legend.lat || this.legend.long)) {
                                         data.the_geom = this.convertPointToGeoJSON(data[this.legend.lat], data[this.legend.long]);
+                                        data.the_geom_point = {
+                                            lat: data[this.legend.lat],
+                                            lon: data[this.legend.long]
+                                        };
                                     } 
                                     request.body.push(index);
                                     request.body.push(data);
