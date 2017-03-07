@@ -55,7 +55,7 @@ class QueueService {
         logger.info('Updating state of dataset ', id, ' with status ', status);
 
         let options = {
-            uri: '/dataset/' + id,
+            uri: '/v1/dataset/' + id,
             body: {
                status                
             },

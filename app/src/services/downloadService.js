@@ -76,7 +76,7 @@ class DownloadService {
     }
 
     static * downloadFile(url, name) {
-        logger.debug('Type text/csv. Downloading....');
+        logger.debug('Downloading....');
         let path = '/tmp/' + name;
         logger.debug('Temporal path', path, '. Downloading');
         let result = yield requestDownloadFile(url, path);

@@ -132,7 +132,6 @@ class ImporterService {
         yield activateRefreshIndex(this.elasticClient, index);
     }
     convertPointToGeoJSON(lat, long) {
-        logger.debug('Converting points');
         return {
             type: 'point',
             coordinates: [
