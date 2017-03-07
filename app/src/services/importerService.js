@@ -244,22 +244,26 @@ class ImporterService {
                                 _.forEach(data, function (value, key) {
                                     let newKey = key;
                                     try {
-
-                                        if (CONTAIN_SPACES.test(key)) {
-                                            delete data[key];
-                                            newKey = key.replace(CONTAIN_SPACES, '_');
-                                        }
-                                        if (isJSONObject(value)) {
-                                            try {
-                                                data[newKey] = JSON.parse(value);
-                                            } catch (e) {
+                                        if (newKey !== '_id'){
+                                            if (CONTAIN_SPACES.test(key)) {
+                                                delete data[key];
+                                                newKey = key.replace(CONTAIN_SPACES, '_');
+                                            }
+                                            if (!(value instanceof Object) && isJSONObject(value)) {
+                                                try {
+                                                    data[newKey] = JSON.parse(value);
+                                                } catch (e) {
+                                                    data[newKey] = value;
+                                                }
+                                            } else if (!isNaN(value)) {
+                                                data[newKey] = Number(value);
+                                            } else {
                                                 data[newKey] = value;
                                             }
-                                        } else if (!isNaN(value)) {
-                                            data[newKey] = Number(value);
                                         } else {
-                                            data[newKey] = value;
+                                            delete data[newKey];
                                         }
+                                        
                                     } catch (e) {
                                         logger.error(e);
                                         error = true;

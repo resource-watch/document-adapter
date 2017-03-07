@@ -38,6 +38,7 @@ let requestDownloadFile = function(url, path) {
                 var downloadfile = fs.createWriteStream(path, {'flags': 'a'});
                 logger.info('File size: ' + humanFileSize(parseInt(response.headers['content-length'], 10)) );
                 response.addListener('data', function (chunk) {
+                    logger.debug('Downloadig data', chunk);
                     dlprogress += chunk.length;
                     downloadfile.write(chunk, {encoding: 'binary'});
                     if(dlprogress-oldProgress > 100*1024*1024){

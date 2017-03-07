@@ -15,8 +15,9 @@ class JSONConverter {
 
     * init() {
         if (this.checkURL.test(this.url)) {
-            logger.debug('Is a url. Downloading file');
+            logger.debug('Is a url. Downloading file in url ', this.url);
             this.filePath = yield DownloadService.downloadFile(this.url, randomstring.generate() + '.json');
+            logger.debug('Temporal path ', this.filePath);
         } else {
             this.filePath = this.url;
         }
