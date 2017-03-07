@@ -97,7 +97,7 @@ class Scroll {
 
             if (type === 'csv') {
                 let json = json2csv({
-                    data: data.data,
+                    data: data ? data.data : [],
                     hasCSVColumnTitle: first
                 }) + '\n';
                 return json;

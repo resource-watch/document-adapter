@@ -28,8 +28,7 @@ const router = new Router({
 
 class DatasetRouter {
 
-    static *
-        import () {
+    static * import () {
             logger.info('Adding dataset with dataset id: ', this.request.body);
             let url = this.request.body.connector.connectorUrl;
             if (this.request.body.connector.data) {

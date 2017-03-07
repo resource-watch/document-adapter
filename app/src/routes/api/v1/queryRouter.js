@@ -106,7 +106,7 @@ class QueryRouter {
             url: `/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
-                    datasetUrl: url.replace('/csv', ''),
+                    datasetUrl: url.replace('/document', ''),
                     application: ['your','apps']
                 }
             }
