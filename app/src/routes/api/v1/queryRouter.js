@@ -44,7 +44,6 @@ var serializeObjToQuery = function(obj){
 class QueryRouter {
 
     
-    
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
         logger.debug('Checking if is delete or select');
