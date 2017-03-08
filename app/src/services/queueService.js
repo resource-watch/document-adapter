@@ -10,7 +10,7 @@ const queryService = require('services/queryService');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 const ImporterService = require('services/importerService');
 
-const ConverterFactory = require('services/converters/ConverterFactory');
+const ConverterFactory = require('services/converters/converterFactory');
 
 var microserviceClient = null;
 
