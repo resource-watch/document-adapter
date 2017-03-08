@@ -1,7 +1,7 @@
 FROM mhart/alpine-node:6.2
 MAINTAINER raul.requero@vizzuality.com
 
-ENV NAME rw-adapter-csv
+ENV NAME rw-adapter-document
 ENV USER microservice
 
 RUN apk update && apk upgrade && \

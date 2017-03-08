@@ -1,7 +1,7 @@
 {
-  "name": "rw-adapter-csv",
+  "name": "rw-adapter-document",
   "version": "1.2.0",
-  "description": "Resource Watch - Adapter CSV",
+  "description": "Resource Watch - Adapter document",
   "main": "index.js",
   "scripts": {
     "test-e2e": "NODE_PATH=app/src grunt --gruntfile app/Gruntfile.js e2eTest",
