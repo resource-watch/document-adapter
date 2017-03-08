@@ -10,7 +10,7 @@ const csv = require('fast-csv');
 const uuid = require('uuid');
 const _ = require('lodash');
 const queryService = require('services/queryService');
-const ConverterFactory = require('services/converters/ConverterFactory');
+const ConverterFactory = require('services/converters/converterFactory');
 
 const CONTAIN_SPACES = /\s/g;
 
