@@ -50,14 +50,14 @@ class DatasetRouter {
     static * overwrite() {
         logger.info('Overwrite dataset with dataset id: ', this.params.id);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
-        yield queueService.overwriteDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend);
+        yield queueService.overwriteDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend, this.request.body.dataPath);
         this.body = '';
     }
 
     static * concat() {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
-        yield queueService.concatDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend);
+        yield queueService.concatDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend, this.request.body.dataPath);
         this.body = '';
     }
 

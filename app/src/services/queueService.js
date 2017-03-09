@@ -102,11 +102,12 @@ class QueueService {
     }
 
     *
-    overwriteDataset(type, url, index, id, legend) {
+    overwriteDataset(type, url, index, id, legend, dataPath) {
         logger.info(`Adding overwrite dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
             type,
+            dataPath,
             legend: legend,
             index: index,
             id: id,
@@ -118,11 +119,12 @@ class QueueService {
         });
     }
 
-    * concatDataset(type, url, index, id, legend) {
+    * concatDataset(type, url, index, id, legend, dataPath) {
         logger.info(`Adding concat dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
             type,
+            dataPath,
             legend: legend,
             index: index,
             id: id,
