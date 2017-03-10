@@ -4,8 +4,6 @@ const logger = require('logger');
 const Router = require('koa-router');
 const queueService = require('services/queueService');
 const queryService = require('services/queryService');
-const fs = require('fs');
-const randomstring = require('randomstring');
 
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
@@ -17,12 +15,6 @@ const deserializer = function (obj) {
     };
 };
 
-const writeFile = function (name, data)  {
-    return function (callback) {
-        fs.writeFile(name, data, callback);
-    };
-};
-
 const router = new Router({
     prefix: '/document'
 });
@@ -31,13 +23,8 @@ class DatasetRouter {
 
     static * import () {
             logger.info('Adding dataset with dataset id: ', this.request.body);
-            let url = this.request.body.connector.connectorUrl;
-            if (this.request.body.connector.data) {
-                logger.debug('Containg data. Saving in file');
-                url = `/tmp/${this.request.body.connector.id}.json`;
-                yield writeFile(url, JSON.stringify(this.request.body.connector.data));
-            }
-            yield queueService.addDataset(this.params.provider || 'csv', url, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend, this.request.body.connector.data_path);
+            
+            yield queueService.addDataset(this.params.provider || 'csv', this.request.body.connectorUrl, this.request.body.connector.data, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend, this.request.body.connector.data_path);
             this.body = '';
         }
 
@@ -53,13 +40,8 @@ class DatasetRouter {
         logger.info('Overwrite dataset with dataset id: ', this.params.id);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        let url = this.request.body.url;
-        if (this.request.body.data) {
-            logger.debug('Containg data. Saving in file');
-            url = `/tmp/${randomstring.generate()}.json`;
-            yield writeFile(url, JSON.stringify(this.request.body.data));
-        }
-        yield queueService.overwriteDataset(this.request.body.provider, url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
+        
+        yield queueService.overwriteDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         this.body = '';
     }
 
@@ -67,13 +49,8 @@ class DatasetRouter {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        let url = this.request.body.url;
-        if (this.request.body.data) {
-            logger.debug('Containg data. Saving in file');
-            url = `/tmp/${randomstring.generate()}.json`;
-            yield writeFile(url, JSON.stringify(this.request.body.data));
-        }
-        yield queueService.concatDataset(this.request.body.provider, url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
+        
+        yield queueService.concatDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         this.body = '';
     }
 

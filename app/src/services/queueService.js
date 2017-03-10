@@ -9,10 +9,16 @@ const DownloadService = require('services/downloadService');
 const queryService = require('services/queryService');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 const ImporterService = require('services/importerService');
-
+const randomstring = require('randomstring');
 const ConverterFactory = require('services/converters/converterFactory');
 
 var microserviceClient = null;
+
+const writeFile = function (name, data)  {
+    return function (callback) {
+        fs.writeFile(name, data, callback);
+    };
+};
 
 var getKey = function (key) {
     return function (cb) {
@@ -84,10 +90,11 @@ class QueueService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addDataset(type, url, index, id, legend, dataPath) {
+    * addDataset(type, url, data, index, id, legend, dataPath) {
         logger.info(`Adding import dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
+            data,
             type,
             dataPath,
             legend: legend,
@@ -102,10 +109,11 @@ class QueueService {
     }
 
     *
-    overwriteDataset(type, url, index, id, legend, dataPath) {
+    overwriteDataset(type, url, data, index, id, legend, dataPath) {
         logger.info(`Adding overwrite dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
+            data,
             type,
             dataPath,
             legend: legend,
@@ -119,10 +127,11 @@ class QueueService {
         });
     }
 
-    * concatDataset(type, url, index, id, legend, dataPath) {
+    * concatDataset(type, url, data, index, id, legend, dataPath) {
         logger.info(`Adding concat dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
+            data,
             type,
             dataPath,
             legend: legend,
@@ -169,6 +178,14 @@ class QueueService {
             logger.info('Proccesing import task with  type: %s, url: %s and index: %s and id: %s and dataPath: %s', job.data.type, job.data.url, job.data.index, job.data.id, job.data.dataPath, job.data.legend);
             co(function* () {
                 try {
+                    let url = job.data.url;
+                    if (job.data.data) {
+                        logger.debug('Containg data. Saving in file');
+                        url = `/tmp/${randomstring.generate()}.json`;
+                        yield writeFile(url, JSON.stringify(job.data.data));
+                        job.data.url = url;
+                    }
+
                     logger.debug('Action', job.data.action);
                     yield this.updateState(job.data.id, 0, job.data.index); //pending
                 
