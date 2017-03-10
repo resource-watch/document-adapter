@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const queueService = require('services/queueService');
 const queryService = require('services/queryService');
 const fs = require('fs');
+const randomstring = require('randomstring');
 
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
@@ -50,14 +51,28 @@ class DatasetRouter {
     static * overwrite() {
         logger.info('Overwrite dataset with dataset id: ', this.params.id);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
-        yield queueService.overwriteDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend, this.request.body.dataPath);
+        this.assert(this.request.body.provider, 400, 'Provider required');
+        let url = this.request.body.url;
+        if (this.request.body.data) {
+            logger.debug('Containg data. Saving in file');
+            url = `/tmp/${randomstring.generate()}.json`;
+            yield writeFile(url, JSON.stringify(this.request.body.data));
+        }
+        yield queueService.overwriteDataset(this.request.body.provider, url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         this.body = '';
     }
 
     static * concat() {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
-        yield queueService.concatDataset(this.request.body.type || this.request.body.dataset.provider, this.request.body.url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend || this.request.body.dataset.legend, this.request.body.dataPath);
+        this.assert(this.request.body.provider, 400, 'Provider required');
+        let url = this.request.body.url;
+        if (this.request.body.data) {
+            logger.debug('Containg data. Saving in file');
+            url = `/tmp/${randomstring.generate()}.json`;
+            yield writeFile(url, JSON.stringify(this.request.body.data));
+        }
+        yield queueService.concatDataset(this.request.body.provider, url, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         this.body = '';
     }
 
