@@ -24,7 +24,7 @@ class DatasetRouter {
     static * import () {
             logger.info('Adding dataset with dataset id: ', this.request.body);
             
-            yield queueService.addDataset(this.params.provider || 'csv', this.request.body.connectorUrl, this.request.body.connector.data, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend, this.request.body.connector.data_path);
+            yield queueService.addDataset(this.params.provider || 'csv', this.request.body.connector.connectorUrl, this.request.body.connector.data, 'index_' + this.request.body.connector.id.replace(/-/g, ''), this.request.body.connector.id, this.request.body.connector.legend, this.request.body.connector.data_path);
             this.body = '';
         }
 
