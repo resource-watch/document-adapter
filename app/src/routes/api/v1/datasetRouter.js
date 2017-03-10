@@ -43,6 +43,7 @@ class DatasetRouter {
 
     static * updateData() {
         logger.info(`Update data with id ${this.params.id}  of dataset ${this.request.body.dataset.id}`);
+        this.assert(this.request.body.data, 400, 'Data is required');
         const result = yield queryService.updateElement(this.request.body.dataset.tableName, this.params.id, this.request.body.data);
 
         this.body = null;
