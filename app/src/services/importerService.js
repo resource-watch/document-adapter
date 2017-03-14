@@ -183,10 +183,7 @@ class ImporterService {
                 body.mappings[this.options.type].properties.the_geom_point = {
                     type: 'geo_point'
                 };
-                body.mappings[this.options.type].properties.region = {
-                    type: "text",
-                    fielddata: true
-                };
+
             }
 
             logger.info('Creating index ', this.options.index);
