@@ -367,7 +367,7 @@ class QueryService {
             let mapping = yield this.getMapping(index);
             logger.info('Mapping', mapping);
             logger.info('index', index);
-            mapping = mapping[index].mappings[index].properties;
+            mapping = mapping[0][index].mappings[index].properties;
             for (let i = 0, length = parsed.group.length; i < length; i++) {
                 const node = parsed.group[i];
                 if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
