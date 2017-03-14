@@ -59,13 +59,13 @@ class Scroll {
         this.timeoutFunc = setTimeout(function () {
             this.timeout = true;
         }.bind(this), 60000);
-        logger.error('QUERY ELASTIC',  this.sql.substring(0, 40));
+        
         let resultQueryElastic = yield this.elasticClient.explain({
             sql: this.sql
         });
         logger.info('Entra');
         logger.info('Logger con info ', this.sql);
-        logger.error('QUERY ELASTIC',  this.sql.substring(0, 40));
+        logger.error('QUERY ELASTIC',  this.sql.substring(0, 200));
 
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
