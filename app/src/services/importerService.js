@@ -118,14 +118,14 @@ class ImporterService {
             yield this.start(this.action !== 'concat');
 
             logger.info('Activating refresh index', this.index);
-            yield this.activateRefreshIndex(this.index);  
-        } catch(err){
+            yield this.activateRefreshIndex(this.index);
+        } catch (err) {
             if (this.action !== 'concat') {
                 logger.info('Throwed ERROR: Removing index ');
                 yield queryService.deleteIndex(this.index);
             }
             throw err;
-        }  
+        }
     }
 
     * activateRefreshIndex(index) {
@@ -182,6 +182,10 @@ class ImporterService {
                 logger.info('Generating the_geom_point column');
                 body.mappings[this.options.type].properties.the_geom_point = {
                     type: 'geo_point'
+                };
+                body.mappings[this.options.type].properties.region = {
+                    type: "text",
+                    fielddata: true
                 };
             }
 
@@ -244,7 +248,7 @@ class ImporterService {
                                 _.forEach(data, function (value, key) {
                                     let newKey = key;
                                     try {
-                                        if (newKey !== '_id'){
+                                        if (newKey !== '_id') {
                                             if (CONTAIN_SPACES.test(key)) {
                                                 delete data[key];
                                                 newKey = key.replace(CONTAIN_SPACES, '_');
@@ -263,7 +267,7 @@ class ImporterService {
                                         } else {
                                             delete data[newKey];
                                         }
-                                        
+
                                     } catch (e) {
                                         logger.error(e);
                                         error = true;
