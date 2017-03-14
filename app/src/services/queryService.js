@@ -361,9 +361,11 @@ class QueryService {
         return node;
     }
 
-    convertQueryToElastic(parsed) {
+    * convertQueryToElastic(parsed, index) {
         //search ST_GeoHash
         if (parsed.group) {
+            let mapping = yield QueryService.getMapping(index);
+            mapping = mapping[index].mappings[index].properties;
             for (let i = 0, length = parsed.group.length; i < length; i++) {
                 const node = parsed.group[i];
                 if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
@@ -377,6 +379,12 @@ class QueryService {
                     });
                     node.arguments = args;
                     node.value = 'geohash_grid';
+                } else if (node.type==='literal') {
+                    logger.debug('Checking if it is text');
+                    logger.debug(mapping[node.value]);
+                    if (mapping[node.value] && mapping[node.value].type === 'text'){
+                        node.value = `${node.value}.keyword`;
+                    }
                 }
             }
         }
@@ -409,7 +417,7 @@ class QueryService {
 
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl) {
         logger.info('Doing query...');
-        parsed = this.convertQueryToElastic(parsed);
+        parsed = yield this.convertQueryToElastic(parsed, index);
         sql = Json2sql.toSQL(parsed);
         logger.debug('sql', sql);
 
@@ -422,7 +430,7 @@ class QueryService {
     * doDeleteQuery(sql, parsed, tableName) {
         logger.info(`Doing delete to ${sql}`);
         logger.debug('Obtaining explain with select ', `${sql}`);
-        parsed = this.convertQueryToElastic(parsed);
+        parsed = yield this.convertQueryToElastic(parsed, tableName);
         parsed.select = [{
             value: '*',
             alias: null,
@@ -455,7 +463,7 @@ class QueryService {
 
     * downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
         logger.info('Download with query...');
-        parsed = this.convertQueryToElastic(parsed);
+        parsed = yield this.convertQueryToElastic(parsed, index);
         logger.debug('sql', sql);
         sql = Json2sql.toSQL(parsed);
         var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, null, type);
