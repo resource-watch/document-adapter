@@ -384,11 +384,7 @@ class QueryService {
                     logger.debug('Checking if it is text');
                     logger.debug(mapping[node.value]);
                     if (mapping[node.value] && mapping[node.value].type === 'text'){
-                        let oldValue = node.value;
                         node.value = `${node.value}.keyword`;
-                        if (!node.alias){
-                            node.alias = oldValue;
-                        }
                     }
                 }
             }

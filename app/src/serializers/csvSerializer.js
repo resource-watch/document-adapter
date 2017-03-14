@@ -25,6 +25,7 @@ class CSVSerializer {
         if (key.indexOf('geohash') >= 0){
             alias = 'geohash';
         }
+        alias = alias.replace('.keyword', '');
         for (let i = 0, length = buckets.length; i < length; i++) {
             let keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
             if (keys.length === 1 && buckets[i][keys[0]].buckets) {
