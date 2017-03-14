@@ -203,6 +203,7 @@ class QueryService {
                     var call = function (err, data) {
                         if (data) {
                             try {
+                                logger.info('Log de salida', data);
                                 data = JSON.parse(data);
                             } catch (e) {
                                 data = null;
