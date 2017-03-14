@@ -29,8 +29,8 @@ class CSVSerializer {
             let keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
             if (keys.length === 1 && buckets[i][keys[0]].buckets) {
                 const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
-                for (let i = 0, length = partialList.length; i < length; i++){
-                    partialList[i][alias] = buckets[i].key;
+                for (let j = 0, length = partialList.length; j < length; j++){
+                    partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
             } else {
