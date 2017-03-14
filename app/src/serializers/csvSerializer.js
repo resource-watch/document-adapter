@@ -127,7 +127,6 @@ class CSVSerializer {
                         data: [attributes]
                     };
                 } else {
-                    logger.debug(' data[0].aggregations[keys[0]]',  data[0].aggregations[keys[0]]);
                     const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
                     const list = values.map((el) => {
                         return CSVSerializer.formatAlias(el, parsed);
