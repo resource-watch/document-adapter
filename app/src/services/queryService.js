@@ -201,9 +201,9 @@ class QueryService {
             explain: function (opts) {
                 return function (cb) {
                     var call = function (err, data) {
+                        logger.info('Log de salida', data.substring(0, 300));
                         if (data) {
-                            try {
-                                logger.info('Log de salida', data);
+                            try {                                
                                 data = JSON.parse(data);
                             } catch (e) {
                                 data = null;
