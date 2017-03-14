@@ -59,6 +59,7 @@ class Scroll {
         this.timeoutFunc = setTimeout(function () {
             this.timeout = true;
         }.bind(this), 60000);
+        logger.error('SQL is', this.sql); 
         let resultQueryElastic = yield this.elasticClient.explain({
             sql: this.sql
         });
