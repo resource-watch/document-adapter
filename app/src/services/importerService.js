@@ -320,6 +320,9 @@ class ImporterService {
                                 reject(err);
                                 return;
                             });
+                        } else {
+                            logger.debug('Pack saved successfully');
+                            resolve(res);
                         }
                     }.bind(this));
             } catch (e)  {
