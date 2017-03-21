@@ -29,7 +29,7 @@ class JSONConverter {
         readStream.on('end', () => {
             if (fs.existsSync(this.filePath)){
                 logger.info('Removing file');
-               // fs.unlinkSync(this.filePath);
+                fs.unlinkSync(this.filePath);
             }
         });
 
