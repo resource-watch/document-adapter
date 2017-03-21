@@ -1,6 +1,6 @@
 'use strict';
 
-const importerService = require('services/importerService');
+const queueService = require('services/queueService');
 const logger = require('logger');
-importerService.addProcess();
+queueService.addProcess();
 logger.info('Worker started');
