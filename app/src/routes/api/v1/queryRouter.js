@@ -105,7 +105,7 @@ class QueryRouter {
             url: `/${process.env.API_VERSION}/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
-                    datasetUrl: url.replace('/document', ''),
+                    datasetUrl: `/${process.env.API_VERSION}${url.replace('/document', '')}`,
                     application: ['your','apps']
                 }
             }
