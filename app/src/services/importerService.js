@@ -322,7 +322,7 @@ class ImporterService {
                             });
                         } else {
                             logger.debug('Pack saved successfully');
-                            resolve(res);
+                            resolve();
                         }
                     }.bind(this));
             } catch (e)  {
