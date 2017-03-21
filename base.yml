@@ -5,4 +5,4 @@ base:
   environment:
     PORT: 4000
     NODE_PATH: app/src
-  container_name: rw-adapter-csv
+  container_name: rw-adapter-document

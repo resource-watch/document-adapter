@@ -1,6 +1,6 @@
 {
     "logger": {
-        "name": "rw-adapter-csv",
+        "name": "rw-adapter-document",
         "level": "warn",
         "toFile": false,
         "dirLogFile": null

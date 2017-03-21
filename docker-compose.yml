@@ -1,5 +1,5 @@
 prod:
-  image: vizzuality/rw-adapter-csv:1.2.0${STAGING}
+  image: vizzuality/rw-adapter-document:1.0.0${STAGING}
   ports:
     - "4000"
   env_file:
@@ -10,11 +10,12 @@ prod:
   dns: ${DNS_SERVER}
   restart: always
   log_driver: "syslog"
+  container_name: rw-adapter-document-api
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-adapter-csv-app${STAGING}
+    tag: rw-adapter-document${STAGING}
 worker:
-  image: vizzuality/rw-adapter-csv:1.2.0${STAGING}
+  image: vizzuality/rw-adapter-document:1.0.0${STAGING}
   env_file:
     - prod.env
   links:
@@ -23,9 +24,10 @@ worker:
   dns: ${DNS_SERVER}
   restart: always
   log_driver: "syslog"
+  container_name: rw-adapter-document-worker
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-adapter-csv-worker${STAGING}
+    tag: rw-adapter-document${STAGING}
 redis:
   image: redis
   ports:

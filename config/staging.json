@@ -1,6 +1,6 @@
 {
     "logger": {
-        "name": "rw-adapter-csv-STAGING",
+        "name": "rw-adapter-document-STAGING",
         "level": "debug",
         "toFile": false,
         "dirLogFile": null
