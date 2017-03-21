@@ -13,7 +13,7 @@ prod:
   container_name: rw-adapter-document-api
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-adapter-document${STAGING}
+    tag: rw-adapter-document-api${STAGING}
 worker:
   image: vizzuality/rw-adapter-document:1.0.0${STAGING}
   env_file:
@@ -27,7 +27,7 @@ worker:
   container_name: rw-adapter-document-worker
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-adapter-document${STAGING}
+    tag: rw-adapter-document-worker${STAGING}
 redis:
   image: redis
   ports:
