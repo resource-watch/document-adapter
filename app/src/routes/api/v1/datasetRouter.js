@@ -79,6 +79,9 @@ const containApps = function (apps1, apps2) {
 
 const checkUserHasPermission = function (user, dataset) {
     if (user && dataset) {
+        if (user.id === 'microservice') {
+            return true;
+        }
         // check if user is admin of any application of the dataset or manager and owner of the dataset
         if (user.role === 'MANAGER' && user.id === dataset.userId) {
             return true;
