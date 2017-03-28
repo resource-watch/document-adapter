@@ -138,13 +138,11 @@ class Scroll {
                     encoding: 'binary'
                 });
             } else {
-
+                this.first = true;
                 while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
                     logger.debug('Writting data');
                     let more = false;
                     const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId);
-
-                    this.first = true;
                     
                     this.total += this.resultScroll[0].hits.hits.length;
                     if (this.total < this.limit || this.limit === -1) {
@@ -161,6 +159,7 @@ class Scroll {
                     this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl), {
                         encoding: 'binary'
                     });
+                    this.first = false;
 
                 }
                 if (this.total === 0) {
