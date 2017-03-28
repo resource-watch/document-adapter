@@ -134,9 +134,9 @@ class Scroll {
             if (this.resultScroll[0].aggregations) {
                 logger.debug(this.resultScroll[0].aggregations);
                 const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId);
-                this.stream.write(this.convertDataToDownload(data, this.type, true, false, this.cloneUrl, {
+                this.stream.write(this.convertDataToDownload(data, this.type, true, false, this.cloneUrl), {
                     encoding: 'binary'
-                }));
+                });
             } else {
 
                 while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
@@ -158,15 +158,15 @@ class Scroll {
                     } else {
                         more = false;
                     }
-                    this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl, {
+                    this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl), {
                         encoding: 'binary'
-                    }));
+                    });
 
                 }
                 if (this.total === 0) {
-                    this.stream.write(this.convertDataToDownload(null, this.type, true, false, this.cloneUrl, {
+                    this.stream.write(this.convertDataToDownload(null, this.type, true, false, this.cloneUrl), {
                         encoding: 'binary'
-                    }));
+                    });
                 }
             }
             this.stream.end();
