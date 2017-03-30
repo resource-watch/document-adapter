@@ -166,13 +166,13 @@ class ImporterService {
                     }
                 }
             };
-            if (this.legend && this.legend.date && this.legend.date.length > 0) {
-                for (let i = 0, length = this.legend.date.length; i < length; i++) {
-                    body.mappings[this.options.type].properties[this.legend.date[i]] = {
-                        type: 'date'
-                    };
-                }
-            }
+            // if (this.legend && this.legend.date && this.legend.date.length > 0) {
+            //     for (let i = 0, length = this.legend.date.length; i < length; i++) {
+            //         body.mappings[this.options.type].properties[this.legend.date[i]] = {
+            //             type: 'date'
+            //         };
+            //     }
+            // }
 
             if (this.legend && this.legend.lat &&  this.legend.long) {
                 logger.info('Contain a geojson column', this.legend.lat);
