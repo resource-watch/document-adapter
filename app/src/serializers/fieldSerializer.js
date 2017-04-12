@@ -25,7 +25,7 @@ class FieldSerializer {
             // };
             return {
                 tableName: tableName,
-                fields: data[0][tableName]['mappings'][tableName].properties
+                fields: data[0][tableName].mappings[tableName].properties
             };
         }
     }
