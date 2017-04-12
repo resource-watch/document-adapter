@@ -177,7 +177,10 @@ class ImporterService {
             if (this.legend && this.legend.lat &&  this.legend.long) {
                 logger.info('Contain a geojson column', this.legend.lat);
                 body.mappings[this.options.type].properties.the_geom = {
-                    type: 'geo_shape'
+                    type: 'geo_shape',
+                    tree: 'geohash',
+                    precision: '1m',
+                    points_only: true
                 };
                 logger.info('Generating the_geom_point column');
                 body.mappings[this.options.type].properties.the_geom_point = {
@@ -187,10 +190,17 @@ class ImporterService {
             }
 
             logger.info('Creating index ', this.options.index);
-            yield createIndex(this.elasticClient, {
-                index: this.options.index,
-                body: body
-            });
+            try {
+                yield createIndex(this.elasticClient, {
+                    index: this.options.index,
+                    body: body
+                });
+            }catch(err) {
+                logger.error(err);
+                throw err;
+
+
+            }
         }
 
         logger.debug('Deactivating refresh index');
