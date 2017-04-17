@@ -320,6 +320,10 @@ class ImporterService {
 
 
                     }.bind(this))
+                    .on('error', function (err) {
+                        logger.error(err);
+                        reject(err);
+                    }.bind(this))
                     .on('end', function () {
                         if (request.body && request.body.length > 0) {
                             this.saveData(request).then(function (res) {
