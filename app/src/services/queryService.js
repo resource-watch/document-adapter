@@ -449,7 +449,6 @@ class QueryService {
             let result = yield this.elasticClient.deleteByQuery({
                 index: tableName,
                 timeout: 120000,
-                requestTimeout: 120000,
                 body: resultQueryElastic
             });
             logger.debug(result[0]);

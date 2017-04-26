@@ -4,11 +4,16 @@ const fs = require('fs');
 const UrlNotFound = require('errors/urlNotFound');
 const randomstring = require('randomstring');
 const DownloadService = require('services/downloadService');
-
+const FileNotFound = require('errors/fileNotFound');
 
 class XMLConverter {
     constructor(url, dataPath) {
-        this.checkURL = new RegExp('^(?:[a-z]+:)?//', 'i');
+        this.checkURL = new RegExp('^(https?:\\/\\/)?' + // protocol
+            '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
+            '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+            '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+            '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+            '(\\#[-a-z\\d_]*)?$', 'i');
         this.dataPath = dataPath;
         this.url = url;
     }
@@ -27,6 +32,9 @@ class XMLConverter {
     }
 
     serialize() {
+        if (!fs.existsSync(this.filePath)) {
+            throw new FileNotFound(`File ${this.filePath} does not exist`);
+        }
         const readStream = fs.createReadStream(this.filePath)
             .pipe(xml(this.dataPath));
         readStream.on('end', () => {
