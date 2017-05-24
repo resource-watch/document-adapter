@@ -42,7 +42,7 @@ function capitalizeFirstLetter(text) {
 }
 
 class Scroll {
-    constructor(elasticClient, sql, parsed, index, datasetId, stream, download, cloneUrl, type) {
+    constructor(elasticClient, sql, parsed, index, datasetId, stream, download, cloneUrl, format) {
         this.elasticClient = elasticClient;
         this.sql = sql;
         this.parsed = parsed;
@@ -51,7 +51,7 @@ class Scroll {
         this.stream = stream;
         this.download = download;
         this.cloneUrl = cloneUrl;
-        this.type = type || 'json';
+        this.format = format || 'json';
         this.timeout = false;
     }
 
@@ -67,7 +67,7 @@ class Scroll {
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
             this.limit = resultQueryElastic.size;
         }
-
+    
         if (resultQueryElastic.size > 10000 || this.limit === -1) {
             resultQueryElastic.size = 10000;
         }
@@ -101,7 +101,7 @@ class Scroll {
                     hasCSVColumnTitle: first
                 }) + '\n';
                 return json;
-            } else if (type === 'json') {
+            } else if (type === 'json' || type === 'geojson') {
                 let dataString = '';
                 if (data) {
                     dataString = JSON.stringify(data);
@@ -132,9 +132,9 @@ class Scroll {
         continue () {
 
             if (this.resultScroll[0].aggregations) {
-                logger.debug(this.resultScroll[0].aggregations);
-                const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId);
-                this.stream.write(this.convertDataToDownload(data, this.type, true, false, this.cloneUrl), {
+                logger.debug(this.resultScroll[0].aggregations.year);
+                const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
+                this.stream.write(this.convertDataToDownload(data, this.format, true, false, this.cloneUrl), {
                     encoding: 'binary'
                 });
             } else {
@@ -142,7 +142,7 @@ class Scroll {
                 while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
                     logger.debug('Writting data');
                     let more = false;
-                    const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId);
+                    const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
                     
                     this.total += this.resultScroll[0].hits.hits.length;
                     if (this.total < this.limit || this.limit === -1) {
@@ -156,14 +156,14 @@ class Scroll {
                     } else {
                         more = false;
                     }
-                    this.stream.write(this.convertDataToDownload(data, this.type, this.first, more, this.cloneUrl), {
+                    this.stream.write(this.convertDataToDownload(data, this.format, this.first, more, this.cloneUrl), {
                         encoding: 'binary'
                     });
                     this.first = false;
 
                 }
                 if (this.total === 0) {
-                    this.stream.write(this.convertDataToDownload(null, this.type, true, false, this.cloneUrl), {
+                    this.stream.write(this.convertDataToDownload(null, this.format, true, false, this.cloneUrl), {
                         encoding: 'binary'
                     });
                 }
@@ -387,6 +387,10 @@ class QueryService {
                     }
                 }
             }
+
+            if (!parsed.limit) {
+                parsed.limit = 9999999; // in group by is need it because elastic has a 10000 limit by default
+            }
         }
         if (parsed.select) {
             for (let i = 0, length = parsed.select.length; i < length; i++) {
@@ -415,13 +419,13 @@ class QueryService {
         return parsed;
     }
 
-    * doQuery(sql, parsed, index, datasetId, body, cloneUrl) {
+    * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         parsed = yield this.convertQueryToElastic(parsed, index);
         sql = Json2sql.toSQL(parsed);
         logger.debug('sql', sql);
 
-        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl);
+        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
