@@ -480,7 +480,7 @@ class QueryService {
         parsed = yield this.convertQueryToElastic(parsed, index);
         logger.debug('sql', sql);
         sql = Json2sql.toSQL(parsed);
-        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, null, type);
+        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, true, null, type);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
