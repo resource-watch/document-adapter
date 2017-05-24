@@ -60,7 +60,7 @@ class QueryRouter {
                 this.state.parsed.from = this.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(this.state.parsed);
                 logger.debug(this.request.body.dataset);
-                yield queryService.doQuery( sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl);
+                yield queryService.doQuery( sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
             } else {
                 this.throw(400, 'Query not valid');
                 return;
@@ -81,6 +81,7 @@ class QueryRouter {
                 mimetype = 'text/csv';
                 break;
             case 'json':
+            case 'geojson':
                 mimetype = 'application/json';
                 break;
         }
