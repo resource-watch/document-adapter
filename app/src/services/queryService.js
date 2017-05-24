@@ -62,7 +62,18 @@ class Scroll {
         let resultQueryElastic = yield this.elasticClient.explain({
             sql: this.sql
         });
-
+        if (this.parsed.group) {
+            logger.debug('Config size of aggregations');
+            let name = null;
+            let aggregations = resultQueryElastic.aggregations;
+            for (let i = 0, length = this.parsed.group.length; i < length; i++) {
+                name = this.parsed.group[i].value;
+                if (aggregations[name] && aggregations[name].terms) {
+                    aggregations[name].terms.size = this.parsed.limit || 999999;
+                    aggregations = aggregations[name].aggregations;
+                }
+            }
+        }
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
             this.limit = resultQueryElastic.size;
@@ -142,7 +153,6 @@ class Scroll {
         continue () {
 
             if (this.resultScroll[0].aggregations) {
-                logger.debug(this.resultScroll[0].aggregations.year);
                 const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
                 this.stream.write(this.convertDataToDownload(data, this.format, true, false, this.cloneUrl), {
                     encoding: 'binary'
