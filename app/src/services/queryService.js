@@ -108,13 +108,20 @@ class Scroll {
                     dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
                 }
                 if (first) {
-                    dataString = '{"data":[' + dataString;
+                    if (type === 'geojson'){
+                        dataString = `{"data":[{"type": "FeatureCollection", "features": [${dataString}`;
+                    } else {
+                        dataString = '{"data":[' + dataString;
+                    }
                 }
                 if (more) {
                     dataString += ',';
                 } else {
 
                     if (!this.download) {
+                        if (type === 'geojson'){
+                            dataString += ']}';
+                        }
                         dataString += '],';
                         var meta = {
                             cloneUrl: cloneUrl
@@ -122,6 +129,9 @@ class Scroll {
 
                         dataString += `"meta": ${JSON.stringify(meta)} }`;
                     } else {
+                        if (type === 'geojson'){
+                            dataString += ']}';
+                        }
                         dataString += ']}';
                     }
                 }
