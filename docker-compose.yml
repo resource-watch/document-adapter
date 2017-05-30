@@ -1,5 +1,5 @@
 prod:
-  image: vizzuality/rw-adapter-document:1.1.0${STAGING}
+  image: vizzuality/rw-adapter-document:1.1.1${STAGING}
   ports:
     - "4000"
   env_file:
