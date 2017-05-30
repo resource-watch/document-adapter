@@ -111,8 +111,12 @@ class ImporterService {
         try {
             if (this.action === 'overwrite') {
                 logger.info('Overwrite data. Remove old');
-                yield queryService.deleteIndex(this.index);
-                logger.info('Deleted successfully. Continue importing');
+                try {
+                    yield queryService.deleteIndex(this.index);
+                    logger.info('Deleted successfully. Continue importing');
+                } catch(err) {
+                    logger.info('Error removing dataset. Continue importing...', err);
+                }
             }
 
             yield this.start(this.action !== 'concat');
