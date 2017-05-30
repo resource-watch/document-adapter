@@ -15,7 +15,7 @@ prod:
     syslog-address: ${SYSLOG_ADDRESS}
     tag: rw-adapter-document-api${STAGING}
 worker:
-  image: vizzuality/rw-adapter-document:1.0.0${STAGING}
+  image: vizzuality/rw-adapter-document:1.1.1${STAGING}
   env_file:
     - prod.env
   links:
