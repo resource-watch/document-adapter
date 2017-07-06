@@ -24,8 +24,8 @@ case "$1" in
         ;;
     startWorker)
         echo "Running Worker start"
-        
-        exec  NODE_PATH=app/src node app/worker.js
+        export NODE_PATH=app/src
+        exec node app/worker.js
         ;;
     *)
         exec "$@"
