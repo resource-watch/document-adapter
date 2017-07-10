@@ -90,13 +90,14 @@ function desactivateRefreshIndex(client, index) {
 }
 
 class ImporterService {
-    constructor(type, url, index, legend, dataPath, action) {
+    constructor(type, url, index, legend, dataPath, action, verify) {
         logger.debug(`Creating importerservice with ${url} and dataPath ${dataPath} and action ${action}`);
         this.action = action;
         this.dataPath = dataPath;
-        this.converter = ConverterFactory.getInstance(type, url, dataPath);
+        this.converter = ConverterFactory.getInstance(type, url, dataPath, verify);
         this.legend = legend;
         this.index = index;
+        this.verify = verify;
         this.options = {
             index: index,
             type: index
@@ -105,6 +106,14 @@ class ImporterService {
             host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port'),
             log: 'error'
         });
+    }
+
+    getPath() {
+        return this.converter.filePath;
+    }
+
+    getSHA256() {
+        return this.converter.sha256;
     }
 
     * startProcess() {

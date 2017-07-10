@@ -382,28 +382,41 @@ class QueryService {
 
     * convertQueryToElastic(parsed, index) {
         //search ST_GeoHash
-        if (parsed.group) {
+        if (parsed.group || parsed.orderBy) {
             let mapping = yield this.getMapping(index);
-            
-            mapping = mapping[0][index].mappings[index].properties;
-            for (let i = 0, length = parsed.group.length; i < length; i++) {
-                const node = parsed.group[i];
-                if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
-                    const args = [];
-                    args.push({
-                        type: 'literal',
-                        value: 'field=\'the_geom_point\'',
-                    }, {
-                        type: 'literal',
-                        value: `precision=${node.arguments[1].value}`,
-                    });
-                    node.arguments = args;
-                    node.value = 'geohash_grid';
-                } else if (node.type==='literal') {
-                    logger.debug('Checking if it is text');
-                    logger.debug(mapping[node.value]);
-                    if (mapping[node.value] && mapping[node.value].type === 'text'){
-                        node.value = `${node.value}.keyword`;
+            if (parsed.group) {                
+                mapping = mapping[0][index].mappings[index].properties;
+                for (let i = 0, length = parsed.group.length; i < length; i++) {
+                    const node = parsed.group[i];
+                    if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
+                        const args = [];
+                        args.push({
+                            type: 'literal',
+                            value: 'field=\'the_geom_point\'',
+                        }, {
+                            type: 'literal',
+                            value: `precision=${node.arguments[1].value}`,
+                        });
+                        node.arguments = args;
+                        node.value = 'geohash_grid';
+                    } else if (node.type==='literal') {
+                        logger.debug('Checking if it is text');
+                        logger.debug(mapping[node.value]);
+                        if (mapping[node.value] && mapping[node.value].type === 'text'){
+                            node.value = `${node.value}.keyword`;
+                        }
+                    }
+                }
+            }
+            if (parsed.orderBy) {
+                for (let i = 0, length = parsed.orderBy.length; i < length; i++) {
+                    const node = parsed.orderBy[i];
+                    if (node.type==='literal') {
+                        logger.debug('Checking if it is text');
+                        logger.debug(mapping[node.value]);
+                        if (mapping[node.value] && mapping[node.value].type === 'text'){
+                            node.value = `${node.value}.keyword`;
+                        }
                     }
                 }
             }

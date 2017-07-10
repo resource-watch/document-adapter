@@ -10,7 +10,7 @@ const queryService = require('services/queryService');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 const ImporterService = require('services/importerService');
 const randomstring = require('randomstring');
-const ConverterFactory = require('services/converters/converterFactory');
+const stamperyService = require('services/stamperyService');
 
 var microserviceClient = null;
 
@@ -90,7 +90,7 @@ class QueueService {
         this.deleteQueue.process(this.processDelete.bind(this));
     }
 
-    * addDataset(type, url, data, index, id, legend, dataPath) {
+    * addDataset(type, url, data, index, id, legend, dataPath, verify) {
         logger.info(`Adding import dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
         this.importQueue.add({
             url,
@@ -100,7 +100,8 @@ class QueueService {
             legend: legend,
             index: index,
             id: id,
-            action: 'import'
+            action: 'import',
+            verify
         }, {
             attempts: 2,
             timeout: 86400000, //2 hours
@@ -189,13 +190,18 @@ class QueueService {
                     logger.debug('Action', job.data.action);
                     yield this.updateState(job.data.id, 0, job.data.index); //pending
                 
-                    const importer = new ImporterService(job.data.type, job.data.url, job.data.index, job.data.legend, job.data.dataPath, job.data.action);
+                    const importer = new ImporterService(job.data.type, job.data.url, job.data.index, job.data.legend, job.data.dataPath, job.data.action, job.data.verify);
                     yield importer.startProcess();
                     logger.info('Imported successfully. Updating state');
                     yield this.updateState(job.data.id, 1, job.data.index);
+                    if (job.data.verify && job.data.action === 'import') {
+                        logger.debug('Doing stamp');
+                        yield stamperyService.stamp(job.data.id, importer.getSHA256(), importer.getPath(), job.data.type);
+                    }
                 } catch (err) {
                     logger.error('Error in ProcessImport', err);
                     yield this.updateState(job.data.id, 2, null, err.message || 'Unexpected error');
+                    yield queryService.deleteIndex(job.data.index);
                     throw err;
                 }
             }.bind(this)).then(function () {
