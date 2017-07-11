@@ -14,14 +14,14 @@ class StamperyService {
         });
     }
 
-    * updateBlockChain(id, sha256, token, time, url) {
+    * updateBlockChain(id, sha256, idStamp, time, url) {
         logger.debug('Updating dataset');
         let options = {
             uri: '/dataset/' + id,
             body: {
                 blockchain: {
                     hash: sha256,
-                    id,
+                    id: idStamp,
                     time,
                     backupUrl: url
                 }
