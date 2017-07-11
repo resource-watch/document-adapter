@@ -14,16 +14,17 @@ class StamperyService {
         });
     }
 
-    * updateBlockChain(id, sha256, token, url) {
+    * updateBlockChain(id, sha256, token, time, url) {
         logger.debug('Updating dataset');
         let options = {
             uri: '/dataset/' + id,
             body: {
                 blockchain: {
-                    sha256,
-                    token
-                },
-                connectorUrl: url
+                    hash: sha256,
+                    id,
+                    time,
+                    backupUrl: url
+                }
             },
             method: 'PATCH',
             json: true
@@ -47,12 +48,12 @@ class StamperyService {
                         return;
                     }
 
-                    resolve(stamp.token);
+                    resolve(stamp);
                 });
             });
-            const token = yield promise;
+            const stampValue = yield promise;
             let url = yield S3Service.upload(datasetId, type, path);
-            yield this.updateBlockChain(datasetId, sha256, token, url);
+            yield this.updateBlockChain(datasetId, sha256, stampValue.id, stampValue.time, url);
         } catch(err) {
             throw new Error('Error registering in blockchain: ' + err.message);
         }
