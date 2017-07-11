@@ -4,17 +4,17 @@ const JSONConverter = require('services/converters/jsonConverter');
 const XMLConverter = require('services/converters/xmlConverter');
 const ConverterNotSupported = require('errors/converterNotSupported');
 class Converter {
-    static getInstance(type, url, dataPath) {
+    static getInstance(type, url, dataPath, verify) {
         logger.info(`Getting converter of type ${type} and dataPath ${dataPath}`);
         switch(type) {
             case 'csv':
-                return new CSVConverter(url);
+                return new CSVConverter(url, verify);
             case 'tsv':
-                return new CSVConverter(url, '\t');
+                return new CSVConverter(url, verify, '\t');
             case 'json':
-                return new JSONConverter(url, dataPath);
+                return new JSONConverter(url, dataPath, verify);
             case 'xml':
-                return new XMLConverter(url, dataPath);
+                return new XMLConverter(url, dataPath, verify);
             default:
                 throw new ConverterNotSupported(400, `Converter to ${type} not supported`);
         }

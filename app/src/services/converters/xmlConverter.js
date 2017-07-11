@@ -7,7 +7,7 @@ const DownloadService = require('services/downloadService');
 const FileNotFound = require('errors/fileNotFound');
 
 class XMLConverter {
-    constructor(url, dataPath) {
+    constructor(url, dataPath, verify) {
         this.checkURL = new RegExp('^(https?:\\/\\/)?' + // protocol
             '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
             '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
@@ -16,6 +16,7 @@ class XMLConverter {
             '(\\#[-a-z\\d_]*)?$', 'i');
         this.dataPath = dataPath;
         this.url = url;
+        this.verify = verify;
     }
 
     * init() {
@@ -25,7 +26,9 @@ class XMLConverter {
             if (!exists) {
                 throw new UrlNotFound(400, 'Url not found');
             }
-            this.filePath = yield DownloadService.downloadFile(this.url, randomstring.generate() + '.xml');
+            const result = yield DownloadService.downloadFile(this.url, randomstring.generate() + '.xml', this.verify);
+            this.filePath = result.path;
+            this.sha256 = result.sha256;
         } else {
             this.filePath = this.url;
         }
@@ -38,7 +41,7 @@ class XMLConverter {
         const readStream = fs.createReadStream(this.filePath)
             .pipe(xml(this.dataPath));
         readStream.on('end', () => {
-            if (fs.existsSync(this.filePath)) {
+            if (fs.existsSync(this.filePath) && !this.verify) {
                 logger.info('Removing file');
                 fs.unlinkSync(this.filePath);
             }

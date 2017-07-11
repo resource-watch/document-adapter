@@ -7,7 +7,7 @@ const DownloadService = require('services/downloadService');
 const FileNotFound = require('errors/fileNotFound');
 
 class CSVConverter {
-    constructor(url, delimiter = ',') {
+    constructor(url, verify = false, delimiter = ',') {
         this.checkURL = new RegExp('^(https?:\\/\\/)?' + // protocol
             '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
             '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
@@ -16,6 +16,7 @@ class CSVConverter {
             '(\\#[-a-z\\d_]*)?$', 'i');
         this.delimiter = delimiter;
         this.url = url;
+        this.verify = verify;
     }
 
     * init() {
@@ -31,7 +32,9 @@ class CSVConverter {
             } else {
                 name += '.csv';
             }
-            this.filePath = yield DownloadService.downloadFile(this.url, name);
+            const result = yield DownloadService.downloadFile(this.url, name, this.verify);
+            this.filePath = result.path;
+            this.sha256 = result.sha256;
         } else {
             this.filePath = this.url;
         }
@@ -48,9 +51,9 @@ class CSVConverter {
         });
         readStream.on('end', () => {
             logger.info('Removing file', this.filePath);
-            if (fs.existsSync(this.filePath)) {
-                fs.unlinkSync(this.filePath);
-            }
+                if (fs.existsSync(this.filePath) && !this.verify) {
+                    fs.unlinkSync(this.filePath);
+                }
         });
 
         return readStream;
