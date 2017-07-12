@@ -426,7 +426,7 @@ class QueryService {
 
                     if (node.type === 'function') {
                         for (let j = 0; j < node.arguments; j++) {
-                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] === 'text') {
+                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value].type === 'text') {
                                 node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                             }
                         }
