@@ -19,5 +19,6 @@
         "port": 9200,
         "host": "http://mymachine"
     },
-    "timeCache": 1500
+    "timeCache": 1500,
+    "stampery": ""
 }

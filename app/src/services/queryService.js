@@ -423,9 +423,8 @@ class QueryService {
             if (parsed.select) {
                 for (let i = 0, length = parsed.select.length; i < length; i++) {
                     const node = parsed.select[i];
-
                     if (node.type === 'function') {
-                        for (let j = 0; j < node.arguments; j++) {
+                        for (let j = 0; j < node.arguments.length; j++) {
                             if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value].type === 'text') {
                                 node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                             }
