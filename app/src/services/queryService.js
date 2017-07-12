@@ -78,7 +78,7 @@ class Scroll {
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
             this.limit = resultQueryElastic.size;
         }
-    
+
         if (resultQueryElastic.size > 10000 || this.limit === -1) {
             resultQueryElastic.size = 10000;
         }
@@ -119,7 +119,7 @@ class Scroll {
                     dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
                 }
                 if (first) {
-                    if (type === 'geojson'){
+                    if (type === 'geojson') {
                         dataString = `{"data":[{"type": "FeatureCollection", "features": [${dataString}`;
                     } else {
                         dataString = '{"data":[' + dataString;
@@ -130,7 +130,7 @@ class Scroll {
                 } else {
 
                     if (!this.download) {
-                        if (type === 'geojson'){
+                        if (type === 'geojson') {
                             dataString += ']}';
                         }
                         dataString += '],';
@@ -140,7 +140,7 @@ class Scroll {
 
                         dataString += `"meta": ${JSON.stringify(meta)} }`;
                     } else {
-                        if (type === 'geojson'){
+                        if (type === 'geojson') {
                             dataString += ']}';
                         }
                         dataString += ']}';
@@ -163,7 +163,7 @@ class Scroll {
                     logger.debug('Writting data');
                     let more = false;
                     const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
-                    
+
                     this.total += this.resultScroll[0].hits.hits.length;
                     if (this.total < this.limit || this.limit === -1) {
                         this.resultScroll = yield this.elasticClient.getScroll({
@@ -301,7 +301,7 @@ class QueryService {
         logger.info(`Updating index ${index} and id ${id} with data`, data);
         try {
             const result = yield this.elasticClient.update({
-                index, 
+                index,
                 type: index,
                 id: id,
                 body: {
@@ -309,8 +309,8 @@ class QueryService {
                 }
             });
             return result;
-        } catch(err) {
-            if (err && err.status === 404){
+        } catch (err) {
+            if (err && err.status === 404) {
                 throw new DocumentNotFound(404, `Document with id ${id} not found`);
             }
             throw err;
@@ -384,7 +384,7 @@ class QueryService {
         //search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
             let mapping = yield this.getMapping(index);
-            if (parsed.group) {                
+            if (parsed.group) {
                 mapping = mapping[0][index].mappings[index].properties;
                 for (let i = 0, length = parsed.group.length; i < length; i++) {
                     const node = parsed.group[i];
@@ -399,10 +399,10 @@ class QueryService {
                         });
                         node.arguments = args;
                         node.value = 'geohash_grid';
-                    } else if (node.type==='literal') {
+                    } else if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
                         logger.debug(mapping[node.value]);
-                        if (mapping[node.value] && mapping[node.value].type === 'text'){
+                        if (mapping[node.value] && mapping[node.value].type === 'text') {
                             node.value = `${node.value}.keyword`;
                         }
                     }
@@ -411,11 +411,24 @@ class QueryService {
             if (parsed.orderBy) {
                 for (let i = 0, length = parsed.orderBy.length; i < length; i++) {
                     const node = parsed.orderBy[i];
-                    if (node.type==='literal') {
+                    if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
                         logger.debug(mapping[node.value]);
-                        if (mapping[node.value] && mapping[node.value].type === 'text'){
+                        if (mapping[node.value] && mapping[node.value].type === 'text') {
                             node.value = `${node.value}.keyword`;
+                        }
+                    }
+                }
+            }
+            if (parsed.select) {
+                for (let i = 0, length = parsed.select.length; i < length; i++) {
+                    const node = parsed.select[i];
+
+                    if (node.type === 'function') {
+                        for (let j = 0; j < node.arguments; j++) {
+                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] === 'text') {
+                                node.arguments[j].value = `${node.arguments[j].value}.keyword`;
+                            }
                         }
                     }
                 }
