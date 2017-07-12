@@ -439,19 +439,27 @@ class QueryService {
             }
         }
         if (parsed.select) {
+            let mapping = yield this.getMapping(index);
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const node = parsed.select[i];
-                if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
-                    const args = [];
-                    args.push({
-                        type: 'literal',
-                        value: 'field=\'the_geom_point\'',
-                    }, {
-                        type: 'literal',
-                        value: `precision=${node.arguments[1].value}`,
-                    });
-                    node.arguments = args;
-                    node.value = 'geohash_grid';
+                if (node.type === 'function') {
+                    if (node.value.toLowerCase() === 'st_geohash')  {
+                        const args = [];
+                        args.push({
+                            type: 'literal',
+                            value: 'field=\'the_geom_point\'',
+                        }, {
+                            type: 'literal',
+                            value: `precision=${node.arguments[1].value}`,
+                        });
+                        node.arguments = args;
+                        node.value = 'geohash_grid';
+                    }
+                    for (let j = 0; j < node.arguments.length; j++) {
+                        if (node.arguments[j].type === 'literal' &&  mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
+                            node.arguments[j].value = `${node.arguments[j].value}.keyword`;
+                        }
+                    }
                 }
             }
         }
