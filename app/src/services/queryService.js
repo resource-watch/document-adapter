@@ -321,7 +321,8 @@ class QueryService {
     findIntersect(node, finded, result) {
         if (node && node.type === 'string' && node.value && finded) {
             try {
-                const geojson = JSON.parse(node.value.slice(1, node.value.length -2));
+                
+                const geojson = JSON.parse(node.value);
 
                 const newResult = Object.assign({}, result || {}, {
                     geojson
@@ -329,6 +330,7 @@ class QueryService {
 
                 return newResult;
             } catch (e) {
+                
                 return result;
             }
         }
@@ -367,7 +369,7 @@ class QueryService {
                     value: 'the_geom'
                 }, {
                     type: 'string',
-                    value: `${wkt}`
+                    value: `'${wkt}'`
                 }]
             };
         }
