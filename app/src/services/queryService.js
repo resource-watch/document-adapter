@@ -321,6 +321,10 @@ class QueryService {
     findIntersect(node, finded, result) {
         if (node && node.type === 'string' && node.value && finded) {
             try {
+                logger.debug(node.value);
+                if (node.value.startsWith('\'')){
+                    node.value = node.value.slice(1, node.value.length-1);
+                }
                 
                 const geojson = JSON.parse(node.value);
 
@@ -330,7 +334,7 @@ class QueryService {
 
                 return newResult;
             } catch (e) {
-                
+                logger.error(e);
                 return result;
             }
         }
