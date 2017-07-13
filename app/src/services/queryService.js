@@ -321,7 +321,7 @@ class QueryService {
     findIntersect(node, finded, result) {
         if (node && node.type === 'string' && node.value && finded) {
             try {
-                const geojson = JSON.parse(node.value);
+                const geojson = JSON.parse(node.value.slice(1, node.value.length -2));
 
                 const newResult = Object.assign({}, result || {}, {
                     geojson
