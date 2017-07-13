@@ -193,7 +193,7 @@ const toSQLMiddleware = function*(next) {
         yield next;
         
     } catch (e) {
-        if(e.statusCode === 400){
+        if(e.statusCode === 400 || e.statusCode === 404){
             this.status = e.statusCode;
             this.body = e.body;
         }
