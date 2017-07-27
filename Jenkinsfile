@@ -43,6 +43,7 @@ node {
       withCredentials([usernamePassword(credentialsId: 'Vizzuality Docker Hub', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
         sh("docker -H :2375 login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}")
         sh("docker -H :2375 push ${imageTag}")
+        sh("docker -H :2375 push ${dockerUsername}/${appName}:latest")
         sh("docker -H :2375 rmi ${imageTag}")
       }
     }
@@ -62,6 +63,7 @@ node {
             sh("kubectl apply -f k8s/staging/")
           }
           sh("kubectl set image deployment ${appName} ${appName}=${imageTag} --record")
+          sh("kubectl set image deployment ${appName} ${appName}-cron=${imageTag} --record")
           break
 
         // Roll out to production
