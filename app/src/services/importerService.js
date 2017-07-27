@@ -11,7 +11,7 @@ const uuid = require('uuid');
 const _ = require('lodash');
 const queryService = require('services/queryService');
 const ConverterFactory = require('services/converters/converterFactory');
-
+const elasticUri = process.env.ELASTIC_URI ||  config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 const CONTAIN_SPACES = /\s/g;
 
 function isJSONObject(value) {
@@ -103,7 +103,7 @@ class ImporterService {
             type: index
         };
         this.elasticClient = new elasticsearch.Client({
-            host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port'),
+            host: elasticUri,
             log: 'error'
         });
     }
