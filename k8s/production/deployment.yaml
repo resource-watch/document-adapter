@@ -123,7 +123,8 @@ spec:
                   key: STAMPERY_TOKEN
       - name: {name}-redis
         image: redis
-        imagePullPolicy: Always
+        ports:
+          - containerPort: 6379
         resources:
           requests:
             memory: "0Mi"
