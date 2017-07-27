@@ -28,7 +28,7 @@ spec:
           - name: PORT
             value: "4000"
           - name: NODE_ENV
-            value: dev
+            value: prod
           - name: NODE_PATH
             value: app/src
           - name: LOCAL_URL
@@ -82,7 +82,7 @@ spec:
           - name: PORT
             value: "4000"
           - name: NODE_ENV
-            value: dev
+            value: prod
           - name: NODE_PATH
             value: app/src
           - name: LOCAL_URL
