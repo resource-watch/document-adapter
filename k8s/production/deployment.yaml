@@ -33,6 +33,10 @@ spec:
             value: app/src
           - name: LOCAL_URL
             value: http://{name}.default.svc.cluster.local:4000
+          - name: REDIS_PORT_6379_TCP_ADDR
+            value: localhost
+          - name: REDIS_PORT_6379_TCP_PORT
+            value: "6379"
           - name: ELASTIC_URI
             valueFrom:
                 secretKeyRef:
@@ -83,6 +87,10 @@ spec:
             value: app/src
           - name: LOCAL_URL
             value: http://{name}.default.svc.cluster.local:4000
+          - name: REDIS_PORT_6379_TCP_ADDR
+            value: localhost
+          - name: REDIS_PORT_6379_TCP_PORT
+            value: "6379"
           - name: ELASTIC_URI
             valueFrom:
                 secretKeyRef:
