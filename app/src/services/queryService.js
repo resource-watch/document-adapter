@@ -305,6 +305,7 @@ class QueryService {
                     process.exit(1);
                 }
             });
+        }, 3000);
 
     }
 
