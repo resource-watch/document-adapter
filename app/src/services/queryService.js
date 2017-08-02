@@ -10,6 +10,7 @@ const Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
 const DeleteSerializer = require('serializers/deleteSerializer');
 const DocumentNotFound = require('errors/documentNotFound');
+const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 
 const IndexNotFound = require('errors/indexNotFound');
 
@@ -290,10 +291,20 @@ class QueryService {
         elasticsearch.Client.apis.sql = sqlAPI;
 
         this.elasticClient = new elasticsearch.Client({
-            host: config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port'),
+            host: elasticUri,
             log: 'info',
             apiVersion: 'sql'
         });
+        setInterval(() => {
+            this.elasticClient.ping({
+                // ping usually has a 3000ms timeout
+                requestTimeout: 2000
+            }, function (error) {
+                if (error) {
+                    logger.error('elasticsearch cluster is down!');
+                    process.exit(1);
+                }
+            });
 
     }
 
