@@ -11,7 +11,7 @@ const uuid = require('uuid');
 const _ = require('lodash');
 const queryService = require('services/queryService');
 const ConverterFactory = require('services/converters/converterFactory');
-const elasticUri = process.env.ELASTIC_URI ||  config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
+const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 const CONTAIN_SPACES = /\s/g;
 
 function isJSONObject(value) {
@@ -106,6 +106,18 @@ class ImporterService {
             host: elasticUri,
             log: 'error'
         });
+        setInterval(function () {
+            client.ping({
+                // ping usually has a 3000ms timeout
+                requestTimeout: 2000
+            }, function (error) {
+                if (error) {
+                    logger.error('elasticsearch cluster is down!');
+                    process.exit(1);
+                }
+            });
+        }, 3000);
+
     }
 
     getPath() {
@@ -123,7 +135,7 @@ class ImporterService {
                 try {
                     yield queryService.deleteIndex(this.index);
                     logger.info('Deleted successfully. Continue importing');
-                } catch(err) {
+                } catch (err) {
                     logger.info('Error removing dataset. Continue importing...', err);
                 }
             }
@@ -208,7 +220,7 @@ class ImporterService {
                     index: this.options.index,
                     body: body
                 });
-            }catch(err) {
+            } catch (err) {
                 logger.error(err);
                 throw err;
 
