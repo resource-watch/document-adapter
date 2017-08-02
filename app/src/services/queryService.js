@@ -286,6 +286,15 @@ class QueryService {
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
+            },
+            ping: function (opts) {
+                logger.debug('ping ');
+                return function (cb) {
+                    this.transport.request({
+                        method: 'GET',
+                        path: ''
+                    }, cb);
+                }.bind(this);
             }
         };
         elasticsearch.Client.apis.sql = sqlAPI;
