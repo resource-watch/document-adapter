@@ -107,7 +107,7 @@ class ImporterService {
             log: 'error'
         });
         setInterval(() => {
-            this.elasticClien.ping({
+            this.elasticClient.ping({
                 // ping usually has a 3000ms timeout
                 requestTimeout: 2000
             }, function (error) {
