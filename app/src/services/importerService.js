@@ -106,8 +106,8 @@ class ImporterService {
             host: elasticUri,
             log: 'error'
         });
-        setInterval(function () {
-            client.ping({
+        setInterval(() => {
+            this.elasticClien.ping({
                 // ping usually has a 3000ms timeout
                 requestTimeout: 2000
             }, function (error) {
