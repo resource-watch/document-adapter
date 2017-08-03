@@ -107,7 +107,7 @@ node {
 
         // Default behavior?
         default:
-          sh("Default -> do nothing")
+          sh("echo \"Default -> do nothing\"")
       }
     }
 
