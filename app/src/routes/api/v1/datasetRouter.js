@@ -2,9 +2,14 @@
 
 const logger = require('logger');
 const Router = require('koa-router');
+const config = require('config');
 const queueService = require('services/queueService');
 const queryService = require('services/queryService');
-
+const redisDeletePattern = require('redis-delete-pattern');
+var redisClient = require('redis').createClient({
+    port: config.get('redis.port'),
+    host: config.get('redis.host')
+});
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
 const deserializer = function (obj) {
@@ -13,6 +18,21 @@ const deserializer = function (obj) {
             keyForAttribute: 'camelCase'
         }).deserialize(obj, callback);
     };
+};
+
+const redisDeletePatternProm = function (id) {
+    return new Promise((resolve,reject) => {
+        redisDeletePattern({
+            redis: redisClient,
+            pattern: `*${id}*`
+        }, (err) => {
+            if (err){
+                reject(err);
+                return;
+            }
+            resolve();
+        });
+    });
 };
 
 const router = new Router({
@@ -32,7 +52,8 @@ class DatasetRouter {
         logger.info(`Update data with id ${this.params.id}  of dataset ${this.request.body.dataset.id}`);
         this.assert(this.request.body.data, 400, 'Data is required');
         const result = yield queryService.updateElement(this.request.body.dataset.tableName, this.params.id, this.request.body.data);
-
+        yield redisDeletePatternProm(this.request.body.dataset.id);
+        this.set('cache-control', 'flush');
         this.body = null;
     }
 
@@ -42,6 +63,8 @@ class DatasetRouter {
         this.assert(this.request.body.provider, 400, 'Provider required');
         
         yield queueService.overwriteDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
+        yield redisDeletePatternProm(this.request.body.dataset.id);
+        this.set('cache-control', 'flush');
         this.body = '';
     }
 
@@ -51,12 +74,16 @@ class DatasetRouter {
         this.assert(this.request.body.provider, 400, 'Provider required');
         
         yield queueService.concatDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
+        yield redisDeletePatternProm(this.request.body.dataset.id);
+        this.set('cache-control', 'flush');
         this.body = '';
     }
 
     static * delete() {
         logger.info('Deleting index with dataset', this.request.body);
         let result = yield queueService.deleteDataset('index_' + this.params.id.replace(/-/g, ''), this.params.id);
+        yield redisDeletePatternProm(this.params.id);
+        this.set('cache-control', 'flush');
         this.body = result;
     }
 

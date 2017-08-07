@@ -288,7 +288,7 @@ class QueryService {
                 }.bind(this);
             },
             ping: function (opts) {
-                logger.debug('ping ');
+                // logger.debug('ping ');
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
