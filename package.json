@@ -1,6 +1,6 @@
 {
   "name": "rw-adapter-document",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Resource Watch - Adapter document",
   "main": "index.js",
   "scripts": {
@@ -56,9 +56,11 @@
     "md5": "2.1.0",
     "newrelic": "1.27.1",
     "randomstring": "1.1.5",
+    "redis": "^2.7.1",
+    "redis-delete-pattern": "^0.1.0",
     "s3": "^4.4.0",
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
-    "sql2json": "1.5.22",
+    "sql2json": "1.5.23",
     "stampery": "^6.0.2",
     "terraformer-wkt-parser": "^1.1.2",
     "uuid": "2.0.1",

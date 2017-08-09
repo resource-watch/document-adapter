@@ -22,52 +22,57 @@ var router = new Router({
     prefix: '/document'
 });
 
-var unlink = function(file) {
-    return function(callback) {
+var unlink = function (file) {
+    return function (callback) {
         fs.unlink(file, callback);
     };
 };
 
 var JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
-var deserializer = function(obj) {
-    return function(callback) {
-        new JSONAPIDeserializer({keyForAttribute: 'camelCase'}).deserialize(obj, callback);
+var deserializer = function (obj) {
+    return function (callback) {
+        new JSONAPIDeserializer({
+            keyForAttribute: 'camelCase'
+        }).deserialize(obj, callback);
     };
 };
 
-var serializeObjToQuery = function(obj){
-    return Object.keys(obj).reduce(function(a,k){a.push(k+'='+encodeURIComponent(obj[k]));return a;},[]).join('&');
+var serializeObjToQuery = function (obj) {
+    return Object.keys(obj).reduce(function (a, k) {
+        a.push(k + '=' + encodeURIComponent(obj[k]));
+        return a;
+    }, []).join('&');
 };
 
 
 class QueryRouter {
 
-    
+
     static * query() {
         logger.info('Do Query with dataset', this.request.body);
         logger.debug('Checking if is delete or select');
 
-        try {
+        try  {
             if (this.state.parsed.delete) {
                 logger.debug('Doing delete');
                 this.state.parsed.from = this.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(this.state.parsed);
                 this.body = yield queryService.doDeleteQuery(sql, this.state.parsed, this.request.body.dataset.tableName);
-            } else  if (this.state.parsed.select) {
+            } else if (this.state.parsed.select) {
                 this.body = passThrough();
                 const cloneUrl = QueryRouter.getCloneUrl(this.request.url, this.params.dataset);
                 this.state.parsed.from = this.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(this.state.parsed);
                 logger.debug(this.request.body.dataset);
-                yield queryService.doQuery( sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
+                yield queryService.doQuery(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
             } else {
                 this.throw(400, 'Query not valid');
                 return;
             }
-        } catch(err) {
+        } catch (err) {
             logger.error(err);
-            throw err;            
+            throw err;
         }
     }
 
@@ -88,7 +93,7 @@ class QueryRouter {
         this.set('Content-type', mimetype);
         this.state.parsed.from = this.request.body.dataset.tableName;
         const sql = Json2sql.toSQL(this.state.parsed);
-        yield queryService.downloadQuery( sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
+        yield queryService.downloadQuery(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, format);
 
 
     }
@@ -107,7 +112,7 @@ class QueryRouter {
             body: {
                 dataset: {
                     datasetUrl: `/${process.env.API_VERSION}${url.replace('/document', '')}`,
-                    application: ['your','apps']
+                    application: ['your', 'apps']
                 }
             }
         };
@@ -115,27 +120,12 @@ class QueryRouter {
 
 }
 
-const cacheMiddleware = function*(next) {
-    let data = yield redisClient.getAsync(this.request.url);
-    if (data) {
-        this.body = data;
-        return;
-    }
-    yield next;
-    // save result
-    logger.info('Caching data');
-    if(this.statusCode === 200){
-        redisClient.setex(this.request.url, config.get('timeCache'), JSON.stringify(this.body));
-    }
-
-};
-
-const deserializeDataset = function*(next){
+const deserializeDataset = function* (next) {
     logger.debug('Body', this.request.body);
-    if(this.request.body.dataset && this.request.body.dataset.data){
+    if (this.request.body.dataset && this.request.body.dataset.data) {
         this.request.body.dataset = yield deserializer(this.request.body.dataset);
     } else {
-        if (this.request.body.dataset && this.request.body.dataset.table_name){
+        if (this.request.body.dataset && this.request.body.dataset.table_name) {
             this.request.body.dataset.tableName = this.request.body.dataset.table_name;
         }
     }
@@ -143,13 +133,13 @@ const deserializeDataset = function*(next){
 };
 
 
-const toSQLMiddleware = function*(next) {
-    
+const toSQLMiddleware = function* (next) {
+
     let options = {
         method: 'GET',
         json: true
     };
-    if(!this.query.sql && !this.request.body.sql && !this.query.outFields && !this.query.outStatistics){
+    if (!this.query.sql && !this.request.body.sql && !this.query.outFields && !this.query.outStatistics) {
         this.throw(400, 'sql or fs required');
         return;
     }
@@ -158,10 +148,10 @@ const toSQLMiddleware = function*(next) {
         logger.debug('Checking sql correct');
         let params = Object.assign({}, this.query, this.request.body);
         options.uri = '/convert/sql2SQL?sql=' + params.sql;
-        if (params.geostore){
+        if (params.geostore) {
             options.uri += '&geostore=' + params.geostore;
         }
-        if (params.geojson){
+        if (params.geojson) {
             options.body = {
                 geojson: params.geojson
             };
@@ -175,7 +165,7 @@ const toSQLMiddleware = function*(next) {
         let body = fs;
         let resultQuery = Object.assign({}, query);
 
-        if(resultQuery){
+        if (resultQuery) {
             options.uri = '/convert/fs2SQL' + resultQuery + '&tableName=' + this.request.body.dataset.tableName;
         } else {
             options.uri = '/convert/fs2SQL?tableName=' + this.request.body.dataset.tableName;
@@ -191,9 +181,9 @@ const toSQLMiddleware = function*(next) {
         this.state.parsed = result.data.attributes.jsonSql;
         logger.debug(this.query.sql);
         yield next;
-        
+
     } catch (e) {
-        if(e.statusCode === 400 || e.statusCode === 404){
+        if (e.statusCode === 400 || e.statusCode === 404) {
             this.status = e.statusCode;
             this.body = e.body;
         }
@@ -202,13 +192,13 @@ const toSQLMiddleware = function*(next) {
 };
 
 
-const containApps = function(apps1, apps2) {
-    if (!apps1 || !apps2){
+const containApps = function (apps1, apps2) {
+    if (!apps1 || !apps2) {
         return false;
     }
-    for (let i = 0, length = apps1.length; i < length; i++) {
-        for (let j = 0, length2 = apps2.length; j < length2; j++){
-            if (apps1[i] === apps2[j]){
+    for (let i = 0, length = apps1.length; i < length; i++)  {
+        for (let j = 0, length2 = apps2.length; j < length2; j++) {
+            if (apps1[i] === apps2[j]) {
                 return true;
             }
         }
@@ -216,37 +206,87 @@ const containApps = function(apps1, apps2) {
     return false;
 };
 
-const checkUserHasPermission = function(user, dataset) {
+const checkUserHasPermission = function (user, dataset) {
 
-    if (user && dataset) {   
+    if (user && dataset) {
         if (user.id === 'microservice') {
             return true;
         }
-         // check if user is admin of any application of the dataset or manager and owner of the dataset
-        if (user.role === 'MANAGER' && user.id === dataset.userId){
+        // check if user is admin of any application of the dataset or manager and owner of the dataset
+        if (user.role === 'MANAGER' && user.id === dataset.userId) {
             return true;
-        } else  if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
+        } else if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
             return true;
         }
-        
+
     }
     return false;
 };
 
-const checkPermissionDelete = function *(next) {
+const checkPermissionDelete = function* (next) {
     if (this.state.parsed.delete) {
         if (this.request.body && this.request.body.loggedUser) {
 
-            if (checkUserHasPermission(this.request.body.loggedUser, this.request.body.dataset)){
+            if (checkUserHasPermission(this.request.body.loggedUser, this.request.body.dataset)) {
                 yield next;
                 return;
             } else {
                 this.throw(403, 'Not authorized to execute DELETE query');
                 return;
             }
-        }        
-    } 
+        }
+    }
     yield next;
+};
+
+const cacheMiddleware = function* (next) {
+    let url = this.request.url;
+    const data = yield redisClient.getAsync(`${url}-data`);
+    logger.info('Entering in cache', `${url}-data`);
+
+    if (data && this.headers['cache-control'] !== 'no-cache') {
+        logger.info('Exist data in cache');
+        let headers = yield redisClient.getAsync(`${url}-headers`);
+        if (headers) {
+            headers = JSON.parse(headers);
+        }
+        try {
+            this.body = JSON.parse(data);
+            const keys = Object.keys(headers);
+            for (let i = 0, length = keys.length; i < length; i++) {
+                this.set(keys[i], headers[keys[i]]);
+            }
+            return;
+        } catch (e) {
+            logger.error(e);
+            this.body = null;
+        }
+    }
+
+    yield next;
+
+    if (this.body.on) {
+        this.body.on('data', (chunk) => {
+            logger.debug('Seting response', `${url}-data`);
+            redisClient.append(`${url}-data`, chunk);
+        });
+
+        this.body.on('end', () => {
+            logger.debug('Seting responseend');
+            if (this.res.statusCode >= 200 && this.res.statusCode < 300) {
+                logger.debug('Saving headers');
+                redisClient.set(`${url}-headers`, JSON.stringify(this.headers));
+            } else {
+                logger.debug('Removing key by error');
+                redisClient.del(`${url}-data`);
+            }
+        });
+
+    } else {
+
+        redisClient.set(`${url}-data`, JSON.stringify(this.body));
+        redisClient.set(`${url}-headers`, JSON.stringify(this.headers));
+    }
 };
 
 
