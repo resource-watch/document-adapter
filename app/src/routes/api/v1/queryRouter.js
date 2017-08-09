@@ -240,7 +240,21 @@ const checkPermissionDelete = function* (next) {
 };
 
 const cacheMiddleware = function* (next) {
-    let url = this.request.url;
+    let url = '';
+    if (this.request && this.request.body ) {
+        if (this.request.body.sql){
+            url = `/document/query/${this.params.dataset}?sql=${this.request.body.sql}`;
+        } else if (this.request.query.sql) {
+            url = `/document/query/${this.params.dataset}?sql=${this.request.query.sql}`;
+        } else if (this.request.body.fs) {
+            url = `/document/query/${this.params.dataset}?fs=${JSON.stringify(this.request.body.fs)}`;
+        }
+        if (this.request.body.geostore) {
+            url += `&geostore=${this.request.body.geostore}`;
+        }
+    } else {
+        url = this.request.url;
+    }
     const data = yield redisClient.getAsync(`${url}-data`);
     logger.info('Entering in cache', `${url}-data`);
 
