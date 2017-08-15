@@ -109,7 +109,7 @@ class ImporterService {
         setInterval(() => {
             this.elasticClient.ping({
                 // ping usually has a 3000ms timeout
-                requestTimeout: 2000
+                requestTimeout: 10000
             }, function (error) {
                 if (error) {
                     logger.error('elasticsearch cluster is down!');
