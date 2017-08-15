@@ -259,7 +259,7 @@ class ImporterService {
         let i = 0;
         return new Promise(function (resolve, reject) {
             try {
-                logger.debug('Starting read file');
+                logger.info('Starting read file');
                 let request = {
                     body: []
                 };
