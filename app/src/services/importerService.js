@@ -13,6 +13,7 @@ const queryService = require('services/queryService');
 const ConverterFactory = require('services/converters/converterFactory');
 const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 const CONTAIN_SPACES = /\s/g;
+const IS_NUMBER = /^\d+$/;
 
 function isJSONObject(value) {
     if (isNaN(value) && /^[\],:{}\s]*$/.test(value.replace(/\\["\\\/bfnrtu]/g, '@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
@@ -96,6 +97,25 @@ class ImporterService {
         this.dataPath = dataPath;
         this.converter = ConverterFactory.getInstance(type, url, dataPath, verify);
         this.legend = legend;
+        if (this.legend) {
+            if (this.legend.lat) {
+                if (CONTAIN_SPACES.test(this.legend.lat)) {
+                    this.legend.lat = this.legend.lat.replace(CONTAIN_SPACES, '_');
+                }
+                if (IS_NUMBER.test(this.legend.lat)) {
+                    this.legend.lat = `_${this.legend.lat}`;
+                }
+            }
+            if (this.legend.long) {
+                if (CONTAIN_SPACES.test(this.legend.long)) {
+                    this.legend.long = this.legend.long.replace(CONTAIN_SPACES, '_');
+                }
+                if (IS_NUMBER.test(this.legend.long)) {
+                    this.legend.long = `_${this.legend.long}`;
+                }
+            }
+        }
+
         this.index = index;
         this.verify = verify;
         this.options = {
@@ -214,7 +234,7 @@ class ImporterService {
 
             }
 
-            logger.info('Creating index ', this.options.index);
+            logger.info('Creating index ', this.options.index, body);
             try {
                 yield createIndex(this.elasticClient, {
                     index: this.options.index,
@@ -285,6 +305,12 @@ class ImporterService {
                                                 delete data[key];
                                                 newKey = key.replace(CONTAIN_SPACES, '_');
                                             }
+                                            if (IS_NUMBER.test(newKey)) {
+                                                if (data[newKey]) {
+                                                    delete data[key];
+                                                }
+                                                newKey = `_${newKey}`;
+                                            }
                                             if (!(value instanceof Object) && isJSONObject(value)) {
                                                 try {
                                                     data[newKey] = JSON.parse(value);
@@ -299,7 +325,6 @@ class ImporterService {
                                         } else {
                                             delete data[newKey];
                                         }
-
                                     } catch (e) {
                                         logger.error(e);
                                         error = true;
