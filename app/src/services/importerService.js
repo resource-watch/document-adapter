@@ -103,7 +103,7 @@ class ImporterService {
                     this.legend.lat = this.legend.lat.replace(CONTAIN_SPACES, '_');
                 }
                 if (IS_NUMBER.test(this.legend.lat)) {
-                    this.legend.lat = `_${this.legend.lat}`;
+                    this.legend.lat = `col_${this.legend.lat}`;
                 }
             }
             if (this.legend.long) {
@@ -111,7 +111,7 @@ class ImporterService {
                     this.legend.long = this.legend.long.replace(CONTAIN_SPACES, '_');
                 }
                 if (IS_NUMBER.test(this.legend.long)) {
-                    this.legend.long = `_${this.legend.long}`;
+                    this.legend.long = `col_${this.legend.long}`;
                 }
             }
         }
@@ -309,7 +309,7 @@ class ImporterService {
                                                 if (data[newKey]) {
                                                     delete data[key];
                                                 }
-                                                newKey = `_${newKey}`;
+                                                newKey = `col_${newKey}`;
                                             }
                                             if (!(value instanceof Object) && isJSONObject(value)) {
                                                 try {
