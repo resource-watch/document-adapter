@@ -249,10 +249,11 @@ const cacheMiddleware = function* (next) {
         } else if (this.request.body.fs) {
             url = `/document/query/${this.params.dataset}?fs=${JSON.stringify(this.request.body.fs)}`;
         }
-        if (this.request.body.geostore) {
-            url += `&geostore=${this.request.body.geostore}`;
+        if (this.request.body.geostore || this.request.query.geostore) {
+            url += `&geostore=${this.request.body.geostore || this.request.query.geostore}`;
         }
     } else {
+        
         url = this.request.url;
     }
     const data = yield redisClient.getAsync(`${url}-data`);
