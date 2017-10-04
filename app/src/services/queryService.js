@@ -343,10 +343,10 @@ class QueryService {
         if (node && node.type === 'string' && node.value && finded) {
             try {
                 logger.debug(node.value);
-                if (node.value.startsWith('\'')){
-                    node.value = node.value.slice(1, node.value.length-1);
+                if (node.value.startsWith('\'')) {
+                    node.value = node.value.slice(1, node.value.length - 1);
                 }
-                
+
                 const geojson = JSON.parse(node.value);
 
                 const newResult = Object.assign({}, result || {}, {
@@ -482,7 +482,7 @@ class QueryService {
                         node.value = 'geohash_grid';
                     }
                     for (let j = 0; j < node.arguments.length; j++) {
-                        if (node.arguments[j].type === 'literal' &&  mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
+                        if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
                             node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                         }
                     }
@@ -502,7 +502,17 @@ class QueryService {
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         parsed = yield this.convertQueryToElastic(parsed, index);
-        sql = Json2sql.toSQL(parsed);
+        let removeAlias = Object.assign({}, parsed);
+        if (removeAlias.select) {
+            removeAlias.select = removeAlias.select.map(el => {
+                return {
+                    value: el.value,
+                    type: el.type,
+                    alias: null
+                };
+            });
+        }
+        sql = Json2sql.toSQL(removeAlias);
         logger.debug('sql', sql);
 
         var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
