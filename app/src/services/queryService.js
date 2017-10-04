@@ -505,10 +505,14 @@ class QueryService {
         let removeAlias = Object.assign({}, parsed);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map(el => {
+                if (el.type === 'function') {
+                    return el;
+                }
                 return {
                     value: el.value,
                     type: el.type,
-                    alias: null
+                    alias: null,
+                    arguments: el.arguments
                 };
             });
         }

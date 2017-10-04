@@ -39,9 +39,10 @@ class CSVSerializer {
 
     static formatAlias(el, parsed) {
         if (parsed && el) {
+            logger.info('Format alias');
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const sel = parsed.select[i];
-                logger.debug(sel);
+                
                 if (sel.alias) {
                     if (sel.type === 'literal') {
                         el[sel.alias] = el[sel.value];
