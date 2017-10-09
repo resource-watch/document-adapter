@@ -267,11 +267,13 @@ const cacheMiddleware = function* (next) {
         }
         try {
             this.body = JSON.parse(data);
-            const keys = Object.keys(headers);
-            for (let i = 0, length = keys.length; i < length; i++) {
-                this.set(keys[i], headers[keys[i]]);
+            if (this.body) {
+                const keys = Object.keys(headers);
+                for (let i = 0, length = keys.length; i < length; i++) {
+                    this.set(keys[i], headers[keys[i]]);
+                }
+                return;
             }
-            return;
         } catch (e) {
             logger.error(e);
             this.body = null;
@@ -295,6 +297,10 @@ const cacheMiddleware = function* (next) {
                 logger.debug('Removing key by error');
                 redisClient.del(`${url}-data`);
             }
+        });
+        this.body.on('error',  () => {
+            logger.debug('Removing key by error');
+            redisClient.del(`${url}-data`);
         });
 
     } else {
