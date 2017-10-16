@@ -32,12 +32,12 @@ var getKey = function (key) {
 class QueueService {
     constructor() {
         logger.info('Creating queue');
-        this.importQueue = queue('importer', config.get('redis.port'), config.get('redis.host'));
+        this.importQueue = queue('document-importer', config.get('redis.port'), config.get('redis.host'));
 
         this.importQueue.on('on', function (err) {
             logger.error('Error in importqueue', err);
         });
-        this.deleteQueue = queue('delete', config.get('redis.port'), config.get('redis.host'));
+        this.deleteQueue = queue('document-delete', config.get('redis.port'), config.get('redis.host'));
 
         this.importQueue.on('error', function (error) {
             logger.error('Error in queue', error);
