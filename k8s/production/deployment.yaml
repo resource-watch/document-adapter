@@ -32,7 +32,7 @@ spec:
           - name: LOCAL_URL
             value: http://{name}.default.svc.cluster.local:4000
           - name: REDIS_PORT_6379_TCP_ADDR
-            value: localhost
+            value: redis-redis.default.svc.cluster.local
           - name: REDIS_PORT_6379_TCP_PORT
             value: "6379"
           - name: ELASTIC_URI
@@ -86,7 +86,7 @@ spec:
           - name: LOCAL_URL
             value: http://{name}.default.svc.cluster.local:4000
           - name: REDIS_PORT_6379_TCP_ADDR
-            value: localhost
+            value: redis-redis.default.svc.cluster.local
           - name: REDIS_PORT_6379_TCP_PORT
             value: "6379"
           - name: ELASTIC_URI
@@ -119,11 +119,3 @@ spec:
                 secretKeyRef:
                   name: mssecrets
                   key: STAMPERY_TOKEN
-      - name: {name}-redis
-        image: redis
-        ports:
-          - containerPort: 6379
-        resources:
-          requests:
-            memory: "0Mi"
-            cpu: "0m"
