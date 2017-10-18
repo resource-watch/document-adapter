@@ -348,8 +348,9 @@ class ImporterService {
                             }
 
                         } else {
-                            stream.end();
-                            reject(new Error('Data and/or options have no headers specified'));
+                            //stream.end();
+                            logger.error('Data and/or options have no headers specified');
+                            //reject(new Error('Data and/or options have no headers specified'));
                         }
 
                         if (request.body && request.body.length >= 80000) {

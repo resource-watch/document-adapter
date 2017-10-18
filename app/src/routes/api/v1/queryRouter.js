@@ -312,7 +312,7 @@ const cacheMiddleware = function* (next) {
 
 
 
-router.post('/query/:dataset', cacheMiddleware, deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
+router.post('/query/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
 router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, QueryRouter.download);
 router.post('/fields/:dataset', deserializeDataset, QueryRouter.fields);
 
