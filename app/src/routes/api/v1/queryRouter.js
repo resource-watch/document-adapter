@@ -58,7 +58,7 @@ class QueryRouter {
                 logger.debug('Doing delete');
                 this.state.parsed.from = this.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(this.state.parsed);
-                this.body = yield queryService.doDeleteQuery(sql, this.state.parsed, this.request.body.dataset.tableName);
+                this.body = yield queryService.doDeleteQuery(this.request.body.dataset.id, sql, this.state.parsed, this.request.body.dataset.tableName);
             } else if (this.state.parsed.select) {
                 this.body = passThrough();
                 const cloneUrl = QueryRouter.getCloneUrl(this.request.url, this.params.dataset);
