@@ -201,47 +201,7 @@ class Scroll {
         }
 }
 
-function activateRefreshIndex(client, index) {
-    return new Promise(function (resolve, reject) {
-        let options = {
-            index: index,
-            body: {
-                index: {
-                    refresh_interval: '1s',
-                    number_of_replicas: 1
-                }
-            }
-        };
-        client.indices.putSettings(options, function (error, response) {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(response);
-        });
-    });
-}
 
-function desactivateRefreshIndex(client, index) {
-    return new Promise(function (resolve, reject) {
-        let options = {
-            index: index,
-            body: {
-                index: {
-                    refresh_interval: '-1',
-                    number_of_replicas: 0
-                }
-            }
-        };
-        client.indices.putSettings(options, function (error, response) {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(response);
-        });
-    });
-}
 
 class QueryService {
 
@@ -346,6 +306,16 @@ class QueryService {
                     this.transport.request({
                         method: 'GET',
                         path: encodeURI(`_tasks/${opts.task}`)
+                    }, cb);
+                }.bind(this);
+            },
+            putSettings: function(opts) {
+                logger.debug('put settings ', opts);
+                return function (cb) {
+                    this.transport.request({
+                        method: 'PUT',
+                        path: encodeURI(`${opts.index}/_settings`),
+                        body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
             }
@@ -578,6 +548,33 @@ class QueryService {
         logger.info('Finished query');
     }
 
+    * activateRefreshIndex(client, index) {
+        let options = {
+            index: index,
+            body: {
+                index: {
+                    refresh_interval: '1s',
+                    number_of_replicas: 1
+                }
+            }
+        };
+        yield this.client.putSettings(options);
+    }
+    
+    * desactivateRefreshIndex(client, index) {
+        let options = {
+            index: index,
+            body: {
+                index: {
+                    refresh_interval: '-1',
+                    number_of_replicas: 0
+                }
+            }
+        };
+        yield this.client.putSettings(options);
+
+    }
+
     *
     updateState(id, status, errorMessage) {
         logger.info('Updating state of dataset ', id, ' with status ', status);
@@ -608,7 +605,7 @@ class QueryService {
             logger.info(`Doing delete to ${sql}`);
             logger.debug('Obtaining explain with select ', `${sql}`);
             yield this.updateState(id, 0, null);
-            yield desactivateRefreshIndex(this.elasticClient, id);
+            yield this.desactivateRefreshIndex(this.elasticClient, id);
             parsed = yield this.convertQueryToElastic(parsed, tableName);
             parsed.select = [{
                 value: '*',
@@ -644,12 +641,12 @@ class QueryService {
                                 logger.info(`Dataset ${id} is completed`);
                                 clearInterval(interval);
                                 yield this.updateState(id, 1, null);
-                                yield activateRefreshIndex(this.elasticClient, id);
+                                yield this.activateRefreshIndex(this.elasticClient, id);
                             }
                         } catch(err){
                             clearInterval(interval);
                             yield this.updateState(id, 2, null);
-                            yield activateRefreshIndex(this.elasticClient, id);
+                            yield this.activateRefreshIndex(this.elasticClient, id);
                         }
                     }.bind(this)).then(() => {
 
