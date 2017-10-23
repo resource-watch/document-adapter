@@ -665,7 +665,7 @@ class QueryService {
                 throw new Error('Query not valid');
             }
         } catch(err) {
-            logger.error('Error removing query');
+            logger.error('Error removing query', err);
             yield this.updateState(id, 2, 'Error deleting items');
         }
 
