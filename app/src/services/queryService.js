@@ -548,7 +548,7 @@ class QueryService {
         logger.info('Finished query');
     }
 
-    * activateRefreshIndex(client, index) {
+    * activateRefreshIndex(index) {
         let options = {
             index: index,
             body: {
@@ -558,10 +558,10 @@ class QueryService {
                 }
             }
         };
-        yield this.client.putSettings(options);
+        yield this.elasticClient.putSettings(options);
     }
     
-    * desactivateRefreshIndex(client, index) {
+    * desactivateRefreshIndex(index) {
         let options = {
             index: index,
             body: {
@@ -571,7 +571,7 @@ class QueryService {
                 }
             }
         };
-        yield this.client.putSettings(options);
+        yield this.elasticClient.putSettings(options);
 
     }
 
@@ -605,7 +605,7 @@ class QueryService {
             logger.info(`Doing delete to ${sql}`);
             logger.debug('Obtaining explain with select ', `${sql}`);
             yield this.updateState(id, 0, null);
-            yield this.desactivateRefreshIndex(this.elasticClient, id);
+            yield this.desactivateRefreshIndex(tableName);
             parsed = yield this.convertQueryToElastic(parsed, tableName);
             parsed.select = [{
                 value: '*',
@@ -641,12 +641,12 @@ class QueryService {
                                 logger.info(`Dataset ${id} is completed`);
                                 clearInterval(interval);
                                 yield this.updateState(id, 1, null);
-                                yield this.activateRefreshIndex(this.elasticClient, id);
+                                yield this.activateRefreshIndex(tableName);
                             }
                         } catch(err){
                             clearInterval(interval);
                             yield this.updateState(id, 2, null);
-                            yield this.activateRefreshIndex(this.elasticClient, id);
+                            yield this.activateRefreshIndex(tableName);
                         }
                     }.bind(this)).then(() => {
 
@@ -656,7 +656,7 @@ class QueryService {
                     });
                     
                 }, 2000);
-                return DeleteSerializer.serialize(result[0]);
+                return '';
             } catch (e) {
                 logger.error(e);
                 throw new Error('Query not valid');
