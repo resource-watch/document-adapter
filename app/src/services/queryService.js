@@ -4,12 +4,14 @@ const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
+const co = require('co');
 const fs = require('fs');
 const Json2sql = require('sql2json').json2sql;
 const Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
 const DeleteSerializer = require('serializers/deleteSerializer');
 const DocumentNotFound = require('errors/documentNotFound');
+const ctRegisterMicroservice = require('ct-register-microservice-node');
 const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 
 const IndexNotFound = require('errors/indexNotFound');
@@ -272,7 +274,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_delete_by_query`),
+                        path: encodeURI(`${opts.index}/_delete_by_query?wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -293,6 +295,15 @@ class QueryService {
                     this.transport.request({
                         method: 'GET',
                         path: ''
+                    }, cb);
+                }.bind(this);
+            },
+            getTask: function (opts) {
+                logger.debug('get task ', opts);
+                return function (cb) {
+                    this.transport.request({
+                        method: 'GET',
+                        path: encodeURI(`_tasks/${opts.task}`)
                     }, cb);
                 }.bind(this);
             }
@@ -525,9 +536,35 @@ class QueryService {
         logger.info('Finished query');
     }
 
-    * doDeleteQuery(sql, parsed, tableName) {
+    *
+    updateState(id, status, errorMessage) {
+        logger.info('Updating state of dataset ', id, ' with status ', status);
+
+        let options = {
+            uri: '/dataset/' + id,
+            body: {
+               status                
+            },
+            method: 'PATCH',
+            json: true
+        };
+        
+        if (errorMessage) {
+            options.body.errorMessage = errorMessage;
+        }
+        // logger.info('Updating', options);
+        try {
+            let result = yield ctRegisterMicroservice.requestToMicroservice(options);
+        } catch (e) {
+            logger.error(e);
+            throw new Error('Error to updating dataset');
+        }
+    }
+
+    * doDeleteQuery(id, sql, parsed, tableName) {
         logger.info(`Doing delete to ${sql}`);
         logger.debug('Obtaining explain with select ', `${sql}`);
+        yield this.updateState(id, 0, null);
         parsed = yield this.convertQueryToElastic(parsed, tableName);
         parsed.select = [{
             value: '*',
@@ -535,7 +572,7 @@ class QueryService {
             type: 'wildcard'
         }];
         delete parsed.delete;
-        logger.debug('sql', sql);
+        // logger.debug('sql', sql);
         sql = Json2sql.toSQL(parsed);
         try {
             let resultQueryElastic = yield this.elasticClient.explain({
@@ -548,9 +585,34 @@ class QueryService {
                 index: tableName,
                 timeout: 120000,
                 requestTimeout: 120000,
-                body: resultQueryElastic
+                body: resultQueryElastic,
+
+                waitForCompletion: false
             });
-            logger.debug(result[0]);
+            logger.debug(result);
+            const interval = setInterval(() => {
+                co(function *() {
+                    try {
+                        logger.debug('Checking task');
+                        const data = yield this.elasticClient.getTask({task: result[0].task});
+                        // logger.debug('data', data);
+                        if (data && data.length > 0 && data[0].completed) {
+                            logger.info(`Dataset ${id} is completed`);
+                            clearInterval(interval);
+                            yield this.updateState(id, 1, null);
+                        }
+                    } catch(err){
+                        clearInterval(interval);
+                        yield this.updateState(id, 2, null);
+                    }
+                }.bind(this)).then(() => {
+
+                }, err => {
+                    logger.error('Error checking task', err);
+
+                });
+                
+            }, 2000);
             return DeleteSerializer.serialize(result[0]);
         } catch (e) {
             logger.error(e);

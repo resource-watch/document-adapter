@@ -51,6 +51,10 @@ class DatasetRouter {
     static * updateData() {
         logger.info(`Update data with id ${this.params.id}  of dataset ${this.request.body.dataset.id}`);
         this.assert(this.request.body.data, 400, 'Data is required');
+        if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
+            this.throw(400, 'Dataset is not in saved status');
+            return;
+        }
         const result = yield queryService.updateElement(this.request.body.dataset.tableName, this.params.id, this.request.body.data);
         yield redisDeletePatternProm(this.request.body.dataset.id);
         this.set('cache-control', 'flush');
@@ -61,7 +65,10 @@ class DatasetRouter {
         logger.info('Overwrite dataset with dataset id: ', this.params.id);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        
+        if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
+            this.throw(400, 'Dataset is not in saved status');
+            return;
+        }
         yield queueService.overwriteDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         yield redisDeletePatternProm(this.request.body.dataset.id);
         this.set('cache-control', 'flush');
@@ -72,7 +79,10 @@ class DatasetRouter {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        
+        if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
+            this.throw(400, 'Dataset is not in saved status');
+            return;
+        }
         yield queueService.concatDataset(this.request.body.provider, this.request.body.url, this.request.body.data, this.request.body.dataset.tableName, this.request.body.dataset.id, this.request.body.legend, this.request.body.dataPath);
         yield redisDeletePatternProm(this.request.body.dataset.id);
         this.set('cache-control', 'flush');
