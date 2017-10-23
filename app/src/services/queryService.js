@@ -201,6 +201,48 @@ class Scroll {
         }
 }
 
+function activateRefreshIndex(client, index) {
+    return new Promise(function (resolve, reject) {
+        let options = {
+            index: index,
+            body: {
+                index: {
+                    refresh_interval: '1s',
+                    number_of_replicas: 1
+                }
+            }
+        };
+        client.indices.putSettings(options, function (error, response) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
+function desactivateRefreshIndex(client, index) {
+    return new Promise(function (resolve, reject) {
+        let options = {
+            index: index,
+            body: {
+                index: {
+                    refresh_interval: '-1',
+                    number_of_replicas: 0
+                }
+            }
+        };
+        client.indices.putSettings(options, function (error, response) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
 class QueryService {
 
     constructor() {
@@ -274,7 +316,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_delete_by_query?wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
+                        path: encodeURI(`${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -562,61 +604,69 @@ class QueryService {
     }
 
     * doDeleteQuery(id, sql, parsed, tableName) {
-        logger.info(`Doing delete to ${sql}`);
-        logger.debug('Obtaining explain with select ', `${sql}`);
-        yield this.updateState(id, 0, null);
-        parsed = yield this.convertQueryToElastic(parsed, tableName);
-        parsed.select = [{
-            value: '*',
-            alias: null,
-            type: 'wildcard'
-        }];
-        delete parsed.delete;
-        // logger.debug('sql', sql);
-        sql = Json2sql.toSQL(parsed);
         try {
-            let resultQueryElastic = yield this.elasticClient.explain({
-                sql
-            });
-            delete resultQueryElastic.from;
-            delete resultQueryElastic.size;
-            logger.debug('Doing query');
-            let result = yield this.elasticClient.deleteByQuery({
-                index: tableName,
-                timeout: 120000,
-                requestTimeout: 120000,
-                body: resultQueryElastic,
-
-                waitForCompletion: false
-            });
-            logger.debug(result);
-            const interval = setInterval(() => {
-                co(function *() {
-                    try {
-                        logger.debug('Checking task');
-                        const data = yield this.elasticClient.getTask({task: result[0].task});
-                        // logger.debug('data', data);
-                        if (data && data.length > 0 && data[0].completed) {
-                            logger.info(`Dataset ${id} is completed`);
-                            clearInterval(interval);
-                            yield this.updateState(id, 1, null);
-                        }
-                    } catch(err){
-                        clearInterval(interval);
-                        yield this.updateState(id, 2, null);
-                    }
-                }.bind(this)).then(() => {
-
-                }, err => {
-                    logger.error('Error checking task', err);
-
+            logger.info(`Doing delete to ${sql}`);
+            logger.debug('Obtaining explain with select ', `${sql}`);
+            yield this.updateState(id, 0, null);
+            yield desactivateRefreshIndex(this.elasticClient, id);
+            parsed = yield this.convertQueryToElastic(parsed, tableName);
+            parsed.select = [{
+                value: '*',
+                alias: null,
+                type: 'wildcard'
+            }];
+            delete parsed.delete;
+            // logger.debug('sql', sql);
+            sql = Json2sql.toSQL(parsed);
+            try {
+                let resultQueryElastic = yield this.elasticClient.explain({
+                    sql
                 });
-                
-            }, 2000);
-            return DeleteSerializer.serialize(result[0]);
-        } catch (e) {
-            logger.error(e);
-            throw new Error('Query not valid');
+                delete resultQueryElastic.from;
+                delete resultQueryElastic.size;
+                logger.debug('Doing query');
+                let result = yield this.elasticClient.deleteByQuery({
+                    index: tableName,
+                    timeout: 120000,
+                    requestTimeout: 120000,
+                    body: resultQueryElastic,
+
+                    waitForCompletion: false
+                });
+                logger.debug(result);
+                const interval = setInterval(() => {
+                    co(function *() {
+                        try {
+                            logger.debug('Checking task');
+                            const data = yield this.elasticClient.getTask({task: result[0].task});
+                            // logger.debug('data', data);
+                            if (data && data.length > 0 && data[0].completed) {
+                                logger.info(`Dataset ${id} is completed`);
+                                clearInterval(interval);
+                                yield this.updateState(id, 1, null);
+                                yield activateRefreshIndex(this.elasticClient, id);
+                            }
+                        } catch(err){
+                            clearInterval(interval);
+                            yield this.updateState(id, 2, null);
+                            yield activateRefreshIndex(this.elasticClient, id);
+                        }
+                    }.bind(this)).then(() => {
+
+                    }, err => {
+                        logger.error('Error checking task', err);
+
+                    });
+                    
+                }, 2000);
+                return DeleteSerializer.serialize(result[0]);
+            } catch (e) {
+                logger.error(e);
+                throw new Error('Query not valid');
+            }
+        } catch(err) {
+            logger.error('Error removing query');
+            yield this.updateState(id, 2, 'Error deleting items');
         }
 
     }
