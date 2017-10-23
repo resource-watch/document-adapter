@@ -637,7 +637,7 @@ class QueryService {
                 const interval = setInterval(() => {
                     co(function *() {
                         try {
-                            logger.debug('Checking task');
+                            logger.info('Checking task');
                             const data = yield this.elasticClient.getTask({task: result[0].task});
                             // logger.debug('data', data);
                             if (data && data.length > 0 && data[0].completed) {
