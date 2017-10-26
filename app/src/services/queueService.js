@@ -201,7 +201,9 @@ class QueueService {
                 } catch (err) {
                     logger.error('Error in ProcessImport', err);
                     yield this.updateState(job.data.id, 2, null, err.message || 'Unexpected error');
-                    yield queryService.deleteIndex(job.data.index);
+                    if (job.data.action !== 'concat') {
+                        yield queryService.deleteIndex(job.data.index);
+                    }
                     throw err;
                 }
             }.bind(this)).then(function () {
