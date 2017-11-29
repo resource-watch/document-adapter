@@ -1,50 +1,42 @@
-'use strict';
 
 const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
 const json2csv = require('json2csv');
 const co = require('co');
-const fs = require('fs');
 const Json2sql = require('sql2json').json2sql;
 const Terraformer = require('terraformer-wkt-parser');
 const csvSerializer = require('serializers/csvSerializer');
-const DeleteSerializer = require('serializers/deleteSerializer');
 const DocumentNotFound = require('errors/documentNotFound');
+const IndexNotFound = require('errors/indexNotFound');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
+
 const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
 
-const IndexNotFound = require('errors/indexNotFound');
-
-var unlink = function (file) {
-    return function (callback) {
-        fs.unlink(file, callback);
-    };
-};
-
-function capitalizeFirstLetter(text) {
-    switch (text) {
-        case 'multipolygon':
-            return 'MultiPolygon';
-        case 'polygon':
-            return 'Polygon';
-        case 'point':
-            return 'Point';
-        case 'linestring':
-            return 'LineString';
-        case 'multipoint':
-            return 'MultiPoint';
-        case 'multilinestring':
-            return 'MultiPointString';
-        case 'geometrycollection':
-            return 'GeometryCollection';
-        default:
-            return text;
-    }
-
-}
+// function capitalizeFirstLetter(text) {
+//     switch (text) {
+//         case 'multipolygon':
+//             return 'MultiPolygon';
+//         case 'polygon':
+//             return 'Polygon';
+//         case 'point':
+//             return 'Point';
+//         case 'linestring':
+//             return 'LineString';
+//         case 'multipoint':
+//             return 'MultiPoint';
+//         case 'multilinestring':
+//             return 'MultiPointString';
+//         case 'geometrycollection':
+//             return 'GeometryCollection';
+//         default:
+//             return text;
+//     }
+//
+// }
 
 class Scroll {
+
     constructor(elasticClient, sql, parsed, index, datasetId, stream, download, cloneUrl, format) {
         this.elasticClient = elasticClient;
         this.sql = sql;
@@ -62,7 +54,7 @@ class Scroll {
         this.timeoutFunc = setTimeout(function () {
             this.timeout = true;
         }.bind(this), 60000);
-        let resultQueryElastic = yield this.elasticClient.explain({
+        const resultQueryElastic = yield this.elasticClient.explain({
             sql: this.sql
         });
         if (this.parsed.group) {
@@ -86,14 +78,14 @@ class Scroll {
             resultQueryElastic.size = 10000;
         }
         logger.debug('Creating params to scroll with query', resultQueryElastic);
-        let params = {
+        const params = {
             query: resultQueryElastic,
             duration: '1m',
             index: this.index
         };
 
         try {
-            let size = resultQueryElastic.size;
+            const size = resultQueryElastic.size;
             logger.debug('Creating scroll');
             this.resultScroll = yield this.elasticClient.createScroll(params);
             this.first = true;
@@ -199,8 +191,8 @@ class Scroll {
 
             logger.info('Write correctly');
         }
-}
 
+}
 
 
 class QueryService {
@@ -560,7 +552,7 @@ class QueryService {
         };
         yield this.elasticClient.putSettings(options);
     }
-    
+
     * desactivateRefreshIndex(index) {
         let options = {
             index: index,
@@ -582,12 +574,12 @@ class QueryService {
         let options = {
             uri: '/dataset/' + id,
             body: {
-               status                
+               status
             },
             method: 'PATCH',
             json: true
         };
-        
+
         if (errorMessage) {
             options.body.errorMessage = errorMessage;
         }
@@ -654,7 +646,7 @@ class QueryService {
                         logger.error('Error checking task', err);
 
                     });
-                    
+
                 }, 2000);
                 return '';
             } catch (e) {

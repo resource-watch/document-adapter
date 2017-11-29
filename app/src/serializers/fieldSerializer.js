@@ -1,6 +1,3 @@
-'use strict';
-
-var logger = require('logger');
 
 class FieldSerializer {
 
@@ -24,11 +21,13 @@ class FieldSerializer {
             //     }
             // };
             return {
-                tableName: tableName,
+                tableName,
                 fields: data[0][tableName].mappings[tableName].properties
             };
         }
+        return {};
     }
+
 }
 
 module.exports = FieldSerializer;

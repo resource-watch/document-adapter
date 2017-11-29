@@ -1,6 +1,6 @@
-'use strict';
-var JSONAPISerializer = require('jsonapi-serializer').Serializer;
-var deleteSerializer = new JSONAPISerializer('query', {
+const JSONAPISerializer = require('jsonapi-serializer').Serializer;
+
+const deleteSerializer = new JSONAPISerializer('query', {
     attributes: ['deleted'],
     typeForAttribute: function (attribute, record) {
         return attribute;
@@ -10,9 +10,11 @@ var deleteSerializer = new JSONAPISerializer('query', {
 
 
 class DeleteSerializer {
-    static serialize(data){
+
+    static serialize(data) {
         return deleteSerializer.serialize(data);
     }
+
 }
 
 module.exports = DeleteSerializer;

@@ -14,22 +14,3 @@ prod:
   log_opt:
     syslog-address: ${SYSLOG_ADDRESS}
     tag: rw-adapter-document-api${STAGING}
-worker:
-  image: vizzuality/rw-adapter-document:1.2.7${STAGING}
-  env_file:
-    - prod.env
-  links:
-    - redis
-  command: startWorker
-  dns: ${DNS_SERVER}
-  restart: always
-  log_driver: "syslog"
-  container_name: rw-adapter-document-worker
-  log_opt:
-    syslog-address: ${SYSLOG_ADDRESS}
-    tag: rw-adapter-document-worker${STAGING}
-redis:
-  image: redis
-  ports:
-    - "6379"
-  restart: always
