@@ -42,7 +42,7 @@ class QueryRouter {
                 logger.debug('Doing delete');
                 this.state.parsed.from = this.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(this.state.parsed);
-                this.body = yield taskQueueService.import({
+                this.body = yield taskQueueService.delete({
                     datasetId: this.request.body.connector.id,
                     query: sql,
                     index: this.request.body.dataset.tableName
