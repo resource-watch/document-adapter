@@ -5,11 +5,11 @@ const co = require('co');
 
 class QueueService {
 
-    constructor(q) {
+    constructor(q, consume = false) {
         this.q = q;
         logger.debug(`Connecting to queue ${this.q}`);
         try {
-            this.init().then(() => {
+            this.init(consume).then(() => {
                 logger.debug('Connected');
             }, (err) => {
                 logger.error(err);
@@ -20,16 +20,18 @@ class QueueService {
         }
     }
 
-    init() {
+    init(consume) {
         return co(function* () {
             const conn = yield amqp.connect(config.get('rabbitmq.url'));
             this.channel = yield conn.createConfirmChannel();
             yield this.channel.assertQueue(this.q, { durable: true });
-            this.channel.prefetch(1);
-            logger.debug(` [*] Waiting for messages in ${this.q}`);
-            this.channel.consume(this.q, this.consume.bind(this), {
-                noAck: false
-            });
+            if (consume) {
+                this.channel.prefetch(1);
+                logger.debug(` [*] Waiting for messages in ${this.q}`);
+                this.channel.consume(this.q, this.consume.bind(this), {
+                    noAck: false
+                });
+            }
         }.bind(this));
 
     }

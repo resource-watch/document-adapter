@@ -16,6 +16,8 @@ develop:
     S3_SECRET_ACCESS_KEY:
     CT_REGISTER_MODE: auto
     RABBITMQ_URL: "amqp://user:password@mymachine:5672"
+    ELASTIC_PORT_9200_TCP_ADDR: mymachine
+    ELASTIC_PORT_9200_TCP_PORT: 9200
   command: develop
   volumes:
     - ./app:/opt/rw-adapter-document/app

@@ -47,7 +47,7 @@ class DatasetRouter {
     }
 
     static* overwrite() {
-        logger.info('Overwrite dataset with dataset id: ', this.params.id);
+        logger.info('Overwrite dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
         if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
@@ -55,13 +55,12 @@ class DatasetRouter {
             return;
         }
         yield taskQueueService.overwrite({
-            datasetId: this.request.body.connector.id,
-            fileUrl: this.request.body.connector.connectorUrl,
-            data: this.request.body.connector.data,
-            dataPath: this.request.body.connector.dataPath,
-            provider: this.params.provider || 'csv',
-            legend: this.request.body.connector.legend,
-            verified: this.request.body.connector.verified,
+            datasetId: this.params.dataset,
+            fileUrl: this.request.body.url,
+            data: this.request.body.data,
+            dataPath: this.request.body.dataPath,
+            provider: this.request.body.provider || 'csv',
+            legend: this.request.body.legend,
             index: this.request.body.dataset.tableName
         });
         this.set('cache-control', 'flush');
@@ -77,13 +76,12 @@ class DatasetRouter {
             return;
         }
         yield taskQueueService.concat({
-            datasetId: this.request.body.connector.id,
-            fileUrl: this.request.body.connector.connectorUrl,
-            data: this.request.body.connector.data,
-            dataPath: this.request.body.connector.dataPath,
-            provider: this.params.provider || 'csv',
-            legend: this.request.body.connector.legend,
-            verified: this.request.body.connector.verified,
+            datasetId: this.params.dataset,
+            fileUrl: this.request.body.url,
+            data: this.request.body.data,
+            dataPath: this.request.body.dataPath,
+            provider: this.request.body.provider || 'csv',
+            legend: this.request.body.legend,
             index: this.request.body.dataset.tableName
         });
         this.set('cache-control', 'flush');
@@ -95,10 +93,10 @@ class DatasetRouter {
         const response = yield ctRegisterMicroservice.requestToMicroservice({
             method: 'GET',
             json: true,
-            uri: `dataset/${this.params.id}`
+            uri: `/dataset/${this.params.dataset}`
         });
         yield taskQueueService.deleteIndex({
-            datasetId: this.params.id,
+            datasetId: this.params.dataset,
             index: response.data.attributes.tableName
         });
         this.set('cache-control', 'flush');
@@ -169,7 +167,7 @@ const deserializeDataset = function* (next) {
 
 router.post('/:provider', DatasetRouter.import);
 router.post('/data/:dataset/:id', deserializeDataset, DatasetRouter.updateData);
-router.post('/:id/data-overwrite', deserializeDataset, checkPermissionModify, DatasetRouter.overwrite);
+router.post('/:dataset/data-overwrite', deserializeDataset, checkPermissionModify, DatasetRouter.overwrite);
 router.post('/concat/:dataset', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
-router.delete('/:id', DatasetRouter.deleteIndex);
+router.delete('/:dataset', DatasetRouter.deleteIndex);
 module.exports = router;

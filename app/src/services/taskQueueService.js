@@ -10,12 +10,16 @@ class TaskQueueService extends QueueService {
     }
 
     sendMessage(msg) {
-        logger.info(`Sending message to ${this.q}`, msg);
-        try {
-            // Sending to queue
-            this.channel.sendToQueue(this.q, Buffer.from(JSON.stringify(msg)));
-        } catch (err) {
-            logger.error(`Error sending message to ${this.q}`);
+        return (cb) => {
+            logger.info(`Sending message to ${this.q}`, msg);
+            try {
+                // Sending to queue
+                this.channel.sendToQueue(this.q, Buffer.from(JSON.stringify(msg)));
+                cb(null);
+            } catch (err) {
+                logger.error(`Error sending message to ${this.q}`);
+                cb(err);
+            }
         }
     }
 
