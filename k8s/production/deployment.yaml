@@ -31,10 +31,6 @@ spec:
             value: app/src
           - name: LOCAL_URL
             value: http://{name}.default.svc.cluster.local:4000
-          - name: REDIS_PORT_6379_TCP_ADDR
-            value: redis-redis.default.svc.cluster.local
-          - name: REDIS_PORT_6379_TCP_PORT
-            value: "6379"
           - name: ELASTIC_URI
             valueFrom:
                 secretKeyRef:
@@ -65,5 +61,15 @@ spec:
                 secretKeyRef:
                   name: mssecrets
                   key: CARTODB_USER
+          - name: RABBITMQ_URL
+            valueFrom:
+                secretKeyRef:
+                  name: dbsecrets
+                  key: RABBITMQ_URI
+          - name: RABBITMQ_URL
+            valueFrom:
+                secretKeyRef:
+                  name: dbsecrets
+                  key: RABBITMQ_URI
         ports:
           - containerPort: 4000
