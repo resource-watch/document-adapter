@@ -22,7 +22,7 @@ class FieldSerializer {
             // };
             return {
                 tableName,
-                fields: data[0][tableName].mappings[tableName].properties
+                fields: data[0][tableName].mappings.type.properties
             };
         }
         return {};
