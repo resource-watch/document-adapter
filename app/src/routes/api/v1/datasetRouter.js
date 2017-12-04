@@ -50,7 +50,7 @@ class DatasetRouter {
         logger.info('Overwrite dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
+        if (this.request.body.dataset && (this.request.body.dataset.status !== 'saved' && this.request.body.dataset.status !== 'failed')) {
             this.throw(400, 'Dataset is not in saved status');
             return;
         }
@@ -71,7 +71,7 @@ class DatasetRouter {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
-        if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
+        if (this.request.body.dataset && (this.request.body.dataset.status !== 'saved' && this.request.body.dataset.status !== 'failed')) {
             this.throw(400, 'Dataset is not in saved status');
             return;
         }

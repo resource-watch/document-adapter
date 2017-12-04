@@ -427,7 +427,7 @@ class QueryService {
         if (parsed.group || parsed.orderBy) {
             let mapping = yield this.getMapping(index);
             if (parsed.group) {
-                mapping = mapping[0][index].mappings[index].properties;
+                mapping = mapping[0][index].mappings.type ?  mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
                 for (let i = 0, length = parsed.group.length; i < length; i++) {
                     const node = parsed.group[i];
                     if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
@@ -467,7 +467,7 @@ class QueryService {
                     const node = parsed.select[i];
                     if (node.type === 'function') {
                         for (let j = 0; j < node.arguments.length; j++) {
-                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value].type === 'text') {
+                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
                                 node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                             }
                         }
