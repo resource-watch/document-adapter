@@ -16,9 +16,3 @@ mongo:
   command: --smallfiles
   ports:
     - "27017"
-
-elastic:
-  image: vizzuality/elasticsearch-sql:1.0.0
-  ports:
-    - "9200"
-    - "9300"

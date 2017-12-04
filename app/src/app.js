@@ -1,8 +1,4 @@
-'use strict';
-//load modules
-if (process.env.NODE_ENV === 'prod') {
-    require('newrelic');
-}
+
 const config = require('config');
 const logger = require('logger');
 const path = require('path');
@@ -13,14 +9,8 @@ const koaLogger = require('koa-logger');
 const loader = require('loader');
 const validate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
-const redis = require('redis');
-require('bluebird').promisifyAll(redis.RedisClient.prototype);
-const redisClient = redis.createClient({
-    port: config.get('redis.port'),
-    host: config.get('redis.host')
-});
 const ctRegisterMicroservice = require('ct-register-microservice-node');
-// instance of koa
+
 var app = koa();
 
 app.use(compress());

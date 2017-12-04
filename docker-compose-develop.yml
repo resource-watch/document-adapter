@@ -11,49 +11,13 @@ develop:
     LOCAL_URL: http://mymachine:4000
     API_VERSION: v1
     CT_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1pY3Jvc2VydmljZSIsImNyZWF0ZWRBdCI6IjIwMTYtMDktMTQifQ.IRCIRm1nfIQTfda_Wb6Pg-341zhV8soAgzw7dd5HxxQ
-    STAMPERY_TOKEN: 
-    S3_ACCESS_KEY_ID: 
-    S3_SECRET_ACCESS_KEY: 
+    STAMPERY_TOKEN:
+    S3_ACCESS_KEY_ID:
+    S3_SECRET_ACCESS_KEY:
     CT_REGISTER_MODE: auto
+    RABBITMQ_URL: "amqp://user:password@mymachine:5672"
+    ELASTIC_PORT_9200_TCP_ADDR: mymachine
+    ELASTIC_PORT_9200_TCP_PORT: 9200
   command: develop
-  links:
-    - redis
-    - elastic
   volumes:
     - ./app:/opt/rw-adapter-document/app
-worker:
-  build: .
-  environment:
-    NODE_PATH: app/src
-    NODE_ENV: dev
-    CT_URL: http://mymachine:9000
-    LOCAL_URL: http://mymachine:4000
-    API_VERSION: v1
-    CT_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1pY3Jvc2VydmljZSIsImNyZWF0ZWRBdCI6IjIwMTYtMDktMTQifQ.IRCIRm1nfIQTfda_Wb6Pg-341zhV8soAgzw7dd5HxxQ
-    STAMPERY_TOKEN: 
-    S3_ACCESS_KEY_ID: 
-    S3_SECRET_ACCESS_KEY: 
-  container_name: rw-adapter-document-worker-develop
-  command: developWorker
-  links:
-    - redis
-    - elastic
-  volumes_from:
-    - develop
-redis:
-  image: redis
-  container_name: rw-adapter-document-redis
-  ports:
-    - "6379"
-  restart: always
-elastic:
-  image: vizzuality/elasticsearch-sql:5.1.1
-  container_name: rw-adapter-document-elastic
-  ports:
-    - "9200"
-    - "9300"
-  volumes:
-    # in osx the host machine volume directory cannot be under /Users
-    # http://stackoverflow.hex1.ru/questions/34390220/how-to-mount-external-volume-for-mongodb-using-docker-compose-and-docker-machine
-    - $HOME/docker/data/rw-adapter-document-elastic:/usr/share/elasticsearch/data
-  restart: always

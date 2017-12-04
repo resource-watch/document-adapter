@@ -1,22 +1,20 @@
-'use strict';
-
 const coRequest = require('co-request');
-const request = require('request');
 const fs = require('fs');
 const logger = require('logger');
 const Bluebird = require('bluebird');
 const https = require('https');
 const http = require('http');
 const crypto = require('crypto');
+
 const algorithm = 'sha256';
 
 function humanFileSize(bytes, si) {
-    var thresh = si ? 1000 : 1024;
-    if(Math.abs(bytes) < thresh) {
+    const thresh = si ? 1000 : 1024;
+    if (Math.abs(bytes) < thresh) {
         return bytes + ' B';
     }
-    var units = si ? ['kB','MB','GB','TB','PB','EB','ZB','YB'] : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
-    var u = -1;
+    const units = si ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    let u = -1;
     do {
         bytes /= thresh;
         ++u;
@@ -24,8 +22,8 @@ function humanFileSize(bytes, si) {
     return bytes.toFixed(1)+' '+units[u];
 }
 
-let requestDownloadFile = function(url, path, verify) {
-    
+const requestDownloadFile = function(url, path, verify) {
+
     return new Bluebird(function(resolve, reject){
         logger.debug('Sending request');
         try {
@@ -63,8 +61,8 @@ let requestDownloadFile = function(url, path, verify) {
                         resolve(sha256);
                     } else {
                         resolve();
-                    }                    
-                    
+                    }
+
                 });
                 response.on('error',function(e){
                     logger.error('Error downloading file', e);
@@ -83,19 +81,19 @@ let requestDownloadFile = function(url, path, verify) {
 
 class DownloadService {
 
-    static * checkIfExists(url){
+    static* checkIfExists(url){
         logger.info('Checking if the url exists');
         let result = yield coRequest.head(url);
         logger.debug('Headers ', result.headers['content-type'], result.statusCode);
-        
+
         return result.statusCode === 200;
     }
 
-    static * downloadFile(url, name, verify) {
+    static* downloadFile(url, name, verify) {
         logger.debug('Downloading....');
-        let path = '/tmp/' + name;
+        const path = '/tmp/' + name;
         logger.debug('Temporal path', path, '. Downloading');
-        let sha256 = yield requestDownloadFile(url, path, verify);
+        const sha256 = yield requestDownloadFile(url, path, verify);
         logger.debug('Download file!!!');
         return {
             path,

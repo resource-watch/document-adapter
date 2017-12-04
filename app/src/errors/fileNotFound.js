@@ -1,8 +1,10 @@
-'use strict';
+
 class FileNotFound extends Error {
-    constructor(message){
+
+    constructor(message) {
         super(message);
     }
+
 }
 
 module.exports = FileNotFound;

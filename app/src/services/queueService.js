@@ -1,222 +1,58 @@
-'use strict';
-
 const logger = require('logger');
 const config = require('config');
-const queue = require('bull');
-const fs = require('fs');
+const amqp = require('amqplib');
 const co = require('co');
-const DownloadService = require('services/downloadService');
-const queryService = require('services/queryService');
-const ctRegisterMicroservice = require('ct-register-microservice-node');
-const ImporterService = require('services/importerService');
-const randomstring = require('randomstring');
-const stamperyService = require('services/stamperyService');
-
-var microserviceClient = null;
-
-const writeFile = function (name, data)  {
-    return function (callback) {
-        fs.writeFile(name, data, callback);
-    };
-};
-
-var getKey = function (key) {
-    return function (cb) {
-        require('redis').createClient({
-            port: config.get('redis.port'),
-            host: config.get('redis.host')
-        }).get(key, cb);
-    };
-};
 
 class QueueService {
-    constructor() {
-        logger.info('Creating queue');
-        this.importQueue = queue('document-importer', config.get('redis.port'), config.get('redis.host'));
 
-        this.importQueue.on('on', function (err) {
-            logger.error('Error in importqueue', err);
-        });
-        this.deleteQueue = queue('document-delete', config.get('redis.port'), config.get('redis.host'));
-
-        this.importQueue.on('error', function (error) {
-            logger.error('Error in queue', error);
-        });
-        this.importQueue.on('failed', function (error) {
-            //logger.error('Error in queue', error);
-        });
-        this.importQueue.on('completed', function (error) {
-            logger.info('Completed');
-        });
-        
-        ctRegisterMicroservice.init({
-            token: process.env.CT_TOKEN,
-            ctUrl: process.env.CT_URL,
-            logger
-        });
-    }
-
-    *
-    updateState(id, status, tableName, errorMessage) {
-        logger.info('Updating state of dataset ', id, ' with status ', status);
-
-        let options = {
-            uri: '/dataset/' + id,
-            body: {
-               status                
-            },
-            method: 'PATCH',
-            json: true
-        };
-        if (tableName) {
-            options.body.table_name = tableName;
-            options.body.tableName = tableName;
-        }
-        if (errorMessage) {
-            options.body.errorMessage = errorMessage;
-        }
-        logger.info('Updating', options);
+    constructor(q, consume = false) {
+        this.q = q;
+        logger.debug(`Connecting to queue ${this.q}`);
         try {
-            let result = yield ctRegisterMicroservice.requestToMicroservice(options);
-        } catch (e) {
-            logger.error(e);
-            throw new Error('Error to updating dataset');
-        }
-    }
-
-    addProcess() {
-        //this processes are executed in separated forks
-        this.importQueue.process(this.processImport.bind(this));
-        this.deleteQueue.process(this.processDelete.bind(this));
-    }
-
-    * addDataset(type, url, data, index, id, legend, dataPath, verify) {
-        logger.info(`Adding import dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
-        this.importQueue.add({
-            url,
-            data,
-            type,
-            dataPath,
-            legend: legend,
-            index: index,
-            id: id,
-            action: 'import',
-            verify
-        }, {
-            attempts: 2,
-            timeout: 86400000, //2 hours
-            backoff: 1000
-        });
-    }
-
-    *
-    overwriteDataset(type, url, data, index, id, legend, dataPath) {
-        logger.info(`Adding overwrite dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
-        this.importQueue.add({
-            url,
-            data,
-            type,
-            dataPath,
-            legend: legend,
-            index: index,
-            id: id,
-            action: 'overwrite'
-        }, {
-            attempts: 2,
-            timeout: 86400000, //2 hours
-            delay: 1000
-        });
-    }
-
-    * concatDataset(type, url, data, index, id, legend, dataPath) {
-        logger.info(`Adding concat dataset task with with type ${type}, url ${url}, index ${index}, id ${id} and legend ${legend}`);
-        this.importQueue.add({
-            url,
-            data,
-            type,
-            dataPath,
-            legend: legend,
-            index: index,
-            id: id,
-            action: 'concat'
-        }, {
-            attempts: 2,
-            timeout: 86400000, //2 hours
-            delay: 1000
-        });
-    }
-
-    *
-    deleteDataset(index, id) {
-        logger.info('Adding delete dataset task with id %id and index %s', id, index);
-        this.deleteQueue.add({
-            index: index,
-            id: id
-        }, {
-            attempts: 3,
-            timeout: 86400000, //2 hours
-            delay: 1000
-        });
-    }
-
-
-    processDelete(job, done) {
-        logger.info('Proccesing delete task with index: %s and id: %s', job.data.index, job.data.id);
-        co(function* () {
-            yield queryService.deleteIndex(job.data.index);
-            logger.info('Deleted successfully. Updating state');
-        }.bind(this)).then(function () {
-            logger.info('Finished deleted task successfully');
-            done();
-        }, function (error) {
-            logger.error(error);
-            done(new Error(error));
-        });
-    }
-
-    processImport(job, done) {
-        try {
-            logger.info('Proccesing import task with  type: %s, url: %s and index: %s and id: %s and dataPath: %s', job.data.type, job.data.url, job.data.index, job.data.id, job.data.dataPath, job.data.legend);
-            co(function* () {
-                try {
-                    let url = job.data.url;
-                    if (job.data.data) {
-                        logger.debug('Containg data. Saving in file');
-                        url = `/tmp/${randomstring.generate()}.json`;
-                        yield writeFile(url, JSON.stringify(job.data.data));
-                        job.data.url = url;
-                    }
-
-                    logger.debug('Action', job.data.action);
-                    yield this.updateState(job.data.id, 0, job.data.index); //pending
-                
-                    const importer = new ImporterService(job.data.type, job.data.url, job.data.index, job.data.legend, job.data.dataPath, job.data.action, job.data.verify);
-                    yield importer.startProcess();
-                    logger.info('Imported successfully. Updating state');
-                    yield this.updateState(job.data.id, 1, job.data.index);
-                    if (job.data.verify && job.data.action === 'import') {
-                        logger.debug('Doing stamp');
-                        yield stamperyService.stamp(job.data.id, importer.getSHA256(), importer.getPath(), job.data.type);
-                    }
-                } catch (err) {
-                    logger.error('Error in ProcessImport', err);
-                    yield this.updateState(job.data.id, 2, null, err.message || 'Unexpected error');
-                    if (job.data.action !== 'concat') {
-                        yield queryService.deleteIndex(job.data.index);
-                    }
-                    throw err;
-                }
-            }.bind(this)).then(function () {
-                logger.info('Finished imported task successfully');
-                done();
-            }, function (error) {
-                logger.error(error);
-                done(new Error(error));
+            this.init(consume).then(() => {
+                logger.debug('Connected');
+            }, (err) => {
+                logger.error(err);
+                process.exit(1);
             });
-        } catch(err){
+        } catch (err) {
+            logger.error(err);
+        }
+    }
+
+    init(consume) {
+        return co(function* () {
+            const conn = yield amqp.connect(config.get('rabbitmq.url'));
+            this.channel = yield conn.createConfirmChannel();
+            yield this.channel.assertQueue(this.q, { durable: true });
+            if (consume) {
+                this.channel.prefetch(1);
+                logger.debug(` [*] Waiting for messages in ${this.q}`);
+                this.channel.consume(this.q, this.consume.bind(this), {
+                    noAck: false
+                });
+            }
+        }.bind(this));
+
+    }
+
+    returnMsg(msg) {
+        logger.debug(`Sending message to ${this.q}`);
+        try {
+            // Sending to queue
+            let count = msg.properties.headers['x-redelivered-count'] || 0;
+            count += 1;
+            this.channel.sendToQueue(this.q, msg.content, { headers: { 'x-redelivered-count': count } });
+        } catch (err) {
+            logger.error(`Error sending message to ${this.q}`);
             throw err;
         }
     }
+
+    consume() {
+
+    }
+
 }
 
-module.exports = new QueueService();
+module.exports = QueueService;

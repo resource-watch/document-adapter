@@ -1,6 +1,4 @@
-'use strict';
 
-var logger = require('logger');
 const Json2sql = require('sql2json').json2sql;
 const GeoJSON = require('geojson');
 
@@ -39,10 +37,10 @@ class CSVSerializer {
 
     static formatAlias(el, parsed) {
         if (parsed && el) {
-            
+
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const sel = parsed.select[i];
-                
+
                 if (sel.alias) {
                     if (sel.type === 'literal') {
                         el[sel.alias] = el[sel.value];
@@ -61,14 +59,13 @@ class CSVSerializer {
         return el;
     }
 
-    static serialize(data, parsed, id, format='json') {
-        let ast = null;
+    static serialize(data, parsed, id, format = 'json') {
         if (data && data.length > 0) {
 
             if (data[0].aggregations) {
 
-                let keys = Object.keys(data[0].aggregations);
-                let attributes = {};
+                const keys = Object.keys(data[0].aggregations);
+                const attributes = {};
                 if (!data[0].aggregations[keys[0]].buckets) {
                     for (let i = 0, length = keys.length; i < length; i++) {
                         attributes[keys[i]] = data[0].aggregations[keys[i]].value;
@@ -76,26 +73,25 @@ class CSVSerializer {
                     return {
                         data: [attributes]
                     };
-                } else {
-                    const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
-                    const list = values.map((el) => {
-                        return CSVSerializer.formatAlias(el, parsed);
-                    });
-                    return {
-                        data: list
-                    };
                 }
+                const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
+                const list = values.map((el) => {
+                    return CSVSerializer.formatAlias(el, parsed);
+                });
+                return {
+                    data: list
+                };
 
             } else if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
 
                 return {
                     data: data[0].hits.hits.map((el) => {
-                        let formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
+                        const formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
                             _id: el._id
                         }), parsed);
-                        if (format === 'geojson'){
-                            return GeoJSON.parse(formatted, {exclude: ['the_geom'], GeoJSON: 'the_geom'});
-                        } 
+                        if (format === 'geojson') {
+                            return GeoJSON.parse(formatted, { exclude: ['the_geom'], GeoJSON: 'the_geom' });
+                        }
                         return formatted;
                     }) // jshint ignore:line
                 };
@@ -106,6 +102,7 @@ class CSVSerializer {
         };
 
     }
+
 }
 
 module.exports = CSVSerializer;

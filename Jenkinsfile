@@ -34,11 +34,11 @@ node {
       sh("docker -H :2375 build -t ${dockerUsername}/${appName}:latest .")
     }
 
-    stage ('Run Tests') {
-      sh('docker-compose -H :2375 -f docker-compose-test.yml build')
-      sh('docker-compose -H :2375 -f docker-compose-test.yml run --rm test')
-      sh('docker-compose -H :2375 -f docker-compose-test.yml stop')
-    }
+    // stage ('Run Tests') {
+    //   sh('docker-compose -H :2375 -f docker-compose-test.yml build')
+    //   sh('docker-compose -H :2375 -f docker-compose-test.yml run --rm test')
+    //   sh('docker-compose -H :2375 -f docker-compose-test.yml stop')
+    // }
 
     stage('Push Docker') {
       withCredentials([usernamePassword(credentialsId: 'Vizzuality Docker Hub', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
@@ -64,7 +64,6 @@ node {
             sh("kubectl apply -f k8s/staging/")
           }
           sh("kubectl set image deployment ${appName} ${appName}=${imageTag} --record")
-          sh("kubectl set image deployment ${appName} ${appName}-cron=${imageTag} --record")
           break
 
         // Roll out to production
@@ -98,7 +97,6 @@ node {
               sh("kubectl apply -f k8s/production/")
             }
             sh("kubectl set image deployment ${appName} ${appName}=${imageTag} --record")
-            sh("kubectl set image deployment ${appName} ${appName}-cron=${imageTag} --record")
           } else {
             sh("echo NOT DEPLOYED")
             currentBuild.result = 'SUCCESS'
