@@ -467,7 +467,7 @@ class QueryService {
                     const node = parsed.select[i];
                     if (node.type === 'function') {
                         for (let j = 0; j < node.arguments.length; j++) {
-                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value].type === 'text') {
+                            if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
                                 node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                             }
                         }
