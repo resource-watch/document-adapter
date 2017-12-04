@@ -20,9 +20,16 @@ class FieldSerializer {
             //         }
             //     }
             // };
+            let mappings = data[0][tableName].mappings;
+            if (mappings.type) {
+                return {
+                    tableName,
+                    fields: mappings.type.properties
+                };
+            }
             return {
                 tableName,
-                fields: data[0][tableName].mappings.type.properties
+                fields: mappings[tableName].properties
             };
         }
         return {};
