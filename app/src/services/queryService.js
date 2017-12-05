@@ -61,13 +61,18 @@ class Scroll {
             logger.debug('Config size of aggregations');
             let name = null;
             let aggregations = resultQueryElastic.aggregations;
-            for (let i = 0, length = this.parsed.group.length; i < length; i++) {
-                name = this.parsed.group[i].value;
-                if (aggregations[name] && aggregations[name].terms) {
-                    aggregations[name].terms.size = this.parsed.limit || 999999;
-                    aggregations = aggregations[name].aggregations;
+            let finish = false;
+            while (aggregations){
+                const keys = Object.keys(aggregations);
+                if (keys.length === 1) {
+                    if (aggregations[keys[0]] && aggregations[keys[0]].terms){
+                        aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
+                        aggregations = aggregations[keys[0]].aggregations;
+                    } else if (keys[0].indexOf('NESTED') >= -1) {
+                        aggregations = aggregations[keys[0]].aggregations;
+                    }
                 }
-            }
+            }               
         }
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
