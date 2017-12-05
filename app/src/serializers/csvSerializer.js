@@ -14,8 +14,14 @@ class CSVSerializer {
         alias = alias.replace('.keyword', '');
         for (let i = 0, length = buckets.length; i < length; i++) {
             let keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
-            if (keys.length === 1 && buckets[i][keys[0]].buckets) {
+            if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED')===-1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
+                for (let j = 0, length = partialList.length; j < length; j++) {
+                    partialList[j][alias] = buckets[i].key;
+                }
+                list = list.concat(partialList);
+            } else if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED')>-1) {
+                const partialList = CSVSerializer.serializeBucket(keys[0].replace('@NESTED', ''), buckets[i][keys[0]][keys[0].replace('@NESTED', '')].buckets);
                 for (let j = 0, length = partialList.length; j < length; j++) {
                     partialList[j][alias] = buckets[i].key;
                 }
@@ -66,13 +72,27 @@ class CSVSerializer {
 
                 const keys = Object.keys(data[0].aggregations);
                 const attributes = {};
-                if (!data[0].aggregations[keys[0]].buckets) {
+                if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                     for (let i = 0, length = keys.length; i < length; i++) {
                         attributes[keys[i]] = data[0].aggregations[keys[i]].value;
                     }
                     return {
                         data: [attributes]
                     };
+                } else if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
+                    let nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
+                    const nested = data[0].aggregations[keys[0]];
+                    for (let i = 0, length = nestedKeys.length; i < length; i++) {
+                        if (nested[nestedKeys[i]].buckets) {
+                            const values = CSVSerializer.serializeBucket(nestedKeys[0], nested[nestedKeys[i]].buckets);
+                            const list = values.map((el) => {
+                                return CSVSerializer.formatAlias(el, parsed);
+                            });
+                            return {
+                                data: list
+                            };
+                        }
+                    }
                 }
                 const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
                 const list = values.map((el) => {
