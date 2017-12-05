@@ -84,7 +84,7 @@ class CSVSerializer {
                     const nested = data[0].aggregations[keys[0]];
                     for (let i = 0, length = nestedKeys.length; i < length; i++) {
                         if (nested[nestedKeys[i]].buckets) {
-                            const values = CSVSerializer.serializeBucket(nestedKeys[0], nested[nestedKeys[i]].buckets);
+                            const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
                             const list = values.map((el) => {
                                 return CSVSerializer.formatAlias(el, parsed);
                             });
