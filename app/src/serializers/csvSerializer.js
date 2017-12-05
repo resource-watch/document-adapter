@@ -20,7 +20,7 @@ class CSVSerializer {
                     partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
-            } else if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED')>-1) {
+            } else if (keys.length === 1 &&  keys[0].indexOf('NESTED')>-1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0].replace('@NESTED', ''), buckets[i][keys[0]][keys[0].replace('@NESTED', '')].buckets);
                 for (let j = 0, length = partialList.length; j < length; j++) {
                     partialList[j][alias] = buckets[i].key;
