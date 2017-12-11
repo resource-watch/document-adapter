@@ -70,9 +70,13 @@ class Scroll {
                         aggregations = aggregations[keys[0]].aggregations;
                     } else if (keys[0].indexOf('NESTED') >= -1) {
                         aggregations = aggregations[keys[0]].aggregations;
+                    } else {
+                        aggregations = null;
                     }
+                } else {
+                    aggregations = null;
                 }
-            }               
+            }
         }
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
