@@ -139,6 +139,9 @@ const toSQLMiddleware = function* (next) {
         logger.debug('Checking sql correct');
         const params = Object.assign({}, this.query, this.request.body);
         options.uri = `/convert/sql2SQL?sql=${params.sql}`;
+        if (params.experimental) {
+            options.uri += `&experimental=${params.experimental}`;
+        }
         if (params.geostore) {
             options.uri += `&geostore=${params.geostore}`;
         }
