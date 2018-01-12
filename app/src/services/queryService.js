@@ -70,9 +70,13 @@ class Scroll {
                         aggregations = aggregations[keys[0]].aggregations;
                     } else if (keys[0].indexOf('NESTED') >= -1) {
                         aggregations = aggregations[keys[0]].aggregations;
+                    } else {
+                        aggregations = null;
                     }
+                } else {
+                    aggregations = null;
                 }
-            }               
+            }
         }
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
@@ -431,8 +435,9 @@ class QueryService {
         //search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
             let mapping = yield this.getMapping(index);
+            mapping = mapping[0][index].mappings.type ?  mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
             if (parsed.group) {
-                mapping = mapping[0][index].mappings.type ?  mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
+                
                 for (let i = 0, length = parsed.group.length; i < length; i++) {
                     const node = parsed.group[i];
                     if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
