@@ -454,9 +454,14 @@ class QueryService {
                     } else if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
                         logger.debug(mapping[node.value]);
+                        const exists = parsed.select.find(sel => sel.alias === node.value);
+                        if (exists) {
+                            node.value = exists.value;
+                        }
                         if (mapping[node.value] && mapping[node.value].type === 'text') {
                             node.value = `${node.value}.keyword`;
                         }
+
                     }
                 }
             }
