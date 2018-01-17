@@ -65,6 +65,7 @@ class QueryRouter {
     }
 
     static* queryV2() {
+        logger.info('Doing query V2');
         logger.info('Do Query with dataset', this.request.body);
         logger.debug('Checking if is delete or select');
 
