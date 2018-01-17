@@ -256,11 +256,13 @@ class QueryService {
                 }.bind(this);
             },
             createScroll: function (opts) {
+                this.transport.requestTimeout = 60000;
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI(`${opts.index}/_search?scroll=${opts.duration}`),
-                        body: JSON.stringify(opts.query)
+                        body: JSON.stringify(opts.query),
+                        requestTimeout: 60000
                     }, cb);
                 }.bind(this);
             },
