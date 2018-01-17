@@ -212,12 +212,11 @@ class QueryService {
         var sqlAPI = {
             sql: function (opts) {
                 return function (cb) {
+                    this.transport.requestTimeout = 60000;
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI('/_sql'),
-                        body: opts.sql,
-                        timeout: 60000,
-                        requestTimeout: 60000,
+                        body: opts.sql
                     }, cb);
                 }.bind(this);
             },
