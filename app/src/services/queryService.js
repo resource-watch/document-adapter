@@ -215,7 +215,9 @@ class QueryService {
                     this.transport.request({
                         method: 'POST',
                         path: encodeURI('/_sql'),
-                        body: opts.sql
+                        body: opts.sql,
+                        timeout: 60000,
+                        requestTimeout: 60000,
                     }, cb);
                 }.bind(this);
             },
