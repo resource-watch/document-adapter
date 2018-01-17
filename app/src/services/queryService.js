@@ -266,10 +266,12 @@ class QueryService {
             },
             getScroll: function (opts) {
                 logger.debug('GETSCROLL ', opts);
+                this.transport.requestTimeout = 60000;
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
                         path: encodeURI(`_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
+                        requestTimeout: 60000
                     }, cb);
                 }.bind(this);
             },
