@@ -48,6 +48,52 @@
 			}
 		}]
 	},{
+		"path": "/v2/query/:dataset",
+		"method": "GET",
+		"binary": true,
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/document/query-v2/:dataset"
+		},
+		"filters": [{
+			"name": "dataset",
+			"path": "/v1/dataset/:dataset",
+			"method": "GET",
+			"params": {
+				"dataset": "dataset"
+			},
+			"compare": {
+				"data": {
+					"attributes": {
+						"connectorType": "document"
+					}
+				}
+			}
+		}]
+	}, {
+		"path": "/v2/query/:dataset",
+		"method": "POST",
+		"binary": true,
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/document/query-v2/:dataset"
+		},
+		"filters": [{
+			"name": "dataset",
+			"path": "/v1/dataset/:dataset",
+			"method": "GET",
+			"params": {
+				"dataset": "dataset"
+			},
+			"compare": {
+				"data": {
+					"attributes": {
+						"connectorType": "document"
+					}
+				}
+			}
+		}]
+	},{
 		"path": "/v1/download/:dataset",
 		"method": "GET",
 		"binary": true,
