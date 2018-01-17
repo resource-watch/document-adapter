@@ -64,6 +64,37 @@ class QueryRouter {
         }
     }
 
+    static* queryV2() {
+        logger.info('Do Query with dataset', this.request.body);
+        logger.debug('Checking if is delete or select');
+
+        try {
+            if (this.state.parsed.delete) {
+                logger.debug('Doing delete');
+                this.state.parsed.from = this.request.body.dataset.tableName;
+                const sql = Json2sql.toSQL(this.state.parsed);
+                this.body = yield taskQueueService.delete({
+                    datasetId: this.request.body.dataset.id,
+                    query: sql,
+                    index: this.request.body.dataset.tableName
+                });
+            } else if (this.state.parsed.select) {
+                this.body = passThrough();
+                const cloneUrl = QueryRouter.getCloneUrl(this.request.url, this.params.dataset);
+                this.state.parsed.from = this.request.body.dataset.tableName;
+                const sql = Json2sql.toSQL(this.state.parsed);
+                logger.debug(this.request.body.dataset);
+                yield queryService.doQueryV2(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
+            } else {
+                this.throw(400, 'Query not valid');
+                return;
+            }
+        } catch (err) {
+            logger.error(err);
+            throw err;
+        }
+    }
+
     static* download() {
         this.body = passThrough();
         const format = this.query.format ? this.query.format : 'csv';
@@ -305,6 +336,7 @@ const checkPermissionDelete = function* (next) {
 
 
 router.post('/query/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
+router.post('/query-v2/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
 router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, QueryRouter.download);
 router.post('/fields/:dataset', deserializeDataset, QueryRouter.fields);
 

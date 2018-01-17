@@ -328,6 +328,11 @@ class QueryService {
             log: 'info',
             apiVersion: 'sql'
         });
+        this.elasticClientV2 = new elasticsearch.Client({
+            host: 'elasticsearch-v2.default.svc.cluster.local:9200',
+            log: 'info',
+            apiVersion: 'sql'
+        });
         setInterval(() => {
             this.elasticClient.ping({
                 // ping usually has a 3000ms timeout
@@ -550,6 +555,32 @@ class QueryService {
         logger.debug('sql', sql);
 
         var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
+        yield scroll.init();
+        yield scroll.continue();
+        logger.info('Finished query');
+    }
+
+    * doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
+        logger.info('Doing query...');
+        parsed = yield this.convertQueryToElastic(parsed, index);
+        let removeAlias = Object.assign({}, parsed);
+        if (removeAlias.select) {
+            removeAlias.select = removeAlias.select.map(el => {
+                if (el.type === 'function') {
+                    return el;
+                }
+                return {
+                    value: el.value,
+                    type: el.type,
+                    alias: null,
+                    arguments: el.arguments
+                };
+            });
+        }
+        sql = Json2sql.toSQL(removeAlias);
+        logger.debug('sql', sql);
+
+        var scroll = new Scroll(this.elasticClientV2, sql, parsed, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
