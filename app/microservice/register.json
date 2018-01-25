@@ -1,5 +1,7 @@
 {
 	"name": "#(service.name)",
+	"cache": ["query-document"],
+	"uncache": ["query-document"],
 	"tags": ["rw"],
 	"endpoints": [{
 		"path": "/v1/query/:dataset",
