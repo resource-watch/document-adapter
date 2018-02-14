@@ -43,31 +43,28 @@ class CSVSerializer {
 
     static formatAlias(el, parsed) {
         if (parsed && el) {
-            const target = {};
+            const target = Object.assign({}, el);
+            let values = [];
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const sel = parsed.select[i];
 
                 if (sel.alias) {
                     if (sel.type === 'literal') {
                         target[sel.alias] = el[sel.value];
+                        values.push(sel.value);
                     } else if (sel.type === 'function') {
                         const name = Json2sql.parseFunction(sel);
                         if (el[name]) {
                             target[sel.alias] = el[name];
+                            values.push(name);
                         }
                     }
 
-                } else {
-                    if (sel.type === 'literal') {
-                        target[sel.value] = el[sel.value];
-                    } else if (sel.type === 'function') {
-                        const name = Json2sql.parseFunction(sel);
-                        if (el[name]) {
-                            target[name] = el[name];
-                        }
-                    }
                 }
             }
+            values.map(val => {
+                delete target[val];
+            });
             return target;
         }
         return el;
