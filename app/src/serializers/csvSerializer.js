@@ -43,7 +43,7 @@ class CSVSerializer {
 
     static formatAlias(el, parsed) {
         if (parsed && el) {
-            const target = Object.assign({}, el);
+            const target = {};
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const sel = parsed.select[i];
 
