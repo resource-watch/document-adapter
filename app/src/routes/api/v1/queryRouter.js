@@ -251,6 +251,10 @@ const checkUserHasPermission = function (user, dataset) {
 
 const checkPermissionDelete = function* (next) {
     if (this.state.parsed.delete) {
+        if (!this.request.body || !this.request.body.loggedUser) {
+            this.throw(403, 'Not authorized to execute DELETE query');
+            return;
+        }
         if (this.request.body && this.request.body.loggedUser) {
 
             if (checkUserHasPermission(this.request.body.loggedUser, this.request.body.dataset)) {
