@@ -1,4 +1,3 @@
-
 const Json2sql = require('sql2json').json2sql;
 const GeoJSON = require('geojson');
 
@@ -13,21 +12,21 @@ class CSVSerializer {
         }
         alias = alias.replace('.keyword', '');
         for (let i = 0, length = buckets.length; i < length; i++) {
-            let keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
-            if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED')===-1) {
+            const keys = Object.keys(buckets[i]).filter(el => el !== 'doc_count' && el !== 'key');
+            if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
                 for (let j = 0, length = partialList.length; j < length; j++) {
                     partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
-            } else if (keys.length === 1 &&  keys[0].indexOf('NESTED')>-1) {
+            } else if (keys.length === 1 && keys[0].indexOf('NESTED') > -1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0].replace('@NESTED', ''), buckets[i][keys[0]][keys[0].replace('@NESTED', '')].buckets);
                 for (let j = 0, length = partialList.length; j < length; j++) {
                     partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
             } else {
-                let obj = {
+                const obj = {
                     [alias]: buckets[i].key
                 };
                 for (let j = 0, lengthSublist = keys.length; j < lengthSublist; j++) {
@@ -44,27 +43,28 @@ class CSVSerializer {
     static formatAlias(el, parsed) {
         if (parsed && el) {
             const target = Object.assign({}, el);
-            let values = [];
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const sel = parsed.select[i];
 
                 if (sel.alias) {
                     if (sel.type === 'literal') {
                         target[sel.alias] = el[sel.value];
-                        values.push(sel.value);
                     } else if (sel.type === 'function') {
                         const name = Json2sql.parseFunction(sel);
                         if (el[name]) {
                             target[sel.alias] = el[name];
-                            values.push(name);
                         }
                     }
 
+                } else if (sel.type === 'literal') {
+                    target[sel.value] = el[sel.value];
+                } else if (sel.type === 'function') {
+                    const name = Json2sql.parseFunction(sel);
+                    if (el[name]) {
+                        target[name] = el[name];
+                    }
                 }
             }
-            values.map(val => {
-                delete target[val];
-            });
             return target;
         }
         return el;
@@ -84,15 +84,13 @@ class CSVSerializer {
                     return {
                         data: [attributes]
                     };
-                } else if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
-                    let nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
+                } if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
+                    const nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
                     const nested = data[0].aggregations[keys[0]];
                     for (let i = 0, length = nestedKeys.length; i < length; i++) {
                         if (nested[nestedKeys[i]].buckets) {
                             const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
-                            const list = values.map((el) => {
-                                return CSVSerializer.formatAlias(el, parsed);
-                            });
+                            const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
                             return {
                                 data: list
                             };
@@ -100,14 +98,12 @@ class CSVSerializer {
                     }
                 }
                 const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
-                const list = values.map((el) => {
-                    return CSVSerializer.formatAlias(el, parsed);
-                });
+                const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
                 return {
                     data: list
                 };
 
-            } else if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+            } if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
 
                 return {
                     data: data[0].hits.hits.map((el) => {
@@ -118,7 +114,7 @@ class CSVSerializer {
                             return GeoJSON.parse(formatted, { exclude: ['the_geom'], GeoJSON: 'the_geom' });
                         }
                         return formatted;
-                    }) // jshint ignore:line
+                    })
                 };
             }
         }

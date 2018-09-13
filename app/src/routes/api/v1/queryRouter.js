@@ -23,15 +23,14 @@ const deserializer = function (obj) {
 };
 
 const serializeObjToQuery = function (obj) {
-    return Object.keys(obj).reduce(function (a, k) {
-        a.push(k + '=' + encodeURIComponent(obj[k]));
+    return Object.keys(obj).reduce((a, k) => {
+        a.push(`${k}=${encodeURIComponent(obj[k])}`);
         return a;
     }, []).join('&');
 };
 
 
 class QueryRouter {
-
 
     static* query() {
         logger.info('Do Query with dataset', this.request.body);
@@ -147,10 +146,8 @@ const deserializeDataset = function* (next) {
     logger.debug('Body', this.request.body);
     if (this.request.body.dataset && this.request.body.dataset.data) {
         this.request.body.dataset = yield deserializer(this.request.body.dataset);
-    } else {
-        if (this.request.body.dataset && this.request.body.dataset.table_name) {
-            this.request.body.dataset.tableName = this.request.body.dataset.table_name;
-        }
+    } else if (this.request.body.dataset && this.request.body.dataset.table_name) {
+        this.request.body.dataset.tableName = this.request.body.dataset.table_name;
     }
     yield next;
 };
@@ -241,7 +238,7 @@ const checkUserHasPermission = function (user, dataset) {
         // check if user is admin of any application of the dataset or manager and owner of the dataset
         if (user.role === 'MANAGER' && user.id === dataset.userId) {
             return true;
-        } else if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
+        } if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
             return true;
         }
 

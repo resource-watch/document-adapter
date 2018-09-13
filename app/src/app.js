@@ -1,8 +1,6 @@
-
 const config = require('config');
 const logger = require('logger');
-const path = require('path');
-const koa = require('koa');
+const Koa = require('koa');
 const compress = require('koa-compress');
 const bodyParser = require('koa-bodyparser');
 const koaLogger = require('koa-logger');
@@ -11,10 +9,10 @@ const validate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
-var app = koa();
+const app = new Koa();
 
 app.use(compress());
-//if environment is dev then load koa-logger
+// if environment is dev then load koa-logger
 if (process.env.NODE_ENV === 'dev') {
     app.use(koaLogger());
 }
@@ -23,7 +21,7 @@ app.use(bodyParser({
     jsonLimit: '50mb'
 }));
 
-//catch errors and send in jsonapi standard. Always return vnd.api+json
+// catch errors and send in jsonapi standard. Always return vnd.api+json
 app.use(function* (next) {
     try {
         yield next;
@@ -38,19 +36,19 @@ app.use(function* (next) {
     this.response.type = 'application/vnd.api+json';
 });
 
-//load custom validator
+// load custom validator
 app.use(validate());
 
-//load routes
+// load routes
 loader.loadRoutes(app);
-//Instance of http module
-var server = require('http').Server(app.callback());
+// Instance of http module
+const server = require('http').Server(app.callback());
 
 // get port of environment, if not exist obtain of the config.
 // In production environment, the port must be declared in environment variable
-var port = process.env.PORT || config.get('service.port');
+const port = process.env.PORT || config.get('service.port');
 
-server.listen(port, function () {
+server.listen(port, () => {
     ctRegisterMicroservice.register({
         info: require('../microservice/register.json'),
         swagger: require('../microservice/public-swagger.json'),
@@ -69,4 +67,6 @@ server.listen(port, function () {
     });
 });
 
-logger.info('Server started in port:' + port);
+logger.info(`Server started in port:${port}`);
+
+module.exports = server;
