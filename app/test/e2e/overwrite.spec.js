@@ -30,6 +30,7 @@ describe('Dataset overwrite tests', () => {
         const queueName = config.get('queues.docTasks');
         const conn = await amqp.connect(config.get('rabbitmq.url'));
         const channel = await conn.createConfirmChannel();
+        await channel.assertQueue(queueName);
         await channel.purgeQueue(queueName);
 
         const preQueueStatus = await channel.assertQueue(queueName);
