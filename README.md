@@ -1,5 +1,7 @@
 # Resource Watch Adapter CSV
 
+[![Build Status](https://travis-ci.org/resource-watch/document-adapter.svg?branch=master)](https://travis-ci.org/resource-watch/document-adapter)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/381fe72ebbdaaeb9aff4/test_coverage)](https://codeclimate.com/github/resource-watch/document-adapter/test_coverage)
 
 This repository is the microservice that implements the csv adapter
 funcionality, which is exposed on the /csv endpoint.
