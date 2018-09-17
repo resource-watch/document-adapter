@@ -1,4 +1,3 @@
-
 const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
@@ -73,7 +72,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: `${opts.index}/_mapping`
+                        path: `/${opts.index}/_mapping`
                     }, cb);
                 }.bind(this);
             },
@@ -81,7 +80,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'DELETE',
-                        path: `${opts.index}`
+                        path: `/${opts.index}`
                     }, cb);
                 }.bind(this);
             },
@@ -90,7 +89,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_search?scroll=${opts.duration}`),
+                        path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
                         body: JSON.stringify(opts.query),
                         requestTimeout: 60000
                     }, cb);
@@ -102,7 +101,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: encodeURI(`_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
+                        path: encodeURI(`/_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
                         requestTimeout: 60000
                     }, cb);
                 }.bind(this);
@@ -112,7 +111,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
+                        path: encodeURI(`/${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -122,7 +121,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/${opts.type}/${opts.id}/_update`),
+                        path: encodeURI(`/${opts.index}/${opts.type}/${opts.id}/_update`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -141,7 +140,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: encodeURI(`_tasks/${opts.task}`)
+                        path: encodeURI(`/_tasks/${opts.task}`)
                     }, cb);
                 }.bind(this);
             },
@@ -150,7 +149,7 @@ class QueryService {
                 return function (cb) {
                     this.transport.request({
                         method: 'PUT',
-                        path: encodeURI(`${opts.index}/_settings`),
+                        path: encodeURI(`/${opts.index}/_settings`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -241,7 +240,8 @@ class QueryService {
             const right = this.findIntersect(node.right);
             if (left) {
                 return left;
-            } if (right)  {
+            }
+            if (right) {
                 return right;
             }
         }
@@ -339,7 +339,7 @@ class QueryService {
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const node = parsed.select[i];
                 if (node.type === 'function') {
-                    if (node.value.toLowerCase() === 'st_geohash')  {
+                    if (node.value.toLowerCase() === 'st_geohash') {
                         const args = [];
                         args.push({
                             type: 'literal',
@@ -448,8 +448,7 @@ class QueryService {
 
     }
 
-    *
-    updateState(id, status, errorMessage) {
+    * updateState(id, status, errorMessage) {
         logger.info('Updating state of dataset ', id, ' with status ', status);
 
         const options = {
