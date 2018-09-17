@@ -7,5 +7,9 @@
   },
   "queues": {
     "docTasks": "DOC-TASKS-TEST"
+  },
+  "elasticsearch": {
+    "port": 9200,
+    "host": "1.1.1.1"
   }
 }
