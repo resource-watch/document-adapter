@@ -19,9 +19,9 @@ const router = new Router({
 
 class DatasetRouter {
 
-    static* import() {
+    static async import() {
         logger.info('Adding dataset with dataset id: ', this.request.body);
-        yield taskQueueService.import({
+        await taskQueueService.import({
             datasetId: this.request.body.connector.id,
             fileUrl: this.request.body.connector.connectorUrl,
             data: this.request.body.connector.data,
@@ -33,7 +33,7 @@ class DatasetRouter {
         this.body = '';
     }
 
-    static* updateData() {
+    static updateData() {
         // logger.info(`Update data with id ${this.params.id}  of dataset ${this.request.body.dataset.id}`);
         // this.assert(this.request.body.data, 400, 'Data is required');
         // if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
@@ -46,7 +46,7 @@ class DatasetRouter {
         // this.body = null;
     }
 
-    static* overwrite() {
+    static async overwrite() {
         logger.info('Overwrite dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
@@ -54,7 +54,7 @@ class DatasetRouter {
             this.throw(400, 'Dataset is not in saved status');
             return;
         }
-        yield taskQueueService.overwrite({
+        await taskQueueService.overwrite({
             datasetId: this.params.dataset,
             fileUrl: this.request.body.url,
             data: this.request.body.data,
@@ -109,7 +109,7 @@ const containApps = function (apps1, apps2) {
     if (!apps1 || !apps2) {
         return false;
     }
-    for (let i = 0, length = apps1.length; i < length; i++)  {
+    for (let i = 0, { length } = apps1; i < length; i++) {
         for (let j = 0, length2 = apps2.length; j < length2; j++) {
             if (apps1[i] === apps2[j]) {
                 return true;
@@ -127,7 +127,8 @@ const checkUserHasPermission = function (user, dataset) {
         // check if user is admin of any application of the dataset or manager and owner of the dataset
         if (user.role === 'MANAGER' && user.id === dataset.userId) {
             return true;
-        } else if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
+        }
+        if (user.role === 'ADMIN' && containApps(dataset.application, user.extraUserData ? user.extraUserData.apps : null)) {
             return true;
         }
 
@@ -138,18 +139,15 @@ const checkUserHasPermission = function (user, dataset) {
 const checkPermissionModify = function* (next) {
     logger.debug('Checking if the user has permissions');
     const user = this.request.body.loggedUser;
-    const dataset = this.request.body.dataset;
+    const { dataset } = this.request.body;
     if (checkUserHasPermission(user, dataset)) {
         if (dataset.overwrite) {
             yield next;
             return;
         }
         this.throw(409, 'Dataset locked. Overwrite false.');
-        return;
-
     } else {
         this.throw(403, 'Not authorized');
-        return;
     }
 };
 
@@ -157,10 +155,8 @@ const deserializeDataset = function* (next) {
     logger.debug('Body', this.request.body);
     if (this.request.body.dataset && this.request.body.dataset.data) {
         this.request.body.dataset = yield deserializer(this.request.body.dataset);
-    } else {
-        if (this.request.body.dataset && this.request.body.dataset.table_name) {
-            this.request.body.dataset.tableName = this.request.body.dataset.table_name;
-        }
+    } else if (this.request.body.dataset && this.request.body.dataset.table_name) {
+        this.request.body.dataset.tableName = this.request.body.dataset.table_name;
     }
     yield next;
 };

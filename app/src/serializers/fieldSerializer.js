@@ -20,7 +20,7 @@ class FieldSerializer {
             //         }
             //     }
             // };
-            let mappings = data[0][tableName].mappings;
+            const mappings = data[0][tableName].mappings;
             if (mappings.type) {
                 return {
                     tableName,

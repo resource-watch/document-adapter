@@ -1,17 +1,14 @@
-
 const logger = require('logger');
 const config = require('config');
 const elasticsearch = require('elasticsearch');
-const json2csv = require('json2csv');
+const Scroll = require('services/scroll');
 const co = require('co');
 const Json2sql = require('sql2json').json2sql;
 const Terraformer = require('terraformer-wkt-parser');
-const csvSerializer = require('serializers/csvSerializer');
 const DocumentNotFound = require('errors/documentNotFound');
-const IndexNotFound = require('errors/indexNotFound');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
-const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') + ':' + config.get('elasticsearch.port');
+const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
 // function capitalizeFirstLetter(text) {
 //     switch (text) {
@@ -35,182 +32,14 @@ const elasticUri = process.env.ELASTIC_URI || config.get('elasticsearch.host') +
 //
 // }
 
-class Scroll {
-
-    constructor(elasticClient, sql, parsed, index, datasetId, stream, download, cloneUrl, format) {
-        this.elasticClient = elasticClient;
-        this.sql = sql;
-        this.parsed = parsed;
-        this.index = index;
-        this.datasetId = datasetId;
-        this.stream = stream;
-        this.download = download;
-        this.cloneUrl = cloneUrl;
-        this.format = format || 'json';
-        this.timeout = false;
-    }
-
-    * init() {
-        this.timeoutFunc = setTimeout(function () {
-            this.timeout = true;
-        }.bind(this), 60000);
-        const resultQueryElastic = yield this.elasticClient.explain({
-            sql: this.sql
-        });
-        if (this.parsed.group) {
-            logger.debug('Config size of aggregations');
-            let name = null;
-            let aggregations = resultQueryElastic.aggregations;
-            let finish = false;
-            while (aggregations){
-                const keys = Object.keys(aggregations);
-                if (keys.length === 1) {
-                    if (aggregations[keys[0]] && aggregations[keys[0]].terms){
-                        aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
-                        aggregations = aggregations[keys[0]].aggregations;
-                    } else if (keys[0].indexOf('NESTED') >= -1) {
-                        aggregations = aggregations[keys[0]].aggregations;
-                    } else {
-                        aggregations = null;
-                    }
-                } else {
-                    aggregations = null;
-                }
-            }
-        }
-        this.limit = -1;
-        if (this.sql.toLowerCase().indexOf('limit') >= 0) {
-            this.limit = resultQueryElastic.size;
-        }
-
-        if (resultQueryElastic.size > 10000 || this.limit === -1) {
-            resultQueryElastic.size = 10000;
-        }
-        logger.debug('Creating params to scroll with query', resultQueryElastic);
-        const params = {
-            query: resultQueryElastic,
-            duration: '1m',
-            index: this.index
-        };
-
-        try {
-            const size = resultQueryElastic.size;
-            logger.debug('Creating scroll');
-            this.resultScroll = yield this.elasticClient.createScroll(params);
-            this.first = true;
-            this.total = 0;
-
-        } catch (err) {
-            if (err.statusCode === 404) {
-                throw new IndexNotFound(404, 'Table not found');
-            }
-            throw err;
-        }
-    }
-
-    convertDataToDownload(data, type, first, more, cloneUrl) {
-
-            if (type === 'csv') {
-                let json = json2csv({
-                    data: data ? data.data : [],
-                    hasCSVColumnTitle: first
-                }) + '\n';
-                return json;
-            } else if (type === 'json' || type === 'geojson') {
-                let dataString = '';
-                if (data) {
-                    dataString = JSON.stringify(data);
-                    dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
-                }
-                if (first) {
-                    if (type === 'geojson') {
-                        dataString = `{"data":[{"type": "FeatureCollection", "features": [${dataString}`;
-                    } else {
-                        dataString = '{"data":[' + dataString;
-                    }
-                }
-                if (more) {
-                    dataString += ',';
-                } else {
-
-                    if (!this.download) {
-                        if (type === 'geojson') {
-                            dataString += ']}';
-                        }
-                        dataString += '],';
-                        var meta = {
-                            cloneUrl: cloneUrl
-                        };
-
-                        dataString += `"meta": ${JSON.stringify(meta)} }`;
-                    } else {
-                        if (type === 'geojson') {
-                            dataString += ']}';
-                        }
-                        dataString += ']}';
-                    }
-                }
-                return dataString;
-            }
-        }
-        *
-        continue () {
-
-            if (this.resultScroll[0].aggregations) {
-                const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
-                this.stream.write(this.convertDataToDownload(data, this.format, true, false, this.cloneUrl), {
-                    encoding: 'binary'
-                });
-            } else {
-                this.first = true;
-                while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
-                    logger.debug('Writting data');
-                    let more = false;
-                    const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
-
-                    this.total += this.resultScroll[0].hits.hits.length;
-                    if (this.total < this.limit || this.limit === -1) {
-                        this.resultScroll = yield this.elasticClient.getScroll({
-                            scroll: '1m',
-                            scroll_id: this.resultScroll[0]._scroll_id,
-                        });
-                        if (this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0) {
-                            more = true;
-                        }
-                    } else {
-                        more = false;
-                    }
-                    this.stream.write(this.convertDataToDownload(data, this.format, this.first, more, this.cloneUrl), {
-                        encoding: 'binary'
-                    });
-                    this.first = false;
-
-                }
-                if (this.total === 0) {
-                    this.stream.write(this.convertDataToDownload(null, this.format, true, false, this.cloneUrl), {
-                        encoding: 'binary'
-                    });
-                }
-            }
-            this.stream.end();
-            if (this.timeout) {
-                throw new Error('Timeout exceed');
-            }
-            clearTimeout(this.timeoutFunc);
-
-            logger.info('Write correctly');
-        }
-
-}
-
 
 class QueryService {
 
     constructor() {
         logger.info('Connecting with elasticsearch');
 
-        var sqlAPI = {
-            sql: function (opts) {
+        const sqlAPI = {
+            sql(opts) {
                 return function (cb) {
                     this.transport.requestTimeout = 60000;
                     this.transport.request({
@@ -220,9 +49,9 @@ class QueryService {
                     }, cb);
                 }.bind(this);
             },
-            explain: function (opts) {
+            explain(opts) {
                 return function (cb) {
-                    var call = function (err, data) {
+                    const call = function (err, data) {
                         if (data) {
                             try {
                                 data = JSON.parse(data);
@@ -239,65 +68,65 @@ class QueryService {
                     }, call);
                 }.bind(this);
             },
-            mapping: function (opts) {
+            mapping(opts) {
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: `${opts.index}/_mapping`
+                        path: `/${opts.index}/_mapping`
                     }, cb);
                 }.bind(this);
             },
-            delete: function (opts) {
+            delete(opts) {
                 return function (cb) {
                     this.transport.request({
                         method: 'DELETE',
-                        path: `${opts.index}`
+                        path: `/${opts.index}`
                     }, cb);
                 }.bind(this);
             },
-            createScroll: function (opts) {
+            createScroll(opts) {
                 this.transport.requestTimeout = 60000;
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_search?scroll=${opts.duration}`),
+                        path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
                         body: JSON.stringify(opts.query),
                         requestTimeout: 60000
                     }, cb);
                 }.bind(this);
             },
-            getScroll: function (opts) {
+            getScroll(opts) {
                 logger.debug('GETSCROLL ', opts);
                 this.transport.requestTimeout = 60000;
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: encodeURI(`_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
+                        path: encodeURI(`/_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
                         requestTimeout: 60000
                     }, cb);
                 }.bind(this);
             },
-            deleteByQuery: function (opts) {
+            deleteByQuery(opts) {
                 logger.debug('Delete by query ', opts);
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
+                        path: encodeURI(`/${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
             },
-            update: function (opts) {
+            update(opts) {
                 logger.debug('Update element ', opts);
                 return function (cb) {
                     this.transport.request({
                         method: 'POST',
-                        path: encodeURI(`${opts.index}/${opts.type}/${opts.id}/_update`),
+                        path: encodeURI(`/${opts.index}/${opts.type}/${opts.id}/_update`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
             },
-            ping: function (opts) {
+            ping(opts) {
                 // logger.debug('ping ');
                 return function (cb) {
                     this.transport.request({
@@ -306,21 +135,21 @@ class QueryService {
                     }, cb);
                 }.bind(this);
             },
-            getTask: function (opts) {
+            getTask(opts) {
                 logger.debug('get task ', opts);
                 return function (cb) {
                     this.transport.request({
                         method: 'GET',
-                        path: encodeURI(`_tasks/${opts.task}`)
+                        path: encodeURI(`/_tasks/${opts.task}`)
                     }, cb);
                 }.bind(this);
             },
-            putSettings: function(opts) {
+            putSettings(opts) {
                 logger.debug('put settings ', opts);
                 return function (cb) {
                     this.transport.request({
                         method: 'PUT',
-                        path: encodeURI(`${opts.index}/_settings`),
+                        path: encodeURI(`/${opts.index}/_settings`),
                         body: JSON.stringify(opts.body)
                     }, cb);
                 }.bind(this);
@@ -342,7 +171,7 @@ class QueryService {
             this.elasticClient.ping({
                 // ping usually has a 3000ms timeout
                 requestTimeout: 10000
-            }, function (error) {
+            }, (error) => {
                 if (error) {
                     logger.error('elasticsearch cluster is down!');
                     process.exit(1);
@@ -358,7 +187,7 @@ class QueryService {
             const result = yield this.elasticClient.update({
                 index,
                 type: index,
-                id: id,
+                id,
                 body: {
                     doc: data
                 }
@@ -411,7 +240,8 @@ class QueryService {
             const right = this.findIntersect(node.right);
             if (left) {
                 return left;
-            } else if (right)  {
+            }
+            if (right) {
                 return right;
             }
         }
@@ -423,7 +253,7 @@ class QueryService {
             return {
                 type: 'function',
                 value: 'GEO_INTERSECTS',
-                arguments:  [{
+                arguments: [{
                     type: 'literal',
                     value: 'the_geom'
                 }, {
@@ -442,12 +272,12 @@ class QueryService {
     }
 
     * convertQueryToElastic(parsed, index) {
-        //search ST_GeoHash
+        // search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
             let mapping = yield this.getMapping(index);
-            mapping = mapping[0][index].mappings.type ?  mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
+            mapping = mapping[0][index].mappings.type ? mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
             if (parsed.group) {
-                
+
                 for (let i = 0, length = parsed.group.length; i < length; i++) {
                     const node = parsed.group[i];
                     if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
@@ -505,11 +335,11 @@ class QueryService {
             }
         }
         if (parsed.select) {
-            let mapping = yield this.getMapping(index);
+            const mapping = yield this.getMapping(index);
             for (let i = 0, length = parsed.select.length; i < length; i++) {
                 const node = parsed.select[i];
                 if (node.type === 'function') {
-                    if (node.value.toLowerCase() === 'st_geohash')  {
+                    if (node.value.toLowerCase() === 'st_geohash') {
                         const args = [];
                         args.push({
                             type: 'literal',
@@ -542,9 +372,9 @@ class QueryService {
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         parsed = yield this.convertQueryToElastic(parsed, index);
-        let removeAlias = Object.assign({}, parsed);
+        const removeAlias = Object.assign({}, parsed);
         if (removeAlias.select) {
-            removeAlias.select = removeAlias.select.map(el => {
+            removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {
                     return el;
                 }
@@ -559,7 +389,7 @@ class QueryService {
         sql = Json2sql.toSQL(removeAlias);
         logger.debug('sql', sql);
 
-        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
+        const scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
@@ -568,9 +398,9 @@ class QueryService {
     * doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         parsed = yield this.convertQueryToElastic(parsed, index);
-        let removeAlias = Object.assign({}, parsed);
+        const removeAlias = Object.assign({}, parsed);
         if (removeAlias.select) {
-            removeAlias.select = removeAlias.select.map(el => {
+            removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {
                     return el;
                 }
@@ -585,15 +415,15 @@ class QueryService {
         sql = Json2sql.toSQL(removeAlias);
         logger.debug('sql', sql);
 
-        var scroll = new Scroll(this.elasticClientV2, sql, parsed, index, datasetId, body, false, cloneUrl, format);
+        const scroll = new Scroll(this.elasticClientV2, sql, parsed, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
     }
 
     * activateRefreshIndex(index) {
-        let options = {
-            index: index,
+        const options = {
+            index,
             body: {
                 index: {
                     refresh_interval: '1s',
@@ -605,8 +435,8 @@ class QueryService {
     }
 
     * desactivateRefreshIndex(index) {
-        let options = {
-            index: index,
+        const options = {
+            index,
             body: {
                 index: {
                     refresh_interval: '-1',
@@ -618,14 +448,13 @@ class QueryService {
 
     }
 
-    *
-    updateState(id, status, errorMessage) {
+    * updateState(id, status, errorMessage) {
         logger.info('Updating state of dataset ', id, ' with status ', status);
 
-        let options = {
-            uri: '/dataset/' + id,
+        const options = {
+            uri: `/dataset/${id}`,
             body: {
-               status
+                status
             },
             method: 'PATCH',
             json: true
@@ -636,7 +465,7 @@ class QueryService {
         }
         // logger.info('Updating', options);
         try {
-            let result = yield ctRegisterMicroservice.requestToMicroservice(options);
+            const result = yield ctRegisterMicroservice.requestToMicroservice(options);
         } catch (e) {
             logger.error(e);
             throw new Error('Error to updating dataset');
@@ -659,13 +488,13 @@ class QueryService {
             // logger.debug('sql', sql);
             sql = Json2sql.toSQL(parsed);
             try {
-                let resultQueryElastic = yield this.elasticClient.explain({
+                const resultQueryElastic = yield this.elasticClient.explain({
                     sql
                 });
                 delete resultQueryElastic.from;
                 delete resultQueryElastic.size;
                 logger.debug('Doing query');
-                let result = yield this.elasticClient.deleteByQuery({
+                const result = yield this.elasticClient.deleteByQuery({
                     index: tableName,
                     timeout: 120000,
                     requestTimeout: 120000,
@@ -675,10 +504,10 @@ class QueryService {
                 });
                 logger.debug(result);
                 const interval = setInterval(() => {
-                    co(function *() {
+                    co(function* () {
                         try {
                             logger.info('Checking task');
-                            const data = yield this.elasticClient.getTask({task: result[0].task});
+                            const data = yield this.elasticClient.getTask({ task: result[0].task });
                             // logger.debug('data', data);
                             if (data && data.length > 0 && data[0].completed) {
                                 logger.info(`Dataset ${id} is completed`);
@@ -686,14 +515,14 @@ class QueryService {
                                 yield this.updateState(id, 1, null);
                                 yield this.activateRefreshIndex(tableName);
                             }
-                        } catch(err){
+                        } catch (err) {
                             clearInterval(interval);
                             yield this.updateState(id, 2, null);
                             yield this.activateRefreshIndex(tableName);
                         }
                     }.bind(this)).then(() => {
 
-                    }, err => {
+                    }, (err) => {
                         logger.error('Error checking task', err);
 
                     });
@@ -704,7 +533,7 @@ class QueryService {
                 logger.error(e);
                 throw new Error('Query not valid');
             }
-        } catch(err) {
+        } catch (err) {
             logger.error('Error removing query', err);
             yield this.updateState(id, 2, 'Error deleting items');
         }
@@ -716,7 +545,7 @@ class QueryService {
         parsed = yield this.convertQueryToElastic(parsed, index);
         logger.debug('sql', sql);
         sql = Json2sql.toSQL(parsed);
-        var scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, true, null, type);
+        const scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, true, null, type);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
@@ -725,8 +554,8 @@ class QueryService {
     * getMapping(index) {
         logger.info('Obtaining mapping...');
 
-        let result = yield this.elasticClient.mapping({
-            index: index
+        const result = yield this.elasticClient.mapping({
+            index
         });
         return result;
     }
@@ -734,11 +563,12 @@ class QueryService {
     * deleteIndex(index) {
         logger.info('Deleting index %s...', index);
 
-        let result = yield this.elasticClient.delete({
-            index: index
+        const result = yield this.elasticClient.delete({
+            index
         });
         return result;
     }
+
 }
 
 module.exports = new QueryService();

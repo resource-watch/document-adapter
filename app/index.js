@@ -1,14 +1,13 @@
-'use strict';
-
-var cluster = require('cluster');
+require('cluster');
+// const cluster = require('cluster');
 // const importerService = require('services/importerService');
 // const logger = require('logger');
-// var numWorkers = 2;
+// let numWorkers = 2;
 //
 // console.log('Starting');
 // if (cluster.isMaster) {
-    require('app');
-//     for (var i = 0; i < numWorkers; i++) {
+require('app');
+//     for (let i = 0; i < numWorkers; i++) {
 //         cluster.fork();
 //     }
 //     cluster.on('exit', function(worker, code, signal) {
