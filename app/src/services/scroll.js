@@ -22,9 +22,20 @@ class Scroll {
         this.timeoutFunc = setTimeout(() => {
             this.timeout = true;
         }, 60000);
-        const resultQueryElastic = yield this.elasticClient.explain({
-            sql: this.sql
-        });
+
+        let resultQueryElastic;
+        try {
+            resultQueryElastic = yield this.elasticClient.explain({
+                sql: this.sql
+            });
+        } catch (e) {
+            if (e.message.includes('index_out_of_bounds_exception')) {
+                throw new Error('Semantically invalid query', e);
+            }
+
+            throw e;
+        }
+
         if (this.parsed.group) {
             logger.debug('Config size of aggregations');
             const name = null;
