@@ -59,7 +59,7 @@
     "randomstring": "1.1.5",
     "s3": "^4.4.0",
     "simple-sql-parser": "git+https://github.com/rrequero/simpleSqlParser.git#between",
-    "sql2json": "git+https://github.com/resource-watch/sql2json.git#2.0.0",
+    "sql2json": "2.0.1",
     "terraformer-wkt-parser": "^1.2.0",
     "uuid": "2.0.1",
     "xml-json": "^2.0.2"

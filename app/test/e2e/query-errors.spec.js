@@ -11,7 +11,7 @@ const requester = getTestServer();
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
 
-describe('Dataset create tests', () => {
+describe('Query datasets - Errors', () => {
 
     before(async () => {
         if (process.env.NODE_ENV !== 'test') {
@@ -20,7 +20,6 @@ describe('Dataset create tests', () => {
 
         nock.cleanAll();
     });
-
 
     it('Invalid query to dataset should return meaningful error message and error code', async () => {
         const requestBody = {

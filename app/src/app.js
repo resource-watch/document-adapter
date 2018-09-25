@@ -8,7 +8,8 @@ const loader = require('loader');
 const validate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
-// const nock = require('nock');
+// const nock = require('nock'); // Use to record http calls for testing
+
 const app = new Koa();
 
 app.use(compress());
@@ -62,7 +63,7 @@ server.listen(port, () => {
         token: process.env.CT_TOKEN,
         active: true,
     }).then(() => {
-        // nock.recorder.rec();
+        // nock.recorder.rec();  // Use to record http calls for testing
     }, (err) => {
         logger.error(err);
         process.exit(1);
