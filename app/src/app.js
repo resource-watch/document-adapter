@@ -8,6 +8,7 @@ const loader = require('loader');
 const validate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
+// const nock = require('nock'); // Use to record http calls for testing
 
 const app = new Koa();
 
@@ -26,7 +27,7 @@ app.use(function* (next) {
     try {
         yield next;
     } catch (err) {
-        this.status = err.status || 500;
+        this.status = err.status || err.statusCode || 500;
         logger.error(err);
         this.body = ErrorSerializer.serializeError(this.status, err.message);
         if (process.env.NODE_ENV === 'prod' && this.status === 500) {
@@ -61,7 +62,9 @@ server.listen(port, () => {
         url: process.env.LOCAL_URL,
         token: process.env.CT_TOKEN,
         active: true,
-    }).then(() => {}, (err) => {
+    }).then(() => {
+        // nock.recorder.rec();  // Use to record http calls for testing
+    }, (err) => {
         logger.error(err);
         process.exit(1);
     });
