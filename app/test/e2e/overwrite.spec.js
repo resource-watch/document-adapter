@@ -44,6 +44,8 @@ describe('Dataset overwrite tests', () => {
             status: 'saved',
             tableName: 'new-table-name'
         };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
         const postBody = {
             dataset,
             data: [{ data: 'value' }],
@@ -82,6 +84,58 @@ describe('Dataset overwrite tests', () => {
         conn.close();
     });
 
+    it('Overwrite a CSV dataset with data from URL should be successful (happy case)', async () => {
+        const queueName = config.get('queues.docTasks');
+        const conn = await amqp.connect(config.get('rabbitmq.url'));
+        const channel = await conn.createConfirmChannel();
+        await channel.assertQueue(queueName);
+        await channel.purgeQueue(queueName);
+
+        const preQueueStatus = await channel.assertQueue(queueName);
+        preQueueStatus.messageCount.should.equal(0);
+
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            url: 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        const postQueueStatus = await channel.assertQueue(queueName);
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.equal(postBody.url);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
+        };
+
+        await channel.consume(queueName, validateMessage.bind(this));
+
+        await channel.purgeQueue(queueName);
+        conn.close();
+    });
+
     afterEach(() => {
         if (!nock.isDone()) {
             throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
@@ -92,5 +146,6 @@ describe('Dataset overwrite tests', () => {
         const conn = await amqp.connect(config.get('rabbitmq.url'));
         const channel = await conn.createConfirmChannel();
         await channel.purgeQueue(config.get('queues.docTasks'));
+        conn.close();
     });
 });
