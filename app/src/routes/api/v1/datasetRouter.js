@@ -19,9 +19,9 @@ const router = new Router({
 
 class DatasetRouter {
 
-    static async import() {
+    static* import() {
         logger.info('Adding dataset with dataset id: ', this.request.body);
-        await taskQueueService.import({
+        yield taskQueueService.import({
             datasetId: this.request.body.connector.id,
             fileUrl: this.request.body.connector.connectorUrl,
             data: this.request.body.connector.data,
@@ -33,7 +33,7 @@ class DatasetRouter {
         this.body = '';
     }
 
-    static updateData() {
+    static* updateData() {
         // logger.info(`Update data with id ${this.params.id}  of dataset ${this.request.body.dataset.id}`);
         // this.assert(this.request.body.data, 400, 'Data is required');
         // if (this.request.body.dataset && this.request.body.dataset.status !== 'saved') {
@@ -46,7 +46,7 @@ class DatasetRouter {
         // this.body = null;
     }
 
-    static async overwrite() {
+    static* overwrite() {
         logger.info('Overwrite dataset with dataset id: ', this.params.dataset);
         this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
@@ -54,7 +54,7 @@ class DatasetRouter {
             this.throw(400, 'Dataset is not in saved status');
             return;
         }
-        await taskQueueService.overwrite({
+        yield taskQueueService.overwrite({
             datasetId: this.params.dataset,
             fileUrl: this.request.body.url,
             data: this.request.body.data,
