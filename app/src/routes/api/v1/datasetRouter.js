@@ -147,6 +147,7 @@ const checkPermissionModify = function* (next) {
         }
         this.throw(409, 'Dataset locked. Overwrite false.');
     } else {
+        logger.debug(`User ${user.id} with role ${user.role} and app(s) '${(user.extraUserData ? user.extraUserData.apps : []).join(', ')}' does not have permissions to modify dataset ${dataset.id}`)
         this.throw(403, 'Not authorized');
     }
 };

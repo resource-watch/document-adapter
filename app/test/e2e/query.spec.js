@@ -13,7 +13,7 @@ const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host'
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
 
-describe('Dataset create tests', () => {
+describe('Query datasets - Simple queries', () => {
 
     before(async () => {
         if (process.env.NODE_ENV !== 'test') {
@@ -23,7 +23,6 @@ describe('Dataset create tests', () => {
         nock.cleanAll();
     });
 
-    /* Create a CSV Dataset */
     it('Basic query to dataset should be successful (happy case)', async () => {
         const requestBody = {
             dataset: {
@@ -87,8 +86,8 @@ describe('Dataset create tests', () => {
                 _source: {
                     thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
                 }
-            },{
-                 _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+            }, {
+                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
                 _type: 'type',
                 _id: 'nDZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -104,7 +103,7 @@ describe('Dataset create tests', () => {
                     thresh: 75, iso: 'COL', adm1: 30, adm2: 1017, area: 128570.48945388374
                 }
             }
-        ]
+        ];
 
         nock(`${process.env.CT_URL}`)
             .get(`/v1/convert/sql2SQL`)
@@ -118,7 +117,7 @@ describe('Dataset create tests', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: 'SELECT * FROM 051364f0-fe44-46c2-bf95-fa4b93e2dbd2',
+                        query: `SELECT * FROM ${requestBody.dataset.id}`,
                         jsonSql: {
                             select: [
                                 {
@@ -235,7 +234,11 @@ describe('Dataset create tests', () => {
         queryResponse.body.should.have.property('data').and.be.an('array');
         queryResponse.body.should.have.property('meta').and.be.an('object');
 
-        queryResponse.body.data.should.have.lengthOf(4);
+        queryResponse.body.data.should.have.lengthOf(results.length);
+
+        const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
+
+        queryResponse.body.data.should.deep.equal(resultList);
 
     });
 
