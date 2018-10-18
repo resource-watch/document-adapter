@@ -36,12 +36,11 @@ class QueryRouter {
         logger.info('Do Query with dataset', this.request.body);
         logger.debug('Checking if is delete or select');
 
-        let sql;
         try {
             if (this.state.parsed.delete) {
                 logger.debug('Doing delete');
                 this.state.parsed.from = this.request.body.dataset.tableName;
-                sql = Json2sql.toSQL(this.state.parsed);
+                const sql = Json2sql.toSQL(this.state.parsed);
                 this.body = yield taskQueueService.delete({
                     datasetId: this.request.body.dataset.id,
                     query: sql,
@@ -51,7 +50,7 @@ class QueryRouter {
                 this.body = passThrough();
                 const cloneUrl = QueryRouter.getCloneUrl(this.request.url, this.params.dataset);
                 this.state.parsed.from = this.request.body.dataset.tableName;
-                sql = Json2sql.toSQL(this.state.parsed);
+                const sql = Json2sql.toSQL(this.state.parsed);
                 logger.debug(this.request.body.dataset);
                 logger.debug('ElasticSearch query', sql);
                 yield queryService.doQuery(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
@@ -61,7 +60,6 @@ class QueryRouter {
             }
         } catch (err) {
             logger.error(err);
-            logger.error('Faulty ElasticSearch query:', sql);
             throw err;
         }
     }
