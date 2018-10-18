@@ -258,7 +258,7 @@ class QueryService {
                     value: 'the_geom'
                 }, {
                     type: 'string',
-                    value: `'${wkt}'`
+                    value: `${wkt}`
                 }]
             };
         }
