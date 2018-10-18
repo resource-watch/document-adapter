@@ -1,7 +1,7 @@
 {
     "logger": {
         "name": "rw-adapter-document-STAGING",
-        "level": "info",
+        "level": "debug",
         "toFile": false,
         "dirLogFile": null
     },
