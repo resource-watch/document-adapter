@@ -364,7 +364,9 @@ class QueryService {
         logger.debug('find intersect', geo);
         if (geo) {
             const wkt = Terraformer.convert(geo.geojson);
+            logger.debug('wkt', wkt);
             parsed.where = this.replaceIntersect(parsed.where, wkt);
+            logger.debug('parsed.where', parsed.where);
         }
         return parsed;
     }
