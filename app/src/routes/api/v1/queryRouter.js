@@ -168,7 +168,7 @@ const toSQLMiddleware = function* (next) {
     if (this.query.sql || this.request.body.sql) {
         logger.debug('Checking sql correct');
         const params = Object.assign({}, this.query, this.request.body);
-        options.uri = `/convert/sql2SQL?sql=${params.sql}`;
+        options.uri = `/convert/sql2SQL?sql=${encodeURI(params.sql)}`;
         if (params.experimental) {
             options.uri += `&experimental=${params.experimental}`;
         }
@@ -220,8 +220,8 @@ const containApps = function (apps1, apps2) {
     if (!apps1 || !apps2) {
         return false;
     }
-    for (let i = 0, { length } = apps1; i < length; i++) {
-        for (let j = 0, length2 = apps2.length; j < length2; j++) {
+    for (let i = 0, { length } = apps1; i < length; i += 1) {
+        for (let j = 0, length2 = apps2.length; j < length2; j += 1) {
             if (apps1[i] === apps2[j]) {
                 return true;
             }
@@ -273,7 +273,7 @@ const checkPermissionDelete = function* (next) {
 //             url = `/document/query/${this.params.dataset}?sql=${this.request.body.sql}`;
 //         } else if (this.request.query.sql) {
 //             url = `/document/query/${this.params.dataset}?sql=${this.request.query.sql}`;
-//         } else if (this.request.body.fs) {
+//         } else if (this.request.body.fs) {
 //             url = `/document/query/${this.params.dataset}?fs=${JSON.stringify(this.request.body.fs)}`;
 //         }
 //         if (this.request.body.geostore || this.request.query.geostore) {
