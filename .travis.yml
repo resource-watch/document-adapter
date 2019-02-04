@@ -3,6 +3,10 @@ services:
   - rabbitmq
 node_js:
   - "7.6"
+  - "8"
+  - "9"
+  - "10"
+  - "11"
 cache:
   directories:
   - "node_modules"
@@ -10,7 +14,7 @@ env:
   global:
     - CC_TEST_REPORTER_ID=835a699d552ad985ccca27cb5796bfbd750042d118498f3bc615e4d19f724a27
     - NODE_ENV=test
-    - PORT=5037
+    - PORT=3001
     - API_VERSION=v1
     - LOCAL_URL=http://127.0.0.1:3001
     - CT_URL=http://127.0.0.1:9000
