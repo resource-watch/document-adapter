@@ -61,7 +61,7 @@ describe('Dataset overwrite tests', () => {
 
         response.status.should.equal(200);
 
-        // TODO: seems that the message may not be here. need to look into this
+        // TODO: seems that the message may not be here, especially in CI envs (travis). need to look into this
         // const postQueueStatus = await channel.assertQueue(queueName);
         // postQueueStatus.messageCount.should.equal(1);
         //
