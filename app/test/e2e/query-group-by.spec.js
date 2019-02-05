@@ -495,8 +495,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '388']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT createdAt FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 GROUP BY date_histogram( \'field\'="createdAt", \'interval\'=\'1d\') LIMIT 9999999')
+        nock(`http://${elasticUri}`)
+            .post('/_sql/_explain', 'SELECT createdAt FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 GROUP BY date_histogram(\'field\'="createdAt", \'interval\'=\'1d\') LIMIT 9999999')
             .reply(200, {
                 from: 0,
                 size: 0,
