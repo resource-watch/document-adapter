@@ -278,7 +278,7 @@ class QueryService {
             mapping = mapping[0][index].mappings.type ? mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
             if (parsed.group) {
 
-                for (let i = 0, length = parsed.group.length; i < length; i++) {
+                for (let i = 0, { length } = parsed.group; i < length; i++) {
                     const node = parsed.group[i];
                     if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
                         const args = [];
@@ -306,7 +306,7 @@ class QueryService {
                 }
             }
             if (parsed.orderBy) {
-                for (let i = 0, length = parsed.orderBy.length; i < length; i++) {
+                for (let i = 0, { length } = parsed.orderBy; i < length; i++) {
                     const node = parsed.orderBy[i];
                     if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
@@ -318,7 +318,7 @@ class QueryService {
                 }
             }
             if (parsed.select) {
-                for (let i = 0, length = parsed.select.length; i < length; i++) {
+                for (let i = 0, { length } = parsed.select; i < length; i++) {
                     const node = parsed.select[i];
                     if (node.type === 'function') {
                         for (let j = 0; j < node.arguments.length; j++) {
@@ -336,7 +336,7 @@ class QueryService {
         }
         if (parsed.select) {
             const mapping = yield this.getMapping(index);
-            for (let i = 0, length = parsed.select.length; i < length; i++) {
+            for (let i = 0, { length } = parsed.select; i < length; i++) {
                 const node = parsed.select[i];
                 if (node.type === 'function') {
                     if (node.value.toLowerCase() === 'st_geohash') {
@@ -359,9 +359,9 @@ class QueryService {
                 }
             }
         }
-        logger.debug('parsed', parsed);
+        logger.debug('convertQueryToElastic - Parsed', parsed);
         const geo = this.findIntersect(parsed.where);
-        logger.debug('find intersect', geo);
+        logger.debug('convertQueryToElastic - Intersection found:', geo);
         if (geo) {
             const wkt = Terraformer.convert(geo.geojson);
             parsed.where = this.replaceIntersect(parsed.where, wkt);
@@ -371,7 +371,7 @@ class QueryService {
 
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
-        parsed = yield this.convertQueryToElastic(parsed, index);
+        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
         const removeAlias = Object.assign({}, parsed);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
@@ -386,10 +386,10 @@ class QueryService {
                 };
             });
         }
-        sql = Json2sql.toSQL(removeAlias);
-        logger.debug('sql', sql);
+        const sqlFromJson = Json2sql.toSQL(removeAlias);
+        logger.debug('doQuery - Generated sql', sqlFromJson);
 
-        const scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, false, cloneUrl, format);
+        const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
@@ -397,8 +397,8 @@ class QueryService {
 
     * doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
-        parsed = yield this.convertQueryToElastic(parsed, index);
-        const removeAlias = Object.assign({}, parsed);
+        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
+        const removeAlias = Object.assign({}, elasticQuery);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {
@@ -412,10 +412,10 @@ class QueryService {
                 };
             });
         }
-        sql = Json2sql.toSQL(removeAlias);
-        logger.debug('sql', sql);
+        const sqlFromJson = Json2sql.toSQL(removeAlias);
+        logger.debug('doQueryV2 - sql', sql);
 
-        const scroll = new Scroll(this.elasticClientV2, sql, parsed, index, datasetId, body, false, cloneUrl, format);
+        const scroll = new Scroll(this.elasticClientV2, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
@@ -543,7 +543,7 @@ class QueryService {
     * downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
         logger.info('Download with query...');
         parsed = yield this.convertQueryToElastic(parsed, index);
-        logger.debug('sql', sql);
+        logger.debug('Download query sql: ', sql);
         sql = Json2sql.toSQL(parsed);
         const scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, true, null, type);
         yield scroll.init();
