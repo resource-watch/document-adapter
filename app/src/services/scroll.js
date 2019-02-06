@@ -129,8 +129,7 @@ class Scroll {
         }
     }
 
-    *
-    continue() {
+    * continue() {
 
         if (this.resultScroll[0].aggregations) {
             const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
