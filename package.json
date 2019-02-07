@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/resource-watch/rw_adapter_csv.git"
+    "url": "git+https://github.com/resource-watch/document-adapter.git"
   },
   "keywords": [
     "gfw",
@@ -24,9 +24,9 @@
   "author": "rrequero",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/resource-watch/rw_adapter_csv/issues"
+    "url": "https://github.com/resource-watch/document-adapter/issues"
   },
-  "homepage": "https://github.com/resource-watch/rw_adapter_csv#readme",
+  "homepage": "https://github.com/resource-watch/document-adapter",
   "dependencies": {
     "JSONStream": "^1.3.4",
     "amqplib": "^0.5.2",
