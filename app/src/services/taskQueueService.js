@@ -1,6 +1,6 @@
 const logger = require('logger');
 const QueueService = require('services/queueService');
-const { task } = require('doc-importer-messages');
+const { task } = require('rw-doc-importer-messages');
 const config = require('config');
 
 class TaskQueueService extends QueueService {

@@ -39,7 +39,7 @@
     "co-sleep": "0.0.1",
     "config": "1.19.0",
     "ct-register-microservice-node": "2.1.6",
-    "doc-importer-messages": "git+http://github.com/resource-watch/doc-importer-messages.git#master",
+    "rw-doc-importer-messages": "^1.0.0",
     "elasticsearch": "^12.1.3",
     "fast-csv": "1.0.0",
     "geojson": "^0.4.1",
