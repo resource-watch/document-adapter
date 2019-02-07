@@ -8,7 +8,9 @@ const loader = require('loader');
 const validate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
-// const nock = require('nock'); // Use to record http calls for testing
+
+// const nock = require('nock');
+// nock.recorder.rec();
 
 const app = new Koa();
 

@@ -89,11 +89,10 @@ class Scroll {
 
     convertDataToDownload(data, type, first, more, cloneUrl) {
         if (type === 'csv') {
-            const json = `${json2csv({
+            return `${json2csv({
                 data: data ? data.data : [],
                 hasCSVColumnTitle: first
             })}\n`;
-            return json;
         } if (type === 'json' || type === 'geojson') {
             let dataString = '';
             if (data) {
@@ -129,8 +128,7 @@ class Scroll {
         }
     }
 
-    *
-    continue() {
+    * continue() {
 
         if (this.resultScroll[0].aggregations) {
             const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
