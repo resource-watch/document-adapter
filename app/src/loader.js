@@ -1,3 +1,4 @@
+/* eslint-disable import/no-dynamic-require */
 /**
  * Load routers
  */

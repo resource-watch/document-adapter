@@ -56,7 +56,6 @@ class QueryRouter {
                 yield queryService.doQuery(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
             } else {
                 this.throw(400, 'Query not valid');
-                return;
             }
         } catch (err) {
             logger.error(err);
@@ -88,7 +87,6 @@ class QueryRouter {
                 yield queryService.doQueryV2(sql, this.state.parsed, this.request.body.dataset.tableName, this.request.body.dataset.id, this.body, cloneUrl, this.query.format);
             } else {
                 this.throw(400, 'Query not valid');
-                return;
             }
         } catch (err) {
             logger.error(err);
@@ -265,78 +263,6 @@ const checkPermissionDelete = function* (next) {
     }
     yield next;
 };
-
-// const cacheMiddleware = function* (next) {
-//     let url = '';
-//     if (this.request && this.request.body ) {
-//         if (this.request.body.sql){
-//             url = `/document/query/${this.params.dataset}?sql=${this.request.body.sql}`;
-//         } else if (this.request.query.sql) {
-//             url = `/document/query/${this.params.dataset}?sql=${this.request.query.sql}`;
-//         } else if (this.request.body.fs) {
-//             url = `/document/query/${this.params.dataset}?fs=${JSON.stringify(this.request.body.fs)}`;
-//         }
-//         if (this.request.body.geostore || this.request.query.geostore) {
-//             url += `&geostore=${this.request.body.geostore || this.request.query.geostore}`;
-//         }
-//     } else {
-//
-//         url = this.request.url;
-//     }
-//     const data = yield redisClient.getAsync(`${url}-data`);
-//     logger.info('Entering in cache', `${url}-data`);
-//
-//     if (data && this.headers['cache-control'] !== 'no-cache') {
-//         logger.info('Exist data in cache');
-//         let headers = yield redisClient.getAsync(`${url}-headers`);
-//         if (headers) {
-//             headers = JSON.parse(headers);
-//         }
-//         try {
-//             this.body = JSON.parse(data);
-//             if (this.body) {
-//                 const keys = Object.keys(headers);
-//                 for (let i = 0, length = keys.length; i < length; i++) {
-//                     this.set(keys[i], headers[keys[i]]);
-//                 }
-//                 return;
-//             }
-//         } catch (e) {
-//             logger.error(e);
-//             this.body = null;
-//         }
-//     }
-//
-//     yield next;
-//
-//     if (this.body.on) {
-//         this.body.on('data', (chunk) => {
-//             logger.debug('Seting response', `${url}-data`);
-//             redisClient.append(`${url}-data`, chunk);
-//         });
-//
-//         this.body.on('end', () => {
-//             logger.debug('Seting responseend');
-//             if (this.res.statusCode >= 200 && this.res.statusCode < 300) {
-//                 logger.debug('Saving headers');
-//                 redisClient.set(`${url}-headers`, JSON.stringify(this.headers));
-//             } else {
-//                 logger.debug('Removing key by error');
-//                 redisClient.del(`${url}-data`);
-//             }
-//         });
-//         this.body.on('error',  () => {
-//             logger.debug('Removing key by error');
-//             redisClient.del(`${url}-data`);
-//         });
-//
-//     } else {
-//
-//         redisClient.set(`${url}-data`, JSON.stringify(this.body));
-//         redisClient.set(`${url}-headers`, JSON.stringify(this.headers));
-//     }
-// };
-
 
 router.post('/query/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
 router.post('/query-v2/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);

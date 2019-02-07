@@ -1,7 +1,6 @@
 const logger = require('logger');
 const Router = require('koa-router');
 const taskQueueService = require('services/taskQueueService');
-// const queryService = require('services/queryService');
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
@@ -109,8 +108,8 @@ const containApps = function (apps1, apps2) {
     if (!apps1 || !apps2) {
         return false;
     }
-    for (let i = 0, { length } = apps1; i < length; i++) {
-        for (let j = 0, length2 = apps2.length; j < length2; j++) {
+    for (let i = 0, { length } = apps1; i < length; i += 1) {
+        for (let j = 0, length2 = apps2.length; j < length2; j += 1) {
             if (apps1[i] === apps2[j]) {
                 return true;
             }
@@ -147,7 +146,7 @@ const checkPermissionModify = function* (next) {
         }
         this.throw(409, 'Dataset locked. Overwrite false.');
     } else {
-        logger.debug(`User ${user.id} with role ${user.role} and app(s) '${(user.extraUserData ? user.extraUserData.apps : []).join(', ')}' does not have permissions to modify dataset ${dataset.id}`)
+        logger.debug(`User ${user.id} with role ${user.role} and app(s) '${(user.extraUserData ? user.extraUserData.apps : []).join(', ')}' does not have permissions to modify dataset ${dataset.id}`);
         this.throw(403, 'Not authorized');
     }
 };

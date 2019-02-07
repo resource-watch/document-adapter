@@ -8,7 +8,7 @@ class FieldSerializer {
         return el.properties;
     }
 
-    static serialize(data, tableName, id) {
+    static serialize(data, tableName) {
         if (data && data.length > 0) {
             // return {
             //     data: {
@@ -20,7 +20,7 @@ class FieldSerializer {
             //         }
             //     }
             // };
-            const mappings = data[0][tableName].mappings;
+            const { mappings } = data[0][tableName];
             if (mappings.type) {
                 return {
                     tableName,
