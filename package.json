@@ -41,7 +41,6 @@
     "ct-register-microservice-node": "2.1.6",
     "doc-importer-messages": "git+http://github.com/resource-watch/doc-importer-messages.git#master",
     "elasticsearch": "^12.1.3",
-    "elasticsearch-csv": "git+https://github.com/rrequero/elasticsearch-csv.git#timeout",
     "fast-csv": "1.0.0",
     "geojson": "^0.4.1",
     "json2csv": "^3.11.5",
