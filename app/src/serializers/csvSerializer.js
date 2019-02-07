@@ -40,44 +40,42 @@ class CSVSerializer {
         return list;
     }
 
-    static formatAlias(el, parsed) {
-        if (parsed && el) {
-            const target = Object.assign({}, el);
-            for (let i = 0, { length } = parsed.select; i < length; i += 1) {
-                const sel = parsed.select[i];
+    static formatAlias(el, parsedQuery) {
+        if (!parsedQuery || !el) {
+            return el;
+        }
 
-                if (sel.alias) {
+        const target = Object.assign({}, el);
+        for (let i = 0, { length } = parsedQuery.select; i < length; i += 1) {
+            const currentSelectElement = parsedQuery.select[i];
 
+            if (currentSelectElement.alias) {
 
-                    // if (parsedQuery.select[i - 1] && parsedQuery.select[i - 1].type === 'dot' && parsedQuery.select[i - 2]) {
-                    //     target[currentSelectElement.alias] = target[parsedQuery.select[i - 2].value];
-                    //     delete target[parsedQuery.select[i - 2].value];
-                    // } else {
-                    //     target[currentSelectElement.alias] = el[currentSelectElement.value];
-                    // }
-
-
-                    if (sel.type === 'literal') {
-                        target[sel.alias] = el[sel.value];
-                    } else if (sel.type === 'function') {
-                        const name = Json2sql.parseFunction(sel);
-                        if (el[name]) {
-                            target[sel.alias] = el[name];
-                        }
+                if (currentSelectElement.type === 'literal') {
+                    if (parsedQuery.select[i - 1] && parsedQuery.select[i - 1].type === 'dot' && parsedQuery.select[i - 2]) {
+                        target[currentSelectElement.alias] = el[`${parsedQuery.select[i - 2].value}.${parsedQuery.select[i].value}`];
+                        delete target[`${parsedQuery.select[i - 2].value}.${parsedQuery.select[i].value}`];
+                    } else {
+                        target[currentSelectElement.alias] = el[currentSelectElement.value];
                     }
 
-                } else if (sel.type === 'literal') {
-                    target[sel.value] = el[sel.value];
-                } else if (sel.type === 'function') {
-                    const name = Json2sql.parseFunction(sel);
+                } else if (currentSelectElement.type === 'function') {
+                    const name = Json2sql.parseFunction(currentSelectElement);
                     if (el[name]) {
-                        target[name] = el[name];
+                        target[currentSelectElement.alias] = el[name];
                     }
                 }
+
+            } else if (currentSelectElement.type === 'literal') {
+                target[currentSelectElement.value] = el[currentSelectElement.value];
+            } else if (currentSelectElement.type === 'function') {
+                const name = Json2sql.parseFunction(currentSelectElement);
+                if (el[name]) {
+                    target[name] = el[name];
+                }
             }
-            return target;
         }
-        return el;
+        return target;
     }
 
     static serialize(data, parsed, id, format = 'json') {

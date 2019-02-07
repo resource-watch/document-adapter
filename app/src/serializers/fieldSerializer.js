@@ -10,16 +10,6 @@ class FieldSerializer {
 
     static serialize(data, tableName) {
         if (data && data.length > 0) {
-            // return {
-            //     data: {
-            //         id: id,
-            //         type: 'csv',
-            //         attributes: {
-            //             tableName: tableName,
-            //             fields: FieldSerializer.convertToArray(FieldSerializer.searchProperties(data[0]))
-            //         }
-            //     }
-            // };
             const { mappings } = data[0][tableName];
             if (mappings.type) {
                 return {
