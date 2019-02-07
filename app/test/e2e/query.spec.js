@@ -523,7 +523,7 @@ describe('Query datasets - Simple queries', () => {
             loggedUser: null
         };
 
-        const query = `SELECT table.foo AS bar FROM ${requestBody.dataset.id}'`;
+        const query = `SELECT year_data.year AS year FROM ${requestBody.dataset.id}'`;
 
         const results = [
             {
@@ -563,11 +563,18 @@ describe('Query datasets - Simple queries', () => {
                     attributes: {
                         query: 'SELECT year_data.year AS year FROM index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
                         jsonSql: {
-                            select: [{
-                                value: 'year_data',
-                                alias: null,
-                                type: 'literal'
-                            }, { type: 'dot' }, { value: 'year', alias: 'year', type: 'literal' }],
+                            select: [
+                                {
+                                    value: 'year_data',
+                                    alias: 'year',
+                                    type: 'literal'
+                                }, {
+                                    type: 'dot'
+                                }, {
+                                    value: 'year',
+                                    alias: 'year',
+                                    type: 'literal'
+                                }],
                             from: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735'
                         }
                     },
@@ -629,9 +636,7 @@ describe('Query datasets - Simple queries', () => {
                 size: 200,
                 _source: { includes: ['year_data.year'], excludes: [] }
             }, ['content-type',
-                'text/plain; charset=UTF-8',
-                'content-length',
-                '21']);
+                'text/plain; charset=UTF-8']);
 
         nock(`http://${elasticUri}`)
             .post('/index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735/_search', {

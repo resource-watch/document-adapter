@@ -10,28 +10,6 @@ const ctRegisterMicroservice = require('ct-register-microservice-node');
 
 const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
-// function capitalizeFirstLetter(text) {
-//     switch (text) {
-//         case 'multipolygon':
-//             return 'MultiPolygon';
-//         case 'polygon':
-//             return 'Polygon';
-//         case 'point':
-//             return 'Point';
-//         case 'linestring':
-//             return 'LineString';
-//         case 'multipoint':
-//             return 'MultiPoint';
-//         case 'multilinestring':
-//             return 'MultiPointString';
-//         case 'geometrycollection':
-//             return 'GeometryCollection';
-//         default:
-//             return text;
-//     }
-//
-// }
-
 
 class QueryService {
 
@@ -229,7 +207,7 @@ class QueryService {
             return newResult;
         }
         if (node && node.type === 'function' && (node.value.toLowerCase() === 'st_intersects' || finded)) {
-            for (let i = 0, length = node.arguments.length; i < length; i++) {
+            for (let i = 0, { length } = node.arguments; i < length; i += 1) {
                 const newResult = this.findIntersect(node.arguments[i], true, result);
                 result = Object.assign(result || {}, newResult);
                 return result;
@@ -278,7 +256,7 @@ class QueryService {
             mapping = mapping[0][index].mappings.type ? mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
             if (parsed.group) {
 
-                for (let i = 0, { length } = parsed.group; i < length; i++) {
+                for (let i = 0, { length } = parsed.group; i < length; i += 1) {
                     const node = parsed.group[i];
                     if (node.type === 'function' && node.value.toLowerCase() === 'st_geohash') {
                         const args = [];
@@ -306,7 +284,7 @@ class QueryService {
                 }
             }
             if (parsed.orderBy) {
-                for (let i = 0, { length } = parsed.orderBy; i < length; i++) {
+                for (let i = 0, { length } = parsed.orderBy; i < length; i += 1) {
                     const node = parsed.orderBy[i];
                     if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
@@ -318,10 +296,10 @@ class QueryService {
                 }
             }
             if (parsed.select) {
-                for (let i = 0, { length } = parsed.select; i < length; i++) {
+                for (let i = 0, { length } = parsed.select; i < length; i += 1) {
                     const node = parsed.select[i];
                     if (node.type === 'function') {
-                        for (let j = 0; j < node.arguments.length; j++) {
+                        for (let j = 0; j < node.arguments.length; j += 1) {
                             if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
                                 node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                             }
@@ -336,7 +314,7 @@ class QueryService {
         }
         if (parsed.select) {
             const mapping = yield this.getMapping(index);
-            for (let i = 0, { length } = parsed.select; i < length; i++) {
+            for (let i = 0, { length } = parsed.select; i < length; i += 1) {
                 const node = parsed.select[i];
                 if (node.type === 'function') {
                     if (node.value.toLowerCase() === 'st_geohash') {
@@ -351,7 +329,7 @@ class QueryService {
                         node.arguments = args;
                         node.value = 'geohash_grid';
                     }
-                    for (let j = 0; j < node.arguments.length; j++) {
+                    for (let j = 0; j < node.arguments.length; j += 1) {
                         if (node.arguments[j].type === 'literal' && mapping[node.arguments[j].value] && mapping[node.arguments[j].value].type === 'text') {
                             node.arguments[j].value = `${node.arguments[j].value}.keyword`;
                         }
@@ -372,7 +350,7 @@ class QueryService {
     * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         const elasticQuery = yield this.convertQueryToElastic(parsed, index);
-        const removeAlias = Object.assign({}, parsed);
+        const removeAlias = Object.assign({}, elasticQuery);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {
@@ -478,15 +456,15 @@ class QueryService {
             logger.debug('Obtaining explain with select ', `${sql}`);
             yield this.updateState(id, 0, null);
             yield this.desactivateRefreshIndex(tableName);
-            parsed = yield this.convertQueryToElastic(parsed, tableName);
-            parsed.select = [{
+            const elasticQuery = yield this.convertQueryToElastic(parsed, tableName);
+            elasticQuery.select = [{
                 value: '*',
                 alias: null,
                 type: 'wildcard'
             }];
-            delete parsed.delete;
+            delete elasticQuery.delete;
             // logger.debug('sql', sql);
-            sql = Json2sql.toSQL(parsed);
+            const sqlFromJson = Json2sql.toSQL(elasticQuery);
             try {
                 const resultQueryElastic = yield this.elasticClient.explain({
                     sql
@@ -542,10 +520,10 @@ class QueryService {
 
     * downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
         logger.info('Download with query...');
-        parsed = yield this.convertQueryToElastic(parsed, index);
+        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
         logger.debug('Download query sql: ', sql);
-        sql = Json2sql.toSQL(parsed);
-        const scroll = new Scroll(this.elasticClient, sql, parsed, index, datasetId, body, true, null, type);
+        const sqlFromJson = Json2sql.toSQL(elasticQuery);
+        const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, true, null, type);
         yield scroll.init();
         yield scroll.continue();
         logger.info('Finished query');
@@ -554,19 +532,17 @@ class QueryService {
     * getMapping(index) {
         logger.info('Obtaining mapping...');
 
-        const result = yield this.elasticClient.mapping({
+        return yield this.elasticClient.mapping({
             index
         });
-        return result;
     }
 
     * deleteIndex(index) {
         logger.info('Deleting index %s...', index);
 
-        const result = yield this.elasticClient.delete({
+        return yield this.elasticClient.delete({
             index
         });
-        return result;
     }
 
 }

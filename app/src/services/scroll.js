@@ -89,11 +89,10 @@ class Scroll {
 
     convertDataToDownload(data, type, first, more, cloneUrl) {
         if (type === 'csv') {
-            const json = `${json2csv({
+            return `${json2csv({
                 data: data ? data.data : [],
                 hasCSVColumnTitle: first
             })}\n`;
-            return json;
         } if (type === 'json' || type === 'geojson') {
             let dataString = '';
             if (data) {
