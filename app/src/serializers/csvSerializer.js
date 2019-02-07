@@ -79,56 +79,59 @@ class CSVSerializer {
     }
 
     static serialize(data, parsed, id, format = 'json') {
-        if (data && data.length > 0) {
+        if (!data || data.length <= 0) {
+            return {
+                data: []
+            };
+        }
 
-            if (data[0].aggregations) {
+        if (data[0].aggregations) {
 
-                const keys = Object.keys(data[0].aggregations);
-                const attributes = {};
-                if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
-                    for (let i = 0, { length } = keys; i < length; i += 1) {
-                        attributes[keys[i]] = data[0].aggregations[keys[i]].value;
-                    }
-                    return {
-                        data: [attributes]
-                    };
-                } if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
-                    const nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
-                    const nested = data[0].aggregations[keys[0]];
-                    for (let i = 0, { length } = nestedKeys; i < length; i += 1) {
-                        if (nested[nestedKeys[i]].buckets) {
-                            const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
-                            const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
-                            return {
-                                data: list
-                            };
-                        }
-                    }
+            const keys = Object.keys(data[0].aggregations);
+            const attributes = {};
+            if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
+                for (let i = 0, { length } = keys; i < length; i += 1) {
+                    attributes[keys[i]] = data[0].aggregations[keys[i]].value;
                 }
-                const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
-                const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
                 return {
-                    data: list
-                };
-
-            } if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
-
-                return {
-                    data: data[0].hits.hits.map((el) => {
-                        const formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
-                            _id: el._id
-                        }), parsed);
-                        if (format === 'geojson') {
-                            return GeoJSON.parse(formatted, { exclude: ['the_geom'], GeoJSON: 'the_geom' });
-                        }
-                        return formatted;
-                    })
+                    data: [attributes]
                 };
             }
+            if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
+                const nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
+                const nested = data[0].aggregations[keys[0]];
+                for (let i = 0, { length } = nestedKeys; i < length; i += 1) {
+                    if (nested[nestedKeys[i]].buckets) {
+                        const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
+                        const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
+                        return {
+                            data: list
+                        };
+                    }
+                }
+            }
+            const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
+            const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
+            return {
+                data: list
+            };
+
         }
-        return {
-            data: []
-        };
+
+        if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+
+            return {
+                data: data[0].hits.hits.map((el) => {
+                    const formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
+                        _id: el._id
+                    }), parsed);
+                    if (format === 'geojson') {
+                        return GeoJSON.parse(formatted, { exclude: ['the_geom'], GeoJSON: 'the_geom' });
+                    }
+                    return formatted;
+                })
+            };
+        }
 
     }
 
