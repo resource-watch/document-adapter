@@ -3,7 +3,7 @@ const nock = require('nock');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
-const { task } = require('doc-importer-messages');
+const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
 
