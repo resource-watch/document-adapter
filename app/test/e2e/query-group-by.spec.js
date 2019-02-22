@@ -398,7 +398,7 @@ describe('Query datasets - GROUP BY queries', () => {
             }];
 
 
-        nock('http://127.0.0.1:9000', { encodedQueryParams: true })
+        nock(`${process.env.CT_URL}`)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
