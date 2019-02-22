@@ -139,6 +139,13 @@ const checkPermissionModify = function* (next) {
     logger.debug('Checking if the user has permissions');
     const user = this.request.body.loggedUser;
     const { dataset } = this.request.body;
+    if (!user) {
+        logger.debug(`User data missing`);
+        this.throw(401, 'User credentials invalid or missing');
+    }
+    if (!dataset) {
+        this.throw(400, 'Dataset not found');
+    }
     if (checkUserHasPermission(user, dataset)) {
         if (dataset.overwrite) {
             yield next;
