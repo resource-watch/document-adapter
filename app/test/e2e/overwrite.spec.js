@@ -26,6 +26,75 @@ describe('Dataset overwrite tests', () => {
         nock.cleanAll();
     });
 
+    it('Overwrite a dataset without user should return an error', async () => {
+        const timestamp = new Date().getTime();
+
+        const postBody = {
+            data: [{ data: 'value' }],
+            dataPath: 'new data path',
+            legend: 'new legend',
+            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            provider: 'csv'
+        };
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(401);
+        response.body.should.have.property('errors').and.be.an('array');
+        response.body.errors[0].should.have.property('detail').and.equal(`User credentials invalid or missing`);
+    });
+
+    it('Overwrite a dataset without a valid dataset should return a 400 error', async () => {
+        const timestamp = new Date().getTime();
+
+        const postBody = {
+            data: [{ data: 'value' }],
+            dataPath: 'new data path',
+            legend: 'new legend',
+            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(400);
+        response.body.should.have.property('errors').and.be.an('array');
+        response.body.errors[0].should.have.property('detail').and.equal(`Dataset not found`);
+    });
+
+    it('Overwrite a dataset for a different application should return an error', async () => {
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['fake-app'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        const postBody = {
+            dataset,
+            data: [{ data: 'value' }],
+            dataPath: 'new data path',
+            legend: 'new legend',
+            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(403);
+        response.body.should.have.property('errors').and.be.an('array');
+        response.body.errors[0].should.have.property('detail').and.equal(`Not authorized`);
+    });
+
     it('Overwrite a CSV dataset should be successful (happy case)', async () => {
         const queueName = config.get('queues.docTasks');
         const conn = await amqp.connect(config.get('rabbitmq.url'));
