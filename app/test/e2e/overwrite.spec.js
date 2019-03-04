@@ -131,7 +131,7 @@ describe('Dataset overwrite tests', () => {
 
         response.status.should.equal(200);
 
-        sleep.sleep(5);
+        sleep.sleep(2);
 
         const postQueueStatus = await channel.assertQueue(queueName);
         postQueueStatus.messageCount.should.equal(1);
@@ -188,7 +188,7 @@ describe('Dataset overwrite tests', () => {
 
         response.status.should.equal(200);
 
-        sleep.sleep(5);
+        sleep.sleep(2);
 
         const postQueueStatus = await channel.assertQueue(queueName);
         postQueueStatus.messageCount.should.equal(1);
