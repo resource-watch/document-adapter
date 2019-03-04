@@ -6,6 +6,7 @@ const config = require('config');
 const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
+const sleep = require('sleep');
 
 const should = chai.should();
 
@@ -54,19 +55,20 @@ describe('Dataset create tests', () => {
 
         response.status.should.equal(200);
 
+        sleep.sleep(5);
+
         const postQueueStatus = await channel.assertQueue(queueName);
         postQueueStatus.messageCount.should.equal(1);
 
-        // TODO: seems that the message may not be here, especially in CI envs (travis). need to look into this
-        // const validateMessage = (msg) => {
-        //     const content = JSON.parse(msg.content.toString());
-        //     content.should.have.property('datasetId').and.equal(connector.id);
-        //     content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
-        //     content.should.have.property('provider').and.equal('csv');
-        //     content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
-        // };
-        //
-        // await channel.consume(queueName, validateMessage);
+        const validateMessage = (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(connector.id);
+            content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
+        };
+
+        await channel.consume(queueName, validateMessage);
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -101,19 +103,20 @@ describe('Dataset create tests', () => {
 
         response.status.should.equal(200);
 
-        // TODO: seems that the message may not be here, especially in CI envs (travis). need to look into this
-        // const postQueueStatus = await channel.assertQueue(queueName);
-        // postQueueStatus.messageCount.should.equal(1);
-        //
-        // const validateMessage = (msg) => {
-        //     const content = JSON.parse(msg.content.toString());
-        //     content.should.have.property('datasetId').and.equal(connector.id);
-        //     content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
-        //     content.should.have.property('provider').and.equal('json');
-        //     content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
-        // };
-        //
-        // await channel.consume(queueName, validateMessage);
+        sleep.sleep(5);
+
+        const postQueueStatus = await channel.assertQueue(queueName);
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(connector.id);
+            content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
+            content.should.have.property('provider').and.equal('json');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
+        };
+
+        await channel.consume(queueName, validateMessage);
 
         await channel.purgeQueue(queueName);
         conn.close();
