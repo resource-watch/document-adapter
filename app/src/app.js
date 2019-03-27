@@ -30,7 +30,12 @@ app.use(function* (next) {
         yield next;
     } catch (err) {
         this.status = err.status || err.statusCode || 500;
-        logger.error(err);
+        if (this.status >= 500) {
+            logger.error(err);
+        } else {
+            logger.info(err);
+        }
+
         this.body = ErrorSerializer.serializeError(this.status, err.message);
         if (process.env.NODE_ENV === 'prod' && this.status === 500) {
             this.body = 'Unexpected error';
