@@ -4,9 +4,9 @@ const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
 const { task } = require('rw-doc-importer-messages');
+const sleep = require('sleep');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
-const sleep = require('sleep');
 
 const should = chai.should();
 
