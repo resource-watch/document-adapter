@@ -152,6 +152,10 @@ describe('Dataset overwrite tests', () => {
 
         await channel.consume(queueName, validateMessage.bind(this));
 
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
+
         await channel.purgeQueue(queueName);
         conn.close();
     });
@@ -205,6 +209,10 @@ describe('Dataset overwrite tests', () => {
         };
 
         await channel.consume(queueName, validateMessage.bind(this));
+
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
 
         await channel.purgeQueue(queueName);
         conn.close();

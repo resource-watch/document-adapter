@@ -70,6 +70,10 @@ describe('Dataset create tests', () => {
 
         await channel.consume(queueName, validateMessage);
 
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
+
         await channel.purgeQueue(queueName);
         conn.close();
     });
@@ -120,6 +124,10 @@ describe('Dataset create tests', () => {
 
         await channel.purgeQueue(queueName);
         conn.close();
+
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
     });
 
     afterEach(() => {
