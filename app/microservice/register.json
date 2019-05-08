@@ -169,7 +169,7 @@
 		"authenticated": true,
 		"redirect": {
 			"method": "POST",
-			"path": "/api/v1/document/concat/:dataset"
+			"path": "/api/v1/document/:dataset/concat"
 		},
 		"filters": [{
 			"name": "dataset",
