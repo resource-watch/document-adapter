@@ -171,6 +171,6 @@ const deserializeDataset = function* (next) {
 router.post('/:provider', DatasetRouter.import);
 router.post('/data/:dataset/:id', deserializeDataset, DatasetRouter.updateData);
 router.post('/:dataset/data-overwrite', deserializeDataset, checkPermissionModify, DatasetRouter.overwrite);
-router.post('/concat/:dataset', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
+router.post('/:dataset/concat', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
 router.delete('/:dataset', DatasetRouter.deleteIndex);
 module.exports = router;
