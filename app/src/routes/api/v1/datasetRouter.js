@@ -87,6 +87,27 @@ class DatasetRouter {
         this.body = '';
     }
 
+    static* append() {
+        logger.info('Concat dataset with dataset id: ', this.params.dataset);
+        this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
+        this.assert(this.request.body.provider, 400, 'Provider required');
+        if (this.request.body.dataset && (this.request.body.dataset.status !== 'saved' && this.request.body.dataset.status !== 'failed')) {
+            this.throw(400, 'Dataset is not in saved status');
+            return;
+        }
+        yield taskQueueService.append({
+            datasetId: this.params.dataset,
+            fileUrl: this.request.body.url,
+            data: this.request.body.data,
+            dataPath: this.request.body.dataPath,
+            provider: this.request.body.provider || 'csv',
+            legend: this.request.body.dataset.legend,
+            index: this.request.body.dataset.tableName
+        });
+        this.set('cache-control', 'flush');
+        this.body = '';
+    }
+
     static* deleteIndex() {
         logger.info('Deleting index with dataset', this.request.body);
         const response = yield ctRegisterMicroservice.requestToMicroservice({
@@ -172,5 +193,6 @@ router.post('/:provider', DatasetRouter.import);
 router.post('/data/:dataset/:id', deserializeDataset, DatasetRouter.updateData);
 router.post('/:dataset/data-overwrite', deserializeDataset, checkPermissionModify, DatasetRouter.overwrite);
 router.post('/:dataset/concat', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
+router.post('/:dataset/append', deserializeDataset, checkPermissionModify, DatasetRouter.append);
 router.delete('/:dataset', DatasetRouter.deleteIndex);
 module.exports = router;
