@@ -1,18 +1,21 @@
-/* eslint-disable no-unused-vars,no-undef */
+/* eslint-disable no-unused-vars,no-undef,no-await-in-loop */
 const nock = require('nock');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
 const { task } = require('rw-doc-importer-messages');
+const sleep = require('sleep');
+const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
-const sleep = require('sleep');
 
 const should = chai.should();
 chai.use(deepEqualInAnyOrder);
 
 const requester = getTestServer();
+let rabbitmqConnection = null;
+let channel;
 
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
@@ -24,7 +27,28 @@ describe('Dataset overwrite tests', () => {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
 
-        nock.cleanAll();
+        let connectAttempts = 10;
+        while (connectAttempts >= 0 && rabbitmqConnection === null) {
+            try {
+                rabbitmqConnection = await amqp.connect(config.get('rabbitmq.url'));
+            } catch (err) {
+                connectAttempts -= 1;
+                await sleep.sleep(5);
+            }
+        }
+        if (!rabbitmqConnection) {
+            throw new RabbitMQConnectionError();
+        }
+    });
+
+    beforeEach(async () => {
+        channel = await rabbitmqConnection.createConfirmChannel();
+
+        await channel.assertQueue(config.get('queues.tasks'));
+        await channel.purgeQueue(config.get('queues.tasks'));
+
+        const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
+        tasksQueueStatus.messageCount.should.equal(0);
     });
 
     it('Overwrite a dataset without user should return an error', async () => {
@@ -97,7 +121,7 @@ describe('Dataset overwrite tests', () => {
     });
 
     it('Overwrite a CSV dataset should be successful (happy case)', async () => {
-        const queueName = config.get('queues.docTasks');
+        const queueName = config.get('queues.tasks');
         const conn = await amqp.connect(config.get('rabbitmq.url'));
         const channel = await conn.createConfirmChannel();
         await channel.assertQueue(queueName);
@@ -136,7 +160,7 @@ describe('Dataset overwrite tests', () => {
         const postQueueStatus = await channel.assertQueue(queueName);
         postQueueStatus.messageCount.should.equal(1);
 
-        const validateMessage = (msg) => {
+        const validateMessage = async (msg) => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('data').and.equalInAnyOrder(postBody.data);
             content.should.have.property('dataPath').and.equal(postBody.dataPath);
@@ -148,6 +172,8 @@ describe('Dataset overwrite tests', () => {
             content.should.have.property('legend').and.equal(postBody.legend);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
+
+            await channel.ack(msg);
         };
 
         await channel.consume(queueName, validateMessage.bind(this));
@@ -161,7 +187,7 @@ describe('Dataset overwrite tests', () => {
     });
 
     it('Overwrite a CSV dataset with data from URL should be successful (happy case)', async () => {
-        const queueName = config.get('queues.docTasks');
+        const queueName = config.get('queues.tasks');
         const conn = await amqp.connect(config.get('rabbitmq.url'));
         const channel = await conn.createConfirmChannel();
         await channel.assertQueue(queueName);
@@ -197,7 +223,7 @@ describe('Dataset overwrite tests', () => {
         const postQueueStatus = await channel.assertQueue(queueName);
         postQueueStatus.messageCount.should.equal(1);
 
-        const validateMessage = (msg) => {
+        const validateMessage = async (msg) => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
@@ -206,6 +232,8 @@ describe('Dataset overwrite tests', () => {
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
+
+            await channel.ack(msg);
         };
 
         await channel.consume(queueName, validateMessage.bind(this));
@@ -218,16 +246,23 @@ describe('Dataset overwrite tests', () => {
         conn.close();
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await channel.assertQueue(config.get('queues.tasks'));
+        await channel.purgeQueue(config.get('queues.tasks'));
+        const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
+        tasksQueueStatus.messageCount.should.equal(0);
+
         if (!nock.isDone()) {
-            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
+            const pendingMocks = nock.pendingMocks();
+            nock.cleanAll();
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
+
+        await channel.close();
+        channel = null;
     });
 
     after(async () => {
-        const conn = await amqp.connect(config.get('rabbitmq.url'));
-        const channel = await conn.createConfirmChannel();
-        await channel.purgeQueue(config.get('queues.docTasks'));
-        conn.close();
+        rabbitmqConnection.close();
     });
 });

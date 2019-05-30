@@ -6,7 +6,7 @@ const config = require('config');
 class TaskQueueService extends QueueService {
 
     constructor() {
-        super(config.get('queues.docTasks'));
+        super(config.get('queues.tasks'));
     }
 
     async sendMessage(msg) {

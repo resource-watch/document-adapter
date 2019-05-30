@@ -6,7 +6,7 @@
     "dirLogFile": null
   },
   "queues": {
-    "docTasks": "DOC-TASKS-TEST"
+    "tasks": "DOC-TASKS-TEST"
   },
   "elasticsearch": {
     "port": 9200,

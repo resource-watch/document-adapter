@@ -80,7 +80,7 @@ class DatasetRouter {
             data: this.request.body.data,
             dataPath: this.request.body.dataPath,
             provider: this.request.body.provider || 'csv',
-            legend: this.request.body.legend,
+            legend: this.request.body.dataset.legend,
             index: this.request.body.dataset.tableName
         });
         this.set('cache-control', 'flush');
