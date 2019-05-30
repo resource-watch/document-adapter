@@ -5,6 +5,7 @@ const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
+const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
