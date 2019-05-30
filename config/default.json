@@ -18,6 +18,6 @@
     "timeCache": 1500,
     "stampery": "",
     "queues": {
-        "docTasks": "DOC-TASKS"
+        "tasks": "DOC-TASKS"
     }
 }

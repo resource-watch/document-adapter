@@ -1,16 +1,19 @@
-/* eslint-disable no-unused-vars,no-undef */
+/* eslint-disable no-unused-vars,no-undef,no-await-in-loop */
 const nock = require('nock');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
 const { task } = require('rw-doc-importer-messages');
 const sleep = require('sleep');
+const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { getTestServer } = require('./test-server');
 const { ROLES } = require('./test.constants');
 
 const should = chai.should();
 
 const requester = getTestServer();
+let rabbitmqConnection = null;
+let channel;
 
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
@@ -22,18 +25,33 @@ describe('Dataset create tests', () => {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
 
-        nock.cleanAll();
+        let connectAttempts = 10;
+        while (connectAttempts >= 0 && rabbitmqConnection === null) {
+            try {
+                rabbitmqConnection = await amqp.connect(config.get('rabbitmq.url'));
+            } catch (err) {
+                connectAttempts -= 1;
+                await sleep.sleep(5);
+            }
+        }
+        if (!rabbitmqConnection) {
+            throw new RabbitMQConnectionError();
+        }
+    });
+
+    beforeEach(async () => {
+        channel = await rabbitmqConnection.createConfirmChannel();
+
+        await channel.assertQueue(config.get('queues.tasks'));
+        await channel.purgeQueue(config.get('queues.tasks'));
+
+        const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
+        tasksQueueStatus.messageCount.should.equal(0);
     });
 
     /* Create a CSV Dataset */
     it('Create a CSV dataset should be successful (happy case)', async () => {
-        const queueName = config.get('queues.docTasks');
-        const conn = await amqp.connect(config.get('rabbitmq.url'));
-        const channel = await conn.createConfirmChannel();
-        await channel.assertQueue(queueName);
-        await channel.purgeQueue(queueName);
-
-        const preQueueStatus = await channel.assertQueue(queueName);
+        const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
         const timestamp = new Date().getTime();
@@ -57,35 +75,29 @@ describe('Dataset create tests', () => {
 
         sleep.sleep(2);
 
-        const postQueueStatus = await channel.assertQueue(queueName);
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
 
-        const validateMessage = (msg) => {
+        const validateMessage = async (msg) => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(connector.id);
             content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
+
+            await channel.ack(msg);
         };
 
-        await channel.consume(queueName, validateMessage);
+        await channel.consume(config.get('queues.tasks'), validateMessage);
 
         process.on('unhandledRejection', (error) => {
             should.fail(error);
         });
-
-        await channel.purgeQueue(queueName);
-        conn.close();
     });
 
     /* Create a JSON Dataset */
     it('Create a JSON dataset should be successful (happy case)', async () => {
-        const queueName = config.get('queues.docTasks');
-        const conn = await amqp.connect(config.get('rabbitmq.url'));
-        const channel = await conn.createConfirmChannel();
-        await channel.purgeQueue(queueName);
-
-        const preQueueStatus = await channel.assertQueue(queueName);
+        const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
         const timestamp = new Date().getTime();
@@ -109,36 +121,43 @@ describe('Dataset create tests', () => {
 
         sleep.sleep(2);
 
-        const postQueueStatus = await channel.assertQueue(queueName);
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
 
-        const validateMessage = (msg) => {
+        const validateMessage = async (msg) => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(connector.id);
             content.should.have.property('fileUrl').and.equal(connector.connectorUrl);
             content.should.have.property('provider').and.equal('json');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
+
+            await channel.ack(msg);
         };
 
-        await channel.consume(queueName, validateMessage);
-
-        await channel.purgeQueue(queueName);
-        conn.close();
+        await channel.consume(config.get('queues.tasks'), validateMessage);
 
         process.on('unhandledRejection', (error) => {
             should.fail(error);
         });
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await channel.assertQueue(config.get('queues.tasks'));
+        await channel.purgeQueue(config.get('queues.tasks'));
+        const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
+        tasksQueueStatus.messageCount.should.equal(0);
+
         if (!nock.isDone()) {
-            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
+            const pendingMocks = nock.pendingMocks();
+            nock.cleanAll();
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
+
+        await channel.close();
+        channel = null;
     });
 
     after(async () => {
-        const conn = await amqp.connect(config.get('rabbitmq.url'));
-        const channel = await conn.createConfirmChannel();
-        await channel.purgeQueue(config.get('queues.docTasks'));
+        rabbitmqConnection.close();
     });
 });
