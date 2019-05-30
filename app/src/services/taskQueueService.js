@@ -34,6 +34,11 @@ class TaskQueueService extends QueueService {
         await this.sendMessage(taskMessage);
     }
 
+    async append(data) {
+        const taskMessage = task.createMessage(task.MESSAGE_TYPES.TASK_APPEND, data);
+        await this.sendMessage(taskMessage);
+    }
+
     async delete(data) {
         const taskMessage = task.createMessage(task.MESSAGE_TYPES.TASK_DELETE, data);
         await this.sendMessage(taskMessage);

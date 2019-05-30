@@ -55,7 +55,7 @@
     "lodash": "^4.17.11",
     "md5": "2.1.0",
     "randomstring": "1.1.5",
-    "rw-doc-importer-messages": "^1.0.0",
+    "rw-doc-importer-messages": "1.2.1",
     "s3": "^4.4.0",
     "sleep": "^6.0.0",
     "sql2json": "2.0.6",
