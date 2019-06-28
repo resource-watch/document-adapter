@@ -24,15 +24,9 @@ services:
     command: test
     depends_on:
       - rabbitmq
-      - elasticsearch
 
   rabbitmq:
     image: rabbitmq
     ports:
       - "5672"
-
-  elasticsearch:
-    image: elasticsearch:5.5
-    ports:
-      - "9200"
 

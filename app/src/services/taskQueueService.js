@@ -6,7 +6,7 @@ const config = require('config');
 class TaskQueueService extends QueueService {
 
     constructor() {
-        super(config.get('queues.docTasks'));
+        super(config.get('queues.tasks'));
     }
 
     async sendMessage(msg) {
@@ -31,6 +31,11 @@ class TaskQueueService extends QueueService {
 
     async concat(data) {
         const taskMessage = task.createMessage(task.MESSAGE_TYPES.TASK_CONCAT, data);
+        await this.sendMessage(taskMessage);
+    }
+
+    async append(data) {
+        const taskMessage = task.createMessage(task.MESSAGE_TYPES.TASK_APPEND, data);
         await this.sendMessage(taskMessage);
     }
 

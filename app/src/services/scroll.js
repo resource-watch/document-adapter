@@ -19,12 +19,14 @@ class Scroll {
     }
 
     * init() {
+        logger.debug('Scroll init');
         this.timeoutFunc = setTimeout(() => {
             this.timeout = true;
         }, 60000);
 
         let resultQueryElastic;
         try {
+            logger.debug('Scroll init - Query explain: ', this.sql);
             resultQueryElastic = yield this.elasticClient.explain({
                 sql: this.sql
             });
