@@ -22,7 +22,7 @@ class DatasetRouter {
         logger.info('Adding dataset with dataset id: ', this.request.body);
         yield taskQueueService.import({
             datasetId: this.request.body.connector.id,
-            fileUrl: this.request.body.connector.connectorUrl,
+            fileUrl: this.request.body.connector.sources,
             data: this.request.body.connector.data,
             dataPath: this.request.body.connector.dataPath,
             provider: this.params.provider || 'csv',

@@ -40,9 +40,7 @@ class Scroll {
 
         if (this.parsed.group) {
             logger.debug('Config size of aggregations');
-            const name = null;
-            let aggregations = resultQueryElastic.aggregations;
-            const finish = false;
+            let aggregations = { resultQueryElastic };
             while (aggregations) {
                 const keys = Object.keys(aggregations);
                 if (keys.length === 1) {
@@ -75,7 +73,6 @@ class Scroll {
         };
 
         try {
-            const size = resultQueryElastic.size;
             logger.debug('Creating scroll');
             this.resultScroll = yield this.elasticClient.createScroll(params);
             this.first = true;
