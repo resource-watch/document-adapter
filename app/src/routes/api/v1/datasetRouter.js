@@ -55,7 +55,7 @@ class DatasetRouter {
         }
         yield taskQueueService.overwrite({
             datasetId: this.params.dataset,
-            fileUrl: this.request.body.url,
+            fileUrl: [this.request.body.url],
             data: this.request.body.data,
             dataPath: this.request.body.dataPath,
             provider: this.request.body.provider || 'csv',

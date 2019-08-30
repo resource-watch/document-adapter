@@ -166,7 +166,7 @@ describe('Dataset overwrite tests', () => {
             content.should.have.property('dataPath').and.equal(postBody.dataPath);
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.equal(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.contain(postBody.url);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('legend').and.equal(postBody.legend);
@@ -227,7 +227,7 @@ describe('Dataset overwrite tests', () => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.equal(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.contain(postBody.url);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
