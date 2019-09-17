@@ -115,10 +115,13 @@ class DatasetRouter {
             json: true,
             uri: `/dataset/${this.params.dataset}`
         });
-        yield taskQueueService.deleteIndex({
-            datasetId: this.params.dataset,
-            index: response.data.attributes.tableName
-        });
+
+        if (response.data.attributes.tableName) {
+            yield taskQueueService.deleteIndex({
+                datasetId: this.params.dataset,
+                index: response.data.attributes.tableName
+            });
+        }
         this.set('cache-control', 'flush');
         this.body = '';
     }
