@@ -52,7 +52,7 @@
     "koa-router": "5.4.0",
     "koa-validate": "0.2.11",
     "koa-write": "0.0.2",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "md5": "2.1.0",
     "randomstring": "1.1.5",
     "rw-doc-importer-messages": "1.2.1",
