@@ -224,6 +224,58 @@ describe('Dataset concat tests', () => {
         });
     });
 
+    it('Concat a CSV dataset with data from multiple URLs/files should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            concat: true,
+            status: 'saved',
+            tableName: 'new-table-name',
+            overwrite: true
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            url: [
+                'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
+                'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'
+            ],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/concat`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.deep.equal(postBody.url);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CONCAT);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
+
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
+    });
+
     afterEach(async () => {
         await channel.assertQueue(config.get('queues.tasks'));
         await channel.purgeQueue(config.get('queues.tasks'));
