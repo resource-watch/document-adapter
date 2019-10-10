@@ -238,7 +238,7 @@ describe('Dataset concat tests', () => {
         // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
         const postBody = {
             dataset,
-            url: [
+            sources: [
                 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
                 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'
             ],
