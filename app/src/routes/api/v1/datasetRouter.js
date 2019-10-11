@@ -68,7 +68,7 @@ class DatasetRouter {
 
     static* concat() {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
-        this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
+        this.assert(this.request.body.url || this.request.body.data || this.request.body.sources, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
         if (this.request.body.dataset && (this.request.body.dataset.status !== 'saved' && this.request.body.dataset.status !== 'failed')) {
             this.throw(400, 'Dataset is not in saved status');
@@ -76,7 +76,7 @@ class DatasetRouter {
         }
         yield taskQueueService.concat({
             datasetId: this.params.dataset,
-            fileUrl: this.request.body.url,
+            fileUrl: this.request.body.sources || this.request.body.url,
             data: this.request.body.data,
             dataPath: this.request.body.dataPath,
             provider: this.request.body.provider || 'csv',
@@ -89,7 +89,7 @@ class DatasetRouter {
 
     static* append() {
         logger.info('Concat dataset with dataset id: ', this.params.dataset);
-        this.assert(this.request.body.url || this.request.body.data, 400, 'Url or data is required');
+        this.assert(this.request.body.url || this.request.body.data || this.request.body.sources, 400, 'Url or data is required');
         this.assert(this.request.body.provider, 400, 'Provider required');
         if (this.request.body.dataset && (this.request.body.dataset.status !== 'saved' && this.request.body.dataset.status !== 'failed')) {
             this.throw(400, 'Dataset is not in saved status');
@@ -97,7 +97,7 @@ class DatasetRouter {
         }
         yield taskQueueService.append({
             datasetId: this.params.dataset,
-            fileUrl: this.request.body.url,
+            fileUrl: this.request.body.sources || this.request.body.url,
             data: this.request.body.data,
             dataPath: this.request.body.dataPath,
             provider: this.request.body.provider || 'csv',
