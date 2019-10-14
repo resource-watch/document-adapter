@@ -21,7 +21,11 @@
     "javascript",
     "koa"
   ],
-  "author": "rrequero",
+  "author": {
+    "name": "Vizzuality",
+    "email": "hello@vizzuality.com",
+    "url": "http://vizzuality.com/"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/resource-watch/document-adapter/issues"
