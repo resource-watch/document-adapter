@@ -101,15 +101,15 @@ class QueryRouter {
         let mimetype;
         switch (format) {
 
-        case 'csv':
-            mimetype = 'text/csv';
-            break;
-        case 'json':
-        case 'geojson':
-            mimetype = 'application/json';
-            break;
-        default:
-            logger.debug('default');
+            case 'csv':
+                mimetype = 'text/csv';
+                break;
+            case 'json':
+            case 'geojson':
+                mimetype = 'application/json';
+                break;
+            default:
+                logger.debug('default');
 
         }
         this.set('Content-type', mimetype);

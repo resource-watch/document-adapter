@@ -1,6 +1,6 @@
 # Resource Watch document adapter microservice
 
-[![Build Status](https://travis-ci.org/resource-watch/document-adapter.svg?branch=master)](https://travis-ci.org/resource-watch/document-adapter)
+[![Build Status](https://travis-ci.org/resource-watch/document-adapter.svg?branch=develop)](https://travis-ci.org/resource-watch/document-adapter)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/381fe72ebbdaaeb9aff4/test_coverage)](https://codeclimate.com/github/resource-watch/document-adapter/test_coverage)
 
 ## Dependencies

@@ -1,5 +1,5 @@
-FROM mhart/alpine-node:7.6
-MAINTAINER raul.requero@vizzuality.com
+FROM node:12.11-alpine
+MAINTAINER info@vizzuality.com
 
 ENV NAME rw-adapter-document
 ENV USER microservice
