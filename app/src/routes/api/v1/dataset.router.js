@@ -52,9 +52,12 @@ class DatasetRouter {
             ctx.throw(400, 'Dataset is not in saved status');
             return;
         }
+
+        const { url } = ctx.request.body;
+
         await taskQueueService.overwrite({
             datasetId: ctx.params.dataset,
-            fileUrl: [ctx.request.body.url],
+            fileUrl: Array.isArray(url) ? url : [url],
             data: ctx.request.body.data,
             dataPath: ctx.request.body.dataPath,
             provider: ctx.request.body.provider || 'csv',
