@@ -245,6 +245,71 @@ describe('Dataset overwrite tests', () => {
         conn.close();
     });
 
+    it('Overwrite a CSV dataset with data from multiple files should be successful (happy case)', async () => {
+        const queueName = config.get('queues.tasks');
+        const conn = await amqp.connect(config.get('rabbitmq.url'));
+        const channel = await conn.createConfirmChannel();
+        await channel.assertQueue(queueName);
+        await channel.purgeQueue(queueName);
+
+        const preQueueStatus = await channel.assertQueue(queueName);
+        preQueueStatus.messageCount.should.equal(0);
+
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            url: [
+                'http://api.resourcewatch.org/v1/dataset?page[number]=1&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=2&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
+            ],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        sleep.sleep(2);
+
+        const postQueueStatus = await channel.assertQueue(queueName);
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').should.equal(postBody.url);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(queueName, validateMessage.bind(this));
+
+        process.on('unhandledRejection', (error) => {
+            should.fail(error);
+        });
+
+        await channel.purgeQueue(queueName);
+        conn.close();
+    });
+
     afterEach(async () => {
         await channel.assertQueue(config.get('queues.tasks'));
         await channel.purgeQueue(config.get('queues.tasks'));
