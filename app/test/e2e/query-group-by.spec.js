@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars,no-undef */
+/* eslint-disable no-unused-vars,no-undef,max-len */
 const nock = require('nock');
 const config = require('config');
 const chai = require('chai');
@@ -19,8 +19,6 @@ describe('Query datasets - GROUP BY queries', () => {
         if (process.env.NODE_ENV !== 'test') {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
-
-        nock.cleanAll();
     });
 
     it('Group by `column` query to dataset should be successful (happy case)', async () => {
@@ -614,7 +612,11 @@ describe('Query datasets - GROUP BY queries', () => {
 
     afterEach(() => {
         if (!nock.isDone()) {
-            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
+            const pendingMocks = nock.pendingMocks();
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
+
     });
 });
