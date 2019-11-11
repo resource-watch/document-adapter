@@ -17,8 +17,6 @@ describe('Query datasets - Errors', () => {
         if (process.env.NODE_ENV !== 'test') {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
-
-        nock.cleanAll();
     });
 
     it('Invalid query to dataset should return meaningful error message and error code', async () => {
@@ -163,7 +161,11 @@ describe('Query datasets - Errors', () => {
 
     afterEach(() => {
         if (!nock.isDone()) {
-            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
+            const pendingMocks = nock.pendingMocks();
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
+
     });
 });

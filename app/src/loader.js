@@ -1,25 +1,24 @@
 /* eslint-disable import/no-dynamic-require */
+const fs = require('fs');
+
+const routersPath = `${__dirname}/routes`;
+const logger = require('logger');
+const mount = require('koa-mount');
+
 /**
  * Load routers
  */
-module.exports = (function () {
+module.exports = (() => {
 
-
-    const fs = require('fs');
-    const routersPath = `${__dirname}/routes`;
-    const logger = require('logger');
-    const mount = require('koa-mount');
-
-    const loadAPI = function (app, path, pathApi) {
+    const loadAPI = (app, path, pathApi) => {
         const routesFiles = fs.readdirSync(path);
         let existIndexRouter = false;
         routesFiles.forEach((file) => {
             const newPath = path ? (`${path}/${file}`) : file;
             const stat = fs.statSync(newPath);
-
             if (!stat.isDirectory()) {
-                if (file.lastIndexOf('Router.js') !== -1) {
-                    if (file === 'indexRouter.js') {
+                if (file.lastIndexOf('.router.js') !== -1) {
+                    if (file === 'index.router.js') {
                         existIndexRouter = true;
                     } else {
                         logger.debug('Loading route %s, in path %s', newPath, pathApi);
@@ -48,15 +47,14 @@ module.exports = (function () {
         }
     };
 
-    const loadRoutes = function (app) {
+    const loadRoutes = (app) => {
         logger.debug('Loading routes...');
         loadAPI(app, routersPath);
         logger.debug('Loaded routes correctly!');
     };
 
-
     return {
         loadRoutes
     };
 
-}());
+})();

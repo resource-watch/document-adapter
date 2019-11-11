@@ -15,7 +15,6 @@ chai.use(deepEqualInAnyOrder);
 
 const requester = getTestServer();
 let rabbitmqConnection = null;
-let channel;
 
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
@@ -254,9 +253,11 @@ describe('Dataset overwrite tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            nock.cleanAll();
-            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
+
 
         await channel.close();
         channel = null;

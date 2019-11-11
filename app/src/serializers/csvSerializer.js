@@ -11,11 +11,11 @@ class CSVSerializer {
             alias = 'geohash';
         }
         alias = alias.replace('.keyword', '');
-        for (let i = 0, { length } = buckets; i < length; i += 1) {
+        for (let i = 0, { length: bucketLength } = buckets; i < bucketLength; i += 1) {
             const keys = Object.keys(buckets[i]).filter(el => el !== 'doc_count' && el !== 'key');
             if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
-                for (let j = 0, { length } = partialList; j < length; j += 1) {
+                for (let j = 0, { length: partialListLength } = partialList; j < partialListLength; j += 1) {
                     partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
@@ -79,27 +79,27 @@ class CSVSerializer {
     }
 
     static serialize(data, parsed, id, format = 'json') {
-        if (!data || data.length <= 0) {
+        if (!data) {
             return {
                 data: []
             };
         }
 
-        if (data[0].aggregations) {
+        if (data.aggregations) {
 
-            const keys = Object.keys(data[0].aggregations);
+            const keys = Object.keys(data.aggregations);
             const attributes = {};
-            if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
+            if (!data.aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                 for (let i = 0, { length } = keys; i < length; i += 1) {
-                    attributes[keys[i]] = data[0].aggregations[keys[i]].value;
+                    attributes[keys[i]] = data.aggregations[keys[i]].value;
                 }
                 return {
                     data: [attributes]
                 };
             }
-            if (!data[0].aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
-                const nestedKeys = Object.keys(data[0].aggregations[keys[0]]);
-                const nested = data[0].aggregations[keys[0]];
+            if (!data.aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') > -1) {
+                const nestedKeys = Object.keys(data.aggregations[keys[0]]);
+                const nested = data.aggregations[keys[0]];
                 for (let i = 0, { length } = nestedKeys; i < length; i += 1) {
                     if (nested[nestedKeys[i]].buckets) {
                         const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
@@ -110,7 +110,7 @@ class CSVSerializer {
                     }
                 }
             }
-            const values = CSVSerializer.serializeBucket(keys[0], data[0].aggregations[keys[0]].buckets);
+            const values = CSVSerializer.serializeBucket(keys[0], data.aggregations[keys[0]].buckets);
             const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
             return {
                 data: list
@@ -118,10 +118,11 @@ class CSVSerializer {
 
         }
 
-        if (data[0].hits && data[0].hits.hits && data[0].hits.hits.length > 0) {
+        if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
 
             return {
-                data: data[0].hits.hits.map((el) => {
+                data: data.hits.hits.map((el) => {
+                    // eslint-disable-next-line no-underscore-dangle
                     const formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
                         _id: el._id
                     }), parsed);
@@ -133,6 +134,7 @@ class CSVSerializer {
             };
         }
 
+        return null;
     }
 
 }

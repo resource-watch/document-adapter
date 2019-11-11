@@ -1,12 +1,9 @@
 const logger = require('logger');
 const config = require('config');
-const elasticsearch = require('elasticsearch');
+const elasticsearch = require('@elastic/elasticsearch');
 const Scroll = require('services/scroll');
-const co = require('co');
 const Json2sql = require('sql2json').json2sql;
 const Terraformer = require('terraformer-wkt-parser');
-const DocumentNotFound = require('errors/documentNotFound');
-const ctRegisterMicroservice = require('ct-register-microservice-node');
 
 const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
@@ -17,139 +14,79 @@ class QueryService {
         logger.info('Connecting with elasticsearch');
 
         const sqlAPI = {
-            sql(opts) {
-                return function (cb) {
-                    this.transport.requestTimeout = 60000;
-                    this.transport.request({
-                        method: 'POST',
-                        path: encodeURI('/_sql'),
-                        body: opts.sql
-                    }, cb);
-                }.bind(this);
-            },
-            explain(opts) {
-                return function (cb) {
-                    const call = function (err, data) {
-                        if (data) {
-                            try {
-                                data = JSON.parse(data);
-                            } catch (e) {
-                                data = null;
-                            }
-                        }
-                        cb(err, data);
-                    };
-                    this.transport.request({
-                        method: 'POST',
-                        path: encodeURI('/_sql/_explain'),
-                        body: opts.sql
-                    }, call);
-                }.bind(this);
-            },
-            mapping(opts) {
-                return function (cb) {
-                    this.transport.request({
-                        method: 'GET',
-                        path: `/${opts.index}/_mapping`
-                    }, cb);
-                }.bind(this);
-            },
-            delete(opts) {
-                return function (cb) {
-                    this.transport.request({
-                        method: 'DELETE',
-                        path: `/${opts.index}`
-                    }, cb);
-                }.bind(this);
-            },
-            createScroll(opts) {
+            async sql(opts) {
                 this.transport.requestTimeout = 60000;
-                return function (cb) {
-                    this.transport.request({
-                        method: 'POST',
-                        path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
-                        body: JSON.stringify(opts.query),
-                        requestTimeout: 60000
-                    }, cb);
-                }.bind(this);
+                return this.transport.request({
+                    method: 'POST',
+                    path: encodeURI('/_sql'),
+                    body: opts.sql
+                });
             },
-            getScroll(opts) {
+            async explain(opts) {
+                const response = await this.transport.request({
+                    method: 'POST',
+                    path: encodeURI('/_sql/_explain'),
+                    body: opts.sql
+                });
+
+                try {
+                    return JSON.parse(response.body);
+                } catch (e) {
+                    return null;
+                }
+            },
+            async mapping(opts) {
+                return this.transport.request({
+                    method: 'GET',
+                    path: `/${opts.index}/_mapping`
+                });
+            },
+            async createScroll(opts) {
+                this.transport.requestTimeout = 60000;
+                const response = await this.transport.request({
+                    method: 'POST',
+                    path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
+                    body: JSON.stringify(opts.query),
+                    requestTimeout: 60000
+                });
+
+                return response.body;
+            },
+            async getScroll(opts) {
                 logger.debug('GETSCROLL ', opts);
                 this.transport.requestTimeout = 60000;
-                return function (cb) {
-                    this.transport.request({
-                        method: 'GET',
-                        path: encodeURI(`/_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
-                        requestTimeout: 60000
-                    }, cb);
-                }.bind(this);
+                const response = await this.transport.request({
+                    method: 'GET',
+                    path: encodeURI(`/_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
+                    requestTimeout: 60000
+                });
+                return response.body;
             },
-            deleteByQuery(opts) {
-                logger.debug('Delete by query ', opts);
-                return function (cb) {
-                    this.transport.request({
-                        method: 'POST',
-                        path: encodeURI(`/${opts.index}/_delete_by_query?slices=5&wait_for_completion=${opts.waitForCompletion ? 'true' : 'false'}`),
-                        body: JSON.stringify(opts.body)
-                    }, cb);
-                }.bind(this);
-            },
-            update(opts) {
-                logger.debug('Update element ', opts);
-                return function (cb) {
-                    this.transport.request({
-                        method: 'POST',
-                        path: encodeURI(`/${opts.index}/${opts.type}/${opts.id}/_update`),
-                        body: JSON.stringify(opts.body)
-                    }, cb);
-                }.bind(this);
-            },
-            ping(opts) {
-                // logger.debug('ping ');
-                return function (cb) {
-                    this.transport.request({
-                        method: 'GET',
-                        path: ''
-                    }, cb);
-                }.bind(this);
-            },
-            getTask(opts) {
-                logger.debug('get task ', opts);
-                return function (cb) {
-                    this.transport.request({
-                        method: 'GET',
-                        path: encodeURI(`/_tasks/${opts.task}`)
-                    }, cb);
-                }.bind(this);
-            },
-            putSettings(opts) {
-                logger.debug('put settings ', opts);
-                return function (cb) {
-                    this.transport.request({
-                        method: 'PUT',
-                        path: encodeURI(`/${opts.index}/_settings`),
-                        body: JSON.stringify(opts.body)
-                    }, cb);
-                }.bind(this);
+            async ping() {
+                logger.debug('ping ');
+                return this.transport.request({
+                    method: 'GET',
+                    path: ''
+                });
             }
         };
-        elasticsearch.Client.apis.sql = sqlAPI;
 
         this.elasticClient = new elasticsearch.Client({
-            host: elasticUri,
+            node: `http://${elasticUri}`,
             log: 'info',
             apiVersion: 'sql'
         });
         this.elasticClientV2 = new elasticsearch.Client({
-            host: 'elasticsearch-v2.default.svc.cluster.local:9200',
+            node: 'http://elasticsearch-v2.default.svc.cluster.local:9200',
             log: 'info',
             apiVersion: 'sql'
         });
+
+        this.elasticClient = Object.assign(this.elasticClient, sqlAPI);
+        this.elasticClientV2 = Object.assign(this.elasticClientV2, sqlAPI);
+
         setInterval(() => {
-            this.elasticClient.ping({
-                // ping usually has a 3000ms timeout
-                requestTimeout: 10000
-            }, (error) => {
+            this.elasticClient.ping({}, (error) => {
                 if (error) {
                     logger.error('elasticsearch cluster is down!');
                     process.exit(1);
@@ -158,27 +95,6 @@ class QueryService {
         }, 3000);
 
     }
-
-    * updateElement(index, id, data) {
-        logger.info(`Updating index ${index} and id ${id} with data`, data);
-        try {
-            const result = yield this.elasticClient.update({
-                index,
-                type: index,
-                id,
-                body: {
-                    doc: data
-                }
-            });
-            return result;
-        } catch (err) {
-            if (err && err.status === 404) {
-                throw new DocumentNotFound(404, `Document with id ${id} not found`);
-            }
-            throw err;
-        }
-    }
-
 
     findIntersect(node, finded, result) {
         if (node && node.type === 'string' && node.value && finded) {
@@ -209,6 +125,7 @@ class QueryService {
         if (node && node.type === 'function' && (node.value.toLowerCase() === 'st_intersects' || finded)) {
             for (let i = 0, { length } = node.arguments; i < length; i += 1) {
                 const newResult = this.findIntersect(node.arguments[i], true, result);
+                // eslint-disable-next-line no-param-reassign
                 result = Object.assign(result || {}, newResult);
                 return result;
             }
@@ -249,11 +166,11 @@ class QueryService {
         return node;
     }
 
-    * convertQueryToElastic(parsed, index) {
+    async convertQueryToElastic(parsed, index) {
         // search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
-            let mapping = yield this.getMapping(index);
-            mapping = mapping[0][index].mappings.type ? mapping[0][index].mappings.type.properties : mapping[0][index].mappings[index].properties;
+            let mapping = await this.getMapping(index);
+            mapping = mapping.body[index].mappings.type ? mapping.body[index].mappings.type.properties : mapping.body[index].mappings.properties;
             if (parsed.group) {
 
                 for (let i = 0, { length } = parsed.group; i < length; i += 1) {
@@ -313,7 +230,7 @@ class QueryService {
             }
         }
         if (parsed.select) {
-            const mapping = yield this.getMapping(index);
+            const mapping = await this.getMapping(index);
             for (let i = 0, { length } = parsed.select; i < length; i += 1) {
                 const node = parsed.select[i];
                 if (node.type === 'function') {
@@ -347,9 +264,9 @@ class QueryService {
         return parsed;
     }
 
-    * doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
+    async doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
-        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
+        const elasticQuery = await this.convertQueryToElastic(parsed, index);
         const removeAlias = Object.assign({}, elasticQuery);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
@@ -368,14 +285,14 @@ class QueryService {
         logger.debug('doQuery - Generated sql', sqlFromJson);
 
         const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
-        yield scroll.init();
-        yield scroll.continue();
+        await scroll.init();
+        await scroll.continue();
         logger.info('Finished query');
     }
 
-    * doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
+    async doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
-        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
+        const elasticQuery = await this.convertQueryToElastic(parsed, index);
         const removeAlias = Object.assign({}, elasticQuery);
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
@@ -394,155 +311,26 @@ class QueryService {
         logger.debug('doQueryV2 - sql', sql);
 
         const scroll = new Scroll(this.elasticClientV2, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
-        yield scroll.init();
-        yield scroll.continue();
+        await scroll.init();
+        await scroll.continue();
         logger.info('Finished query');
     }
 
-    * activateRefreshIndex(index) {
-        const options = {
-            index,
-            body: {
-                index: {
-                    refresh_interval: '1s',
-                    number_of_replicas: 1
-                }
-            }
-        };
-        yield this.elasticClient.putSettings(options);
-    }
-
-    * desactivateRefreshIndex(index) {
-        const options = {
-            index,
-            body: {
-                index: {
-                    refresh_interval: '-1',
-                    number_of_replicas: 0
-                }
-            }
-        };
-        yield this.elasticClient.putSettings(options);
-
-    }
-
-    * updateState(id, status, errorMessage) {
-        logger.info('Updating state of dataset ', id, ' with status ', status);
-
-        const options = {
-            uri: `/dataset/${id}`,
-            body: {
-                status
-            },
-            method: 'PATCH',
-            json: true
-        };
-
-        if (errorMessage) {
-            options.body.errorMessage = errorMessage;
-        }
-        // logger.info('Updating', options);
-        try {
-            const result = yield ctRegisterMicroservice.requestToMicroservice(options);
-        } catch (e) {
-            logger.error(e);
-            throw new Error('Error to updating dataset');
-        }
-    }
-
-    * doDeleteQuery(id, sql, parsed, tableName) {
-        try {
-            logger.info(`Doing delete to ${sql}`);
-            logger.debug('Obtaining explain with select ', `${sql}`);
-            yield this.updateState(id, 0, null);
-            yield this.desactivateRefreshIndex(tableName);
-            const elasticQuery = yield this.convertQueryToElastic(parsed, tableName);
-            elasticQuery.select = [{
-                value: '*',
-                alias: null,
-                type: 'wildcard'
-            }];
-            delete elasticQuery.delete;
-            // logger.debug('sql', sql);
-            const sqlFromJson = Json2sql.toSQL(elasticQuery);
-            try {
-                const resultQueryElastic = yield this.elasticClient.explain({
-                    sql
-                });
-                delete resultQueryElastic.from;
-                delete resultQueryElastic.size;
-                logger.debug('Doing query');
-                const result = yield this.elasticClient.deleteByQuery({
-                    index: tableName,
-                    timeout: 120000,
-                    requestTimeout: 120000,
-                    body: resultQueryElastic,
-
-                    waitForCompletion: false
-                });
-                logger.debug(result);
-                const interval = setInterval(() => {
-                    co(function* () {
-                        try {
-                            logger.info('Checking task');
-                            const data = yield this.elasticClient.getTask({ task: result[0].task });
-                            // logger.debug('data', data);
-                            if (data && data.length > 0 && data[0].completed) {
-                                logger.info(`Dataset ${id} is completed`);
-                                clearInterval(interval);
-                                yield this.updateState(id, 1, null);
-                                yield this.activateRefreshIndex(tableName);
-                            }
-                        } catch (err) {
-                            clearInterval(interval);
-                            yield this.updateState(id, 2, null);
-                            yield this.activateRefreshIndex(tableName);
-                        }
-                    }.bind(this)).then(() => {
-
-                    }, (err) => {
-                        logger.error('Error checking task', err);
-
-                    });
-
-                }, 2000);
-                return '';
-            } catch (e) {
-                logger.error(e);
-                throw new Error('Query not valid');
-            }
-        } catch (err) {
-            logger.error('Error removing query', err);
-            yield this.updateState(id, 2, 'Error deleting items');
-        }
-
-    }
-
-    * downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
+    async downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
         logger.info('Download with query...');
-        const elasticQuery = yield this.convertQueryToElastic(parsed, index);
+        const elasticQuery = await this.convertQueryToElastic(parsed, index);
         logger.debug('Download query sql: ', sql);
         const sqlFromJson = Json2sql.toSQL(elasticQuery);
         const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, true, null, type);
-        yield scroll.init();
-        yield scroll.continue();
+        await scroll.init();
+        await scroll.continue();
         logger.info('Finished query');
     }
 
-    * getMapping(index) {
+    async getMapping(index) {
         logger.info('Obtaining mapping...');
 
-        return yield this.elasticClient.mapping({
-            index
-        });
-    }
-
-    * deleteIndex(index) {
-        logger.info('Deleting index %s...', index);
-
-        return yield this.elasticClient.delete({
-            index
-        });
+        return this.elasticClient.mapping({ index });
     }
 
 }

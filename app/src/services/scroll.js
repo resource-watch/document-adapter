@@ -18,7 +18,7 @@ class Scroll {
         this.timeout = false;
     }
 
-    * init() {
+    async init() {
         logger.debug('Scroll init');
         this.timeoutFunc = setTimeout(() => {
             this.timeout = true;
@@ -27,7 +27,7 @@ class Scroll {
         let resultQueryElastic;
         try {
             logger.debug('Scroll init - Query explain: ', this.sql);
-            resultQueryElastic = yield this.elasticClient.explain({
+            resultQueryElastic = await this.elasticClient.explain({
                 sql: this.sql
             });
         } catch (e) {
@@ -46,8 +46,10 @@ class Scroll {
                 if (keys.length === 1) {
                     if (aggregations[keys[0]] && aggregations[keys[0]].terms) {
                         aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
+                        // eslint-disable-next-line prefer-destructuring
                         aggregations = aggregations[keys[0]].aggregations;
                     } else if (keys[0].indexOf('NESTED') >= -1) {
+                        // eslint-disable-next-line prefer-destructuring
                         aggregations = aggregations[keys[0]].aggregations;
                     } else {
                         aggregations = null;
@@ -74,7 +76,7 @@ class Scroll {
 
         try {
             logger.debug('Creating scroll');
-            this.resultScroll = yield this.elasticClient.createScroll(params);
+            this.resultScroll = await this.elasticClient.createScroll(params);
             this.first = true;
             this.total = 0;
 
@@ -125,29 +127,31 @@ class Scroll {
             }
             return dataString;
         }
+        return null;
     }
 
-    * continue() {
+    async continue() {
 
-        if (this.resultScroll[0].aggregations) {
+        if (this.resultScroll.aggregations) {
             const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
             this.stream.write(this.convertDataToDownload(data, this.format, true, false, this.cloneUrl), {
                 encoding: 'binary'
             });
         } else {
             this.first = true;
-            while (!this.timeout && this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
+            while (!this.timeout && this.resultScroll.hits && this.resultScroll.hits && this.resultScroll.hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
                 logger.debug('Writting data');
                 let more = false;
                 const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
 
-                this.total += this.resultScroll[0].hits.hits.length;
+                this.total += this.resultScroll.hits.hits.length;
                 if (this.total < this.limit || this.limit === -1) {
-                    this.resultScroll = yield this.elasticClient.getScroll({
+                    this.resultScroll = await this.elasticClient.getScroll({
                         scroll: '1m',
-                        scroll_id: this.resultScroll[0]._scroll_id,
+                        // eslint-disable-next-line no-underscore-dangle
+                        scroll_id: this.resultScroll._scroll_id,
                     });
-                    if (this.resultScroll[0].hits && this.resultScroll[0].hits && this.resultScroll[0].hits.hits.length > 0) {
+                    if (this.resultScroll.hits && this.resultScroll.hits && this.resultScroll.hits.hits.length > 0) {
                         more = true;
                     }
                 } else {
