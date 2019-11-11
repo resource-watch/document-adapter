@@ -8,6 +8,7 @@ const loader = require('loader');
 const koaValidate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
 const ctRegisterMicroservice = require('ct-register-microservice-node');
+const koaSimpleHealthCheck = require('koa-simple-healthcheck');
 
 // const nock = require('nock');
 // nock.recorder.rec();
@@ -23,6 +24,7 @@ if (process.env.NODE_ENV === 'dev') {
 app.use(bodyParser({
     jsonLimit: '50mb'
 }));
+app.use(koaSimpleHealthCheck());
 
 // catch errors and send in jsonapi standard. Always return vnd.api+json
 app.use(async (ctx, next) => {

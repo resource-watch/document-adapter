@@ -29,7 +29,6 @@ const serializeObjToQuery = function (obj) {
     }, []).join('&');
 };
 
-
 class QueryRouter {
 
     static* query() {
