@@ -291,7 +291,7 @@ describe('Dataset overwrite tests', () => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').should.equal(postBody.url);
+            content.should.have.property('fileUrl').and.eql(postBody.url);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
