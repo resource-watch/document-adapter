@@ -18,12 +18,10 @@ const deserializer = obj => callback => new JSONAPIDeserializer({
     keyForAttribute: 'camelCase'
 }).deserialize(obj, callback);
 
-const serializeObjToQuery = function (obj) {
-    return Object.keys(obj).reduce((a, k) => {
-        a.push(`${k}=${encodeURIComponent(obj[k])}`);
-        return a;
-    }, []).join('&');
-};
+const serializeObjToQuery = obj => Object.keys(obj).reduce((a, k) => {
+    a.push(`${k}=${encodeURIComponent(obj[k])}`);
+    return a;
+}, []).join('&');
 
 
 class QueryRouter {
