@@ -130,7 +130,7 @@ class DatasetRouter {
 
 }
 
-const containApps = function (apps1, apps2) {
+const containApps = (apps1, apps2) => {
     if (!apps1 || !apps2) {
         return false;
     }
@@ -144,7 +144,7 @@ const containApps = function (apps1, apps2) {
     return false;
 };
 
-const checkUserHasPermission = function (user, dataset) {
+const checkUserHasPermission = (user, dataset) => {
     if (user && dataset) {
         if (user.id === 'microservice') {
             return true;
