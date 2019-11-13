@@ -5,3 +5,5 @@ npm-debug.log
 dev.env
 .nyc_output
 coverage
+
+.vscode

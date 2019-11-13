@@ -13,7 +13,7 @@
     },
     "elasticsearch": {
         "port": 9200,
-        "host": "http://mymachine"
+        "host": "localhost"
     },
     "timeCache": 1500,
     "stampery": "",
