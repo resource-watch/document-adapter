@@ -4,13 +4,6 @@ const taskQueueService = require('services/taskQueueService');
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
-const deserializer = obj => (callback) => {
-    new JSONAPIDeserializer({
-        keyForAttribute: 'camelCase'
-    }).deserialize(obj, callback);
-};
-
-
 const router = new Router({
     prefix: '/document'
 });
@@ -187,7 +180,9 @@ const checkPermissionModify = async (ctx, next) => {
 const deserializeDataset = async (ctx, next) => {
     logger.debug('Body', ctx.request.body);
     if (ctx.request.body.dataset && ctx.request.body.dataset.data) {
-        ctx.request.body.dataset = await deserializer(ctx.request.body.dataset);
+        ctx.request.body.dataset = await new JSONAPIDeserializer({
+            keyForAttribute: 'camelCase'
+        }).deserialize(ctx.request.body.dataset);
     } else if (ctx.request.body.dataset && ctx.request.body.dataset.table_name) {
         ctx.request.body.dataset.tableName = ctx.request.body.dataset.table_name;
     }

@@ -1,4 +1,5 @@
 # 14/11/2019
+- Refactor usage of JSONAPI deserializer
 - Updated ElasticSearch integration lib
 - Replaced generators with async/await 
 
