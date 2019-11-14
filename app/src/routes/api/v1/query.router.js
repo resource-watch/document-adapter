@@ -14,10 +14,6 @@ const router = new Router({
 
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
-const deserializer = obj => callback => new JSONAPIDeserializer({
-    keyForAttribute: 'camelCase'
-}).deserialize(obj, callback);
-
 const serializeObjToQuery = obj => Object.keys(obj).reduce((a, k) => {
     a.push(`${k}=${encodeURIComponent(obj[k])}`);
     return a;
@@ -138,7 +134,9 @@ class QueryRouter {
 const deserializeDataset = async (ctx, next) => {
     logger.debug('Body', ctx.request.body);
     if (ctx.request.body.dataset && ctx.request.body.dataset.data) {
-        ctx.request.body.dataset = await deserializer(ctx.request.body.dataset);
+        ctx.request.body.dataset = await new JSONAPIDeserializer({
+            keyForAttribute: 'camelCase'
+        }).deserialize(ctx.request.body.dataset);
     } else if (ctx.request.body.dataset && ctx.request.body.dataset.table_name) {
         ctx.request.body.dataset.tableName = ctx.request.body.dataset.table_name;
     }
@@ -199,6 +197,7 @@ const toSQLMiddleware = async (ctx, next) => {
         await next();
 
     } catch (e) {
+        logger.info(`Could not issue request to MS: ${options.method} ${options.uri}`);
         if (e.statusCode === 400 || e.statusCode === 404) {
             ctx.status = e.statusCode;
             ctx.body = e.body;

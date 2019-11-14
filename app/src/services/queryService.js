@@ -63,7 +63,6 @@ class QueryService {
                 return response.body;
             },
             async ping() {
-                logger.debug('ping ');
                 return this.transport.request({
                     method: 'GET',
                     path: ''

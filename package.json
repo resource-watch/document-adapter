@@ -43,7 +43,7 @@
     "fast-csv": "1.0.0",
     "geojson": "^0.4.1",
     "json2csv": "^3.11.5",
-    "jsonapi-serializer": "2.1.1",
+    "jsonapi-serializer": "^3.6.5",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-compress": "^3.0.0",
