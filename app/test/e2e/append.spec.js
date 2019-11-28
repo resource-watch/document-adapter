@@ -220,6 +220,57 @@ describe('Dataset append tests', () => {
         process.on('unhandledRejection', should.fail);
     });
 
+    it('Append a CSV dataset with data from multiple files should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            url: [
+                'http://api.resourcewatch.org/v1/dataset?page[number]=1&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=2&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
+            ],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/append`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        sleep.sleep(2);
+
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.eql(postBody.url);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
+
+        process.on('unhandledRejection', should.fail);
+    });
+
     it('Append a CSV dataset with append=true should be successful', async () => {
         const timestamp = new Date().getTime();
         const dataset = {
@@ -283,10 +334,11 @@ describe('Dataset append tests', () => {
 
         await channel.close();
         channel = null;
+        process.removeListener('unhandledRejection', should.fail);
+
     });
 
     after(async () => {
         rabbitmqConnection.close();
-        process.removeListener('unhandledRejection', should.fail);
     });
 });
