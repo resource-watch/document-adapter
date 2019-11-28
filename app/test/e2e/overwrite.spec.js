@@ -177,9 +177,7 @@ describe('Dataset overwrite tests', () => {
 
         await channel.consume(queueName, validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -237,9 +235,7 @@ describe('Dataset overwrite tests', () => {
 
         await channel.consume(queueName, validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -302,9 +298,7 @@ describe('Dataset overwrite tests', () => {
 
         await channel.consume(queueName, validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -330,5 +324,6 @@ describe('Dataset overwrite tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

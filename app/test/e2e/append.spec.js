@@ -170,9 +170,7 @@ describe('Dataset append tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Append a CSV dataset with data from URL/file should be successful (happy case)', async () => {
@@ -219,9 +217,7 @@ describe('Dataset append tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Append a CSV dataset with append=true should be successful', async () => {
@@ -268,9 +264,7 @@ describe('Dataset append tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     afterEach(async () => {
@@ -293,5 +287,6 @@ describe('Dataset append tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

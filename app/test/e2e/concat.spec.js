@@ -170,9 +170,7 @@ describe('Dataset concat tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Concat a CSV dataset with data from URL/file should be successful (happy case)', async () => {
@@ -219,9 +217,7 @@ describe('Dataset concat tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Concat a CSV dataset with data from multiple URLs/files should be successful (happy case)', async () => {
@@ -271,9 +267,7 @@ describe('Dataset concat tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     afterEach(async () => {
@@ -296,5 +290,6 @@ describe('Dataset concat tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

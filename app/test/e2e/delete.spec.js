@@ -97,9 +97,7 @@ describe('Dataset delete tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     afterEach(async () => {
@@ -122,5 +120,6 @@ describe('Dataset delete tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });
