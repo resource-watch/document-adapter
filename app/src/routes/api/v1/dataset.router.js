@@ -39,18 +39,16 @@ class DatasetRouter {
 
     static async overwrite(ctx) {
         logger.info('Overwrite dataset with dataset id: ', ctx.params.dataset);
-        ctx.assert(ctx.request.body.url || ctx.request.body.data, 400, 'Url or data is required');
+        ctx.assert(ctx.request.body.url || ctx.request.body.data || ctx.request.body.sources, 400, 'Url or data is required');
         ctx.assert(ctx.request.body.provider, 400, 'Provider required');
         if (ctx.request.body.dataset && (ctx.request.body.dataset.status !== 'saved' && ctx.request.body.dataset.status !== 'failed')) {
             ctx.throw(400, 'Dataset is not in saved status');
             return;
         }
 
-        const { url } = ctx.request.body;
-
         await taskQueueService.overwrite({
             datasetId: ctx.params.dataset,
-            fileUrl: Array.isArray(url) ? url : [url],
+            fileUrl: ctx.request.body.sources || [ctx.request.body.url],
             data: ctx.request.body.data,
             dataPath: ctx.request.body.dataPath,
             provider: ctx.request.body.provider || 'csv',
@@ -71,7 +69,7 @@ class DatasetRouter {
         }
         await taskQueueService.concat({
             datasetId: ctx.params.dataset,
-            fileUrl: ctx.request.body.sources || ctx.request.body.url,
+            fileUrl: ctx.request.body.sources || [ctx.request.body.url],
             data: ctx.request.body.data,
             dataPath: ctx.request.body.dataPath,
             provider: ctx.request.body.provider || 'csv',
@@ -92,7 +90,7 @@ class DatasetRouter {
         }
         await taskQueueService.append({
             datasetId: ctx.params.dataset,
-            fileUrl: ctx.request.body.sources || ctx.request.body.url,
+            fileUrl: ctx.request.body.sources || [ctx.request.body.url],
             data: ctx.request.body.data,
             dataPath: ctx.request.body.dataPath,
             provider: ctx.request.body.provider || 'csv',
