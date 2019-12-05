@@ -1,3 +1,6 @@
+# 05/12/2019
+- Fix issue with loading fields data.
+
 # 14/11/2019
 - Refactor usage of JSONAPI deserializer
 - Updated ElasticSearch integration lib

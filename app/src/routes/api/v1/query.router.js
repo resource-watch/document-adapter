@@ -112,8 +112,8 @@ class QueryRouter {
 
     static async fields(ctx) {
         logger.info('Get fields of dataset', ctx.request.body);
-        const fields = await queryService.getMapping(ctx.request.body.dataset.tableName);
-        ctx.body = fieldSerializer.serialize(fields, ctx.request.body.dataset.tableName, ctx.request.body.dataset.id);
+        const response = await queryService.getMapping(ctx.request.body.dataset.tableName);
+        ctx.body = fieldSerializer.serialize(response.body, ctx.request.body.dataset.tableName, ctx.request.body.dataset.id);
     }
 
     static getCloneUrl(url, idDataset) {
