@@ -15,7 +15,6 @@ chai.use(deepEqualInAnyOrder);
 
 const requester = getTestServer();
 let rabbitmqConnection = null;
-let channel;
 
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
@@ -39,6 +38,12 @@ describe('Dataset overwrite tests', () => {
         if (!rabbitmqConnection) {
             throw new RabbitMQConnectionError();
         }
+
+        process.on('unhandledRejection', should.fail);
+        // process.on('unhandledRejection', (error) => {
+        //     console.log(error);
+        //     should.fail(error);
+        // });
     });
 
     beforeEach(async () => {
@@ -58,7 +63,7 @@ describe('Dataset overwrite tests', () => {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
             legend: 'new legend',
-            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            sources: ['https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv'],
             provider: 'csv'
         };
         const response = await requester
@@ -77,7 +82,7 @@ describe('Dataset overwrite tests', () => {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
             legend: 'new legend',
-            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            sources: ['https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv'],
             provider: 'csv',
             loggedUser: ROLES.ADMIN
         };
@@ -106,7 +111,7 @@ describe('Dataset overwrite tests', () => {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
             legend: 'new legend',
-            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
+            sources: ['https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv'],
             provider: 'csv',
             loggedUser: ROLES.ADMIN
         };
@@ -120,7 +125,7 @@ describe('Dataset overwrite tests', () => {
         response.body.errors[0].should.have.property('detail').and.equal(`Not authorized`);
     });
 
-    it('Overwrite a CSV dataset should be successful (happy case)', async () => {
+    it('Overwrite a CSV dataset with data from URL/file using the \'url\' field should be successful (happy case)', async () => {
         const queueName = config.get('queues.tasks');
         const conn = await amqp.connect(config.get('rabbitmq.url'));
         const channel = await conn.createConfirmChannel();
@@ -166,7 +171,7 @@ describe('Dataset overwrite tests', () => {
             content.should.have.property('dataPath').and.equal(postBody.dataPath);
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.be.an('array').and.contain(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.eql([postBody.url]);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('legend').and.equal(postBody.legend);
@@ -177,10 +182,6 @@ describe('Dataset overwrite tests', () => {
         };
 
         await channel.consume(queueName, validateMessage.bind(this));
-
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -208,7 +209,7 @@ describe('Dataset overwrite tests', () => {
         // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
         const postBody = {
             dataset,
-            url: 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
+            sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
             loggedUser: ROLES.ADMIN
         };
@@ -227,7 +228,7 @@ describe('Dataset overwrite tests', () => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.be.an('array').and.contain(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
@@ -238,9 +239,66 @@ describe('Dataset overwrite tests', () => {
 
         await channel.consume(queueName, validateMessage.bind(this));
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        await channel.purgeQueue(queueName);
+        conn.close();
+    });
+
+    it('Overwrite a CSV dataset with data from multiple files should be successful (happy case)', async () => {
+        const queueName = config.get('queues.tasks');
+        const conn = await amqp.connect(config.get('rabbitmq.url'));
+        const channel = await conn.createConfirmChannel();
+        await channel.assertQueue(queueName);
+        await channel.purgeQueue(queueName);
+
+        const preQueueStatus = await channel.assertQueue(queueName);
+        preQueueStatus.messageCount.should.equal(0);
+
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            sources: [
+                'http://api.resourcewatch.org/v1/dataset?page[number]=1&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=2&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
+            ],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/data-overwrite`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        sleep.sleep(2);
+
+        const postQueueStatus = await channel.assertQueue(queueName);
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.eql(postBody.sources);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(queueName, validateMessage.bind(this));
 
         await channel.purgeQueue(queueName);
         conn.close();
@@ -254,9 +312,11 @@ describe('Dataset overwrite tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            nock.cleanAll();
-            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
+
 
         await channel.close();
         channel = null;
@@ -264,5 +324,6 @@ describe('Dataset overwrite tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

@@ -1,2 +1,1 @@
-require('cluster');
 require('app');

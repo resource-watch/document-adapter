@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars,no-undef */
+/* eslint-disable no-unused-vars,no-undef,max-len */
 const nock = require('nock');
 const config = require('config');
 const chai = require('chai');
@@ -19,8 +19,6 @@ describe('Query datasets - Simple queries', () => {
         if (process.env.NODE_ENV !== 'test') {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
-
-        nock.cleanAll();
     });
 
     it('Basic query to dataset should be successful (happy case)', async () => {
@@ -190,7 +188,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -212,7 +210,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -236,6 +234,7 @@ describe('Query datasets - Simple queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
+        // eslint-disable-next-line no-underscore-dangle
         const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
 
         queryResponse.body.data.should.deep.equal(resultList);
@@ -427,7 +426,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -449,7 +448,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -473,6 +472,7 @@ describe('Query datasets - Simple queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
+        // eslint-disable-next-line no-underscore-dangle
         const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
 
         queryResponse.body.data.should.deep.equal(resultList);
@@ -661,7 +661,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -680,7 +680,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(query => query.scroll === '1m' && query.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -701,6 +701,7 @@ describe('Query datasets - Simple queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
+        // eslint-disable-next-line no-underscore-dangle
         const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
 
         queryResponse.body.data.should.deep.equal(resultList);
@@ -709,7 +710,10 @@ describe('Query datasets - Simple queries', () => {
 
     afterEach(() => {
         if (!nock.isDone()) {
-            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`);
+            const pendingMocks = nock.pendingMocks();
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
     });
 });

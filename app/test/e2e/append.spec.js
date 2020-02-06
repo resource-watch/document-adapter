@@ -39,6 +39,12 @@ describe('Dataset append tests', () => {
         if (!rabbitmqConnection) {
             throw new RabbitMQConnectionError();
         }
+
+        process.on('unhandledRejection', should.fail);
+        // process.on('unhandledRejection', (error) => {
+        //     console.log(error);
+        //     should.fail(error);
+        // });
     });
 
     beforeEach(async () => {
@@ -137,7 +143,6 @@ describe('Dataset append tests', () => {
             dataset,
             data: [{ data: 'value' }],
             dataPath: 'new data path',
-            url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
             loggedUser: ROLES.ADMIN
         };
@@ -159,7 +164,6 @@ describe('Dataset append tests', () => {
             content.should.have.property('dataPath').and.equal(postBody.dataPath);
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.equal(postBody.url);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('legend').and.equal(dataset.legend);
@@ -169,13 +173,9 @@ describe('Dataset append tests', () => {
         };
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
-
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
     });
 
-    it('Append a CSV dataset with data from URL/file should be successful (happy case)', async () => {
+    it('Append a CSV dataset with data from URL/file using the \'url\' deprecated field should be successful (happy case)', async () => {
         const timestamp = new Date().getTime();
         const dataset = {
             userId: 1,
@@ -208,7 +208,7 @@ describe('Dataset append tests', () => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.equal(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.eql([postBody.url]);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
@@ -218,13 +218,9 @@ describe('Dataset append tests', () => {
         };
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
-
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
     });
 
-    it('Append a CSV dataset with append=true should be successful', async () => {
+    it('Append a CSV dataset with data from URL/file using the \'sources\' field should be successful (happy case)', async () => {
         const timestamp = new Date().getTime();
         const dataset = {
             userId: 1,
@@ -238,7 +234,101 @@ describe('Dataset append tests', () => {
         // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
         const postBody = {
             dataset,
-            url: 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
+            sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/append`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
+    });
+
+    it('Append a CSV dataset with data from multiple files should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            overwrite: true,
+            status: 'saved',
+            tableName: 'new-table-name'
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            sources: [
+                'http://api.resourcewatch.org/v1/dataset?page[number]=1&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=2&page[size]=10',
+                'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
+            ],
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+
+        const response = await requester
+            .post(`/api/v1/document/${timestamp}/append`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        sleep.sleep(2);
+
+        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
+        postQueueStatus.messageCount.should.equal(1);
+
+        const validateMessage = async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal(dataset.tableName);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
+
+            await channel.ack(msg);
+        };
+
+        await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
+    });
+
+    it('Append a CSV dataset with append=true should be successful (param is ignored)', async () => {
+        const timestamp = new Date().getTime();
+        const dataset = {
+            userId: 1,
+            application: ['rw'],
+            append: true,
+            status: 'saved',
+            tableName: 'new-table-name',
+            overwrite: true
+        };
+
+        // Need to manually inject the dataset into the request to simulate what CT would do. See app/microservice/register.json+227
+        const postBody = {
+            dataset,
+            sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
             loggedUser: ROLES.ADMIN
         };
@@ -257,7 +347,7 @@ describe('Dataset append tests', () => {
             const content = JSON.parse(msg.content.toString());
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
-            content.should.have.property('fileUrl').and.equal(postBody.url);
+            content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
             content.should.have.property('index').and.equal(dataset.tableName);
             content.should.have.property('provider').and.equal('csv');
@@ -267,10 +357,6 @@ describe('Dataset append tests', () => {
         };
 
         await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
-
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
     });
 
     afterEach(async () => {
@@ -281,9 +367,11 @@ describe('Dataset append tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            nock.cleanAll();
-            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
+
 
         await channel.close();
         channel = null;
@@ -291,5 +379,6 @@ describe('Dataset append tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

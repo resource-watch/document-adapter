@@ -1,5 +1,6 @@
 const nock = require('nock');
 const chai = require('chai');
+const config = require('config');
 const chaiHttp = require('chai-http');
 
 let requester;
@@ -13,6 +14,13 @@ exports.getTestServer = function getTestServer() {
 
     nock(process.env.CT_URL)
         .post(`/api/v1/microservice`)
+        .reply(200);
+
+    const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+
+    nock(`http://${elasticUri}`)
+        .get('/')
+        .times(999999)
         .reply(200);
 
     const server = require('../../src/app');

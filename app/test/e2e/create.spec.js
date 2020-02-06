@@ -90,9 +90,7 @@ describe('Dataset create tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage);
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Create a JSON dataset from a single file should be successful (happy case)', async () => {
@@ -135,9 +133,7 @@ describe('Dataset create tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage);
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     it('Create a JSON dataset from multiple files should be successful (happy case)', async () => {
@@ -185,9 +181,7 @@ describe('Dataset create tests', () => {
 
         await channel.consume(config.get('queues.tasks'), validateMessage);
 
-        process.on('unhandledRejection', (error) => {
-            should.fail(error);
-        });
+        process.on('unhandledRejection', should.fail);
     });
 
     afterEach(async () => {
@@ -198,8 +192,9 @@ describe('Dataset create tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            nock.cleanAll();
-            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
         }
 
         await channel.close();
@@ -208,5 +203,6 @@ describe('Dataset create tests', () => {
 
     after(async () => {
         rabbitmqConnection.close();
+        process.removeListener('unhandledRejection', should.fail);
     });
 });

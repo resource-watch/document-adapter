@@ -32,14 +32,14 @@ After that, follow one of the instructions below:
 
 1 - Set up your environment variables. See `dev.env.sample` for a list of variables you should set, which are described in detail in [this section](#configuration-environment-variables) of the documentation. Native execution will NOT load the `dev.env` file content, so you need to use another way to define those values
 
-2 - Install node dependencies using NPM:
+2 - Install node dependencies using YARN:
 ```
-npm install
+yarn install
 ```
 
 3 - Start the application server:
 ```
-npm start
+yarn start
 ```
 
 The endpoints provided by this microservice should now be available through Control Tower's URL.
@@ -64,7 +64,7 @@ There are two ways to run the included tests:
 
 Follow the instruction above for setting up the runtime environment for native execution, then run:
 ```
-npm test
+yarn test
 ```
 
 ### Using Docker
@@ -78,15 +78,15 @@ Follow the instruction above for setting up the runtime environment for Docker e
 
 ### Environment variables
 
-- PORT => TCP port in which the service will run
-- NODE_PATH => relative path to the source code. Should be `app/src`
-- CT_REGISTER_MODE => if `auto` the microservice automatically registers on Control Tower on start
-- CT_TOKEN => 
-- API_VERSION => API version identifier that prefixes the URL. Should be `v1`
-- MONGO_PORT_27017_TCP_ADDR => IP/Address of the MongoDB server
-- CT_URL => Control Tower URL
-- LOCAL_URL => Local URL
-- RABBITMQ_URL => RabbitMQ URL
-- ELASTIC_PORT_9200_TCP_ADDR => Elasticsearch URL
+- **PORT** => TCP port in which the service will run
+- **NODE_PATH** => relative path to the source code. Should be `app/src`
+- **CT_REGISTER_MODE** => if `auto` the microservice automatically registers on Control Tower on start
+- **CT_TOKEN** => 
+- **API_VERSION** => API version identifier that prefixes the URL. Should be `v1`
+- **MONGO_PORT_27017_TCP_ADDR** => IP/Address of the MongoDB server
+- **CT_URL** => Control Tower URL
+- **LOCAL_URL** => Local URL
+- **RABBITMQ_URL** => RabbitMQ connection URL - if using RabbitMQ with default configurations, you should set this variable to something like `amqp://0.0.0.0:5672/`
+- **ELASTIC_URI** => Elasticsearch connection URL - if using ES with default configurations, you should set this variable to something like `127.0.0.1:9200`
 
 You can optionally set other variables, see [this file](config/custom-environment-variables.json) for an extended list.
