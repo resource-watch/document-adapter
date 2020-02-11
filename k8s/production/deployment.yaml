@@ -2,20 +2,20 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    name: {name}
+    name: document
     app: rw
-  name: {name}
+  name: document
 spec:
   revisionHistoryLimit: 2
   template:
     metadata:
       labels:
-        name: {name}
+        name: document
     spec:
       restartPolicy: Always
       containers:
-      - name: {name}
-        image: vizzuality/{name}
+      - name: document
+        image: vizzuality/document
         imagePullPolicy: Always
         resources:
           requests:
@@ -34,7 +34,7 @@ spec:
           - name: NODE_PATH
             value: app/src
           - name: LOCAL_URL
-            value: http://{name}.default.svc.cluster.local:4000
+            value: http://document.default.svc.cluster.local:4000
           - name: ELASTIC_URI
             valueFrom:
                 secretKeyRef:
