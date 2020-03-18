@@ -708,6 +708,402 @@ describe('Query datasets - Simple queries', () => {
 
     });
 
+    it('Query with order by mapping from Elasticsearch should be successful (happy case)', async () => {
+        const requestBody = {
+            dataset: {
+                name: 'Historical and Projected Monthly Hydrographs -- U.S. (Pacific Northwest)',
+                slug: 'Historical-and-Projected-Monthly-Hydrographs-US-Pacific-Northwest_1',
+                type: null,
+                subtitle: null,
+                application: [
+                    'prep'
+                ],
+                dataPath: '',
+                attributesPath: null,
+                connectorType: 'document',
+                provider: 'csv',
+                userId: 'microservice',
+                connectorUrl: null,
+                sources: [
+                    'https://docs.google.com/spreadsheets/d/1tE7lgXLHwG1vLdmZrxJKEeskZDxHHB6HtgmesxpFkQ0/pub?gid=129085061&single=true&output=csv'
+                ],
+                tableName: 'index_68860c9097674d6fb04035d473921461_15845284078893',
+                status: 'saved',
+                published: true,
+                overwrite: false,
+                verified: false,
+                blockchain: {},
+                mainDateField: null,
+                env: 'production',
+                geoInfo: false,
+                protected: false,
+                legend: {
+                    date: [],
+                    region: [],
+                    country: [],
+                    nested: [],
+                    integer: [],
+                    short: [],
+                    byte: [],
+                    double: [],
+                    float: [],
+                    half_float: [],
+                    scaled_float: [],
+                    boolean: [],
+                    binary: [],
+                    text: [],
+                    keyword: []
+                },
+                clonedHost: {},
+                errorMessage: '',
+                taskId: '/v1/doc-importer/task/cca1dc51-aa6a-43df-bba6-06e6c4e636dd',
+                createdAt: '2020-03-18T10:46:47.759Z',
+                updatedAt: '2020-03-18T10:46:58.803Z',
+                dataLastUpdated: null,
+                user: {},
+                widgetRelevantProps: [],
+                layerRelevantProps: []
+            },
+            loggedUser: null
+        };
+
+        const query = `select numeric_m as x, A1B_2080s as y, month as z from ${requestBody.dataset.id} where streamflow='Snohomish' order by numeric_m ASC'`;
+
+        const results = [
+            {
+                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _type: 'type',
+                _id: 'AXDtQNBj5xxOSI2DEp2n',
+                _score: null,
+                _source: {
+                    numeric_m: 1,
+                    month: 'Oct',
+                    A1B_2080s: 6933.430769
+                },
+                sort: [
+                    1
+                ]
+            },
+            {
+                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _type: 'type',
+                _id: 'AXDtQNBj5xxOSI2DEp2o',
+                _score: null,
+                _source: {
+                    numeric_m: 2,
+                    month: 'Nov',
+                    A1B_2080s: 15743.70549
+                },
+                sort: [
+                    2
+                ]
+            },
+            {
+                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _type: 'type',
+                _id: 'AXDtQNBj5xxOSI2DEp2p',
+                _score: null,
+                _source: {
+                    numeric_m: 3,
+                    month: 'Dec',
+                    A1B_2080s: 20168.46484
+                },
+                sort: [
+                    3
+                ]
+            },
+            {
+                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _type: 'type',
+                _id: 'AXDtQNBj5xxOSI2DEp2q',
+                _score: null,
+                _source: {
+                    numeric_m: 4,
+                    month: 'Jan',
+                    A1B_2080s: 19139.62198
+                },
+                sort: [
+                    4
+                ]
+            }
+        ];
+
+        nock(`${process.env.CT_URL}`)
+            .get('/v1/convert/sql2SQL')
+            .query({ sql: query })
+            .reply(200, {
+                data: {
+                    type: 'result',
+                    attributes: {
+                        query: 'SELECT numeric_m AS x, A1B_2080s AS y, month AS z FROM index_6a18cd92acd34107b85595fa2af24473 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC',
+                        jsonSql: {
+                            select: [
+                                {
+                                    value: 'numeric_m',
+                                    alias: 'x',
+                                    type: 'literal'
+                                },
+                                {
+                                    value: 'A1B_2080s',
+                                    alias: 'y',
+                                    type: 'literal'
+                                },
+                                {
+                                    value: 'month',
+                                    alias: 'z',
+                                    type: 'literal'
+                                }
+                            ],
+                            from: 'index_6a18cd92acd34107b85595fa2af24473',
+                            where: [
+                                {
+                                    type: 'operator',
+                                    value: '=',
+                                    left: [
+                                        {
+                                            value: 'streamflow',
+                                            type: 'literal'
+                                        }
+                                    ],
+                                    right: [
+                                        {
+                                            value: 'Snohomish',
+                                            type: 'string'
+                                        }
+                                    ]
+                                }
+                            ],
+                            orderBy: [
+                                {
+                                    type: 'literal',
+                                    value: 'numeric_m',
+                                    alias: null,
+                                    direction: 'ASC'
+                                }
+                            ]
+                        }
+                    }
+                }
+            });
+
+        nock(`http://${elasticUri}`)
+            .get('/index_68860c9097674d6fb04035d473921461_15845284078893/_mapping')
+            .twice()
+            .reply(200, {
+                index_68860c9097674d6fb04035d473921461_15845284078893: {
+                    mappings: {
+                        index_68860c9097674d6fb04035d473921461_15845284078893: {
+                            properties: {
+                                A1B_2040s: {
+                                    type: 'double'
+                                },
+                                A1B_2080s: {
+                                    type: 'double'
+                                },
+                                historical: {
+                                    type: 'long'
+                                },
+                                month: {
+                                    type: 'string'
+                                },
+                                numeric_m: {
+                                    type: 'long'
+                                },
+                                streamflow: {
+                                    type: 'string'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+
+        nock(`http://${elasticUri}`)
+            .post('/_sql/_explain', 'SELECT numeric_m, A1B_2080s, month FROM index_68860c9097674d6fb04035d473921461_15845284078893 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC LIMIT 9999999')
+            .reply(200, {
+                from: 0,
+                size: 9999999,
+                query: {
+                    bool: {
+                        filter: [
+                            {
+                                bool: {
+                                    must: [
+                                        {
+                                            match_phrase: {
+                                                streamflow: {
+                                                    query: 'Snohomish',
+                                                    slop: 0,
+                                                    boost: 1.0
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    disable_coord: false,
+                                    adjust_pure_negative: true,
+                                    boost: 1.0
+                                }
+                            }
+                        ],
+                        disable_coord: false,
+                        adjust_pure_negative: true,
+                        boost: 1.0
+                    }
+                },
+                _source: {
+                    includes: [
+                        'numeric_m',
+                        'A1B_2080s',
+                        'month'
+                    ],
+                    excludes: []
+                },
+                sort: [
+                    {
+                        numeric_m: {
+                            order: 'asc'
+                        }
+                    }
+                ]
+            }, ['content-type',
+                'text/plain; charset=UTF-8']);
+
+        nock(`http://${elasticUri}`)
+            .post('/index_68860c9097674d6fb04035d473921461_15845284078893/_search',
+                {
+                    from: 0,
+                    size: 10000,
+                    query: {
+                        bool: {
+                            filter: [{
+                                bool: {
+                                    must: [{
+                                        match_phrase: {
+                                            streamflow: {
+                                                query: 'Snohomish',
+                                                slop: 0,
+                                                boost: 1
+                                            }
+                                        }
+                                    }],
+                                    disable_coord: false,
+                                    adjust_pure_negative: true,
+                                    boost: 1
+                                }
+                            }],
+                            disable_coord: false,
+                            adjust_pure_negative: true,
+                            boost: 1
+                        }
+                    },
+                    _source: { includes: ['numeric_m', 'A1B_2080s', 'month'], excludes: [] },
+                    sort: [{ numeric_m: { order: 'asc' } }]
+                })
+            .query({ scroll: '1m' })
+            .reply(200, {
+                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
+                took: 1,
+                timed_out: false,
+                _shards: {
+                    total: 3,
+                    successful: 3,
+                    failed: 0
+                },
+                hits: {
+                    total: 4,
+                    max_score: null,
+                    hits: [results[0], results[1]]
+                }
+            });
+
+
+        nock(`http://${elasticUri}`)
+            .get('/_search/scroll')
+            .times(1)
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .reply(200, {
+                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
+                took: 1,
+                timed_out: false,
+                terminated_early: true,
+                _shards: {
+                    total: 5, successful: 5, skipped: 0, failed: 0
+                },
+                hits: {
+                    total: 4,
+                    max_score: 1,
+                    hits: [results[2], results[3]]
+                }
+            });
+
+        nock(`http://${elasticUri}`)
+            .get('/_search/scroll')
+            .times(1)
+            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .reply(200, {
+                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
+                took: 1,
+                timed_out: false,
+                _shards: {
+                    total: 5, successful: 5, skipped: 0, failed: 0
+                },
+                hits: { total: 4, max_score: 1, hits: [] }
+            });
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(200);
+        queryResponse.body.should.have.property('data').and.be.an('array');
+        queryResponse.body.should.have.property('meta').and.be.an('object');
+
+        queryResponse.body.data.should.have.lengthOf(results.length);
+
+        const resultList = [
+            {
+                numeric_m: 1,
+                month: 'Oct',
+                A1B_2080s: 6933.430769,
+                _id: 'AXDtQNBj5xxOSI2DEp2n',
+                x: 1,
+                y: 6933.430769,
+                z: 'Oct'
+            },
+            {
+                numeric_m: 2,
+                month: 'Nov',
+                A1B_2080s: 15743.70549,
+                _id: 'AXDtQNBj5xxOSI2DEp2o',
+                x: 2,
+                y: 15743.70549,
+                z: 'Nov'
+            },
+            {
+                numeric_m: 3,
+                month: 'Dec',
+                A1B_2080s: 20168.46484,
+                _id: 'AXDtQNBj5xxOSI2DEp2p',
+                x: 3,
+                y: 20168.46484,
+                z: 'Dec'
+            },
+            {
+                numeric_m: 4,
+                month: 'Jan',
+                A1B_2080s: 19139.62198,
+                _id: 'AXDtQNBj5xxOSI2DEp2q',
+                x: 4,
+                y: 19139.62198,
+                z: 'Jan'
+            }
+        ];
+
+        queryResponse.body.data.should.deep.equal(resultList);
+
+    });
+
     afterEach(() => {
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();

@@ -169,7 +169,7 @@ class QueryService {
         // search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
             let mapping = await this.getMapping(index);
-            mapping = mapping.body[index].mappings.type ? mapping.body[index].mappings.type.properties : mapping.body[index].mappings.properties;
+            mapping = mapping.body[index].mappings.type ? mapping.body[index].mappings.type.properties : mapping.body[index].mappings[index].properties;
             if (parsed.group) {
 
                 for (let i = 0, { length } = parsed.group; i < length; i += 1) {

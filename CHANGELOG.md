@@ -1,3 +1,6 @@
+## 18/03/2020
+- Fix issue where queries with a `order by` clause would fail.
+
 # v1.0.0
 
 ## 05/12/2019
