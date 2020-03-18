@@ -1,6 +1,6 @@
 {
   "name": "rw-adapter-document",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Resource Watch - Adapter document",
   "main": "index.js",
   "scripts": {
