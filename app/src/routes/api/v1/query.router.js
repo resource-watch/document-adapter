@@ -195,7 +195,6 @@ const toSQLMiddleware = async (ctx, next) => {
         ctx.state.parsed = result.data.attributes.jsonSql;
         logger.debug(ctx.query.sql);
         await next();
-
     } catch (e) {
         logger.warn(`Could not issue request to MS: ${options.method} ${options.uri} with message ${e.message}`);
         if (e.statusCode === 400 || e.statusCode === 404) {
