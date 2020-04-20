@@ -197,7 +197,7 @@ const toSQLMiddleware = async (ctx, next) => {
         await next();
 
     } catch (e) {
-        logger.info(`Could not issue request to MS: ${options.method} ${options.uri}`);
+        logger.warn(`Could not issue request to MS: ${options.method} ${options.uri} with message ${e.message}`);
         if (e.statusCode === 400 || e.statusCode === 404) {
             ctx.status = e.statusCode;
             ctx.body = e.body;
