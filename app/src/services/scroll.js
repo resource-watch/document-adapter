@@ -90,6 +90,9 @@ class Scroll {
 
     convertDataToDownload(data, type, first, more, cloneUrl) {
         if (type === 'csv') {
+            if (data.data.length === 0) {
+                return '';
+            }
             return `${json2csv({
                 data: data ? data.data : [],
                 hasCSVColumnTitle: first
