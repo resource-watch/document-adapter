@@ -1,7 +1,3 @@
-## 23/02/2020
-
-- Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
-
 # v1.1.0
 
 ## 09/04/2020
