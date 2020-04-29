@@ -1,3 +1,9 @@
+# v1.1.1
+
+## 23/04/2020
+
+- Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
+
 # v1.1.0
 
 ## 09/04/2020
@@ -17,7 +23,7 @@
 ## 14/11/2019
 - Refactor usage of JSONAPI deserializer
 - Updated ElasticSearch integration lib
-- Replaced generators with async/await 
+- Replaced generators with async/await
 
 ## 12/11/2019
 - Add support for dataset overwrite using multiple files in parallel.

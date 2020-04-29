@@ -106,8 +106,6 @@ class QueryRouter {
         ctx.state.parsed.from = ctx.request.body.dataset.tableName;
         const sql = Json2sql.toSQL(ctx.state.parsed);
         await queryService.downloadQuery(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.request.body.dataset.id, ctx.body, format);
-
-
     }
 
     static async fields(ctx) {
@@ -194,16 +192,15 @@ const toSQLMiddleware = async (ctx, next) => {
         ctx.query.sql = result.data.attributes.query;
         ctx.state.parsed = result.data.attributes.jsonSql;
         logger.debug(ctx.query.sql);
-        await next();
-
     } catch (e) {
-        logger.info(`Could not issue request to MS: ${options.method} ${options.uri}`);
+        logger.warn(`Could not issue request to MS: ${options.method} ${options.uri} with message ${e.message}`);
         if (e.statusCode === 400 || e.statusCode === 404) {
             ctx.status = e.statusCode;
             ctx.body = e.body;
         }
         throw e;
     }
+    await next();
 };
 
 

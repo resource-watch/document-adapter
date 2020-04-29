@@ -43,6 +43,7 @@ class QueryService {
             },
             async createScroll(opts) {
                 this.transport.requestTimeout = 60000;
+                logger.debug(`Creating scroll - Path: ${encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`)} - Body: ${JSON.stringify(opts.query)}`);
                 const response = await this.transport.request({
                     method: 'POST',
                     path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
