@@ -423,4 +423,25 @@ describe('Dataset download tests', () => {
         response.status.should.equal(200);
         response.body.should.equal('');
     });
+
+    it('Download with invalid format should return a 400', async () => {
+        const response = await requester
+            .post(`/api/v1/document/download/d1ced422-7cd5-480a-8904-d3410d75bf42`)
+            .query({ sql: '', format: 'potato' })
+            .send();
+
+        response.status.should.equal(400);
+        response.body.should.have.property('errors').and.be.an('array');
+        response.body.errors[0].should.have.property('detail').and.equal(`- format: format must be in [json,csv]. - `);
+    });
+
+    afterEach(() => {
+        if (!nock.isDone()) {
+            const pendingMocks = nock.pendingMocks();
+            if (pendingMocks.length > 1) {
+                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
+            }
+        }
+
+    });
 });

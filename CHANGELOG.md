@@ -1,7 +1,8 @@
 # v1.1.1
 
-## 23/04/2020
+## 19/05/2020
 
+- Add validation for `format` query param on download endpoint.
 - Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
 
 # v1.1.0
