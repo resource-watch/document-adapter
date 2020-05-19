@@ -5,6 +5,7 @@ const taskQueueService = require('services/taskQueueService');
 const fieldSerializer = require('serializers/fieldSerializer');
 const Json2sql = require('sql2json').json2sql;
 const passThrough = require('stream').PassThrough;
+const DownloadValidator = require('validators/download.validator');
 
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
@@ -257,7 +258,7 @@ const checkPermissionDelete = async (ctx, next) => {
 
 router.post('/query/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
 router.post('/query-v2/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
-router.post('/download/:dataset', deserializeDataset, toSQLMiddleware, QueryRouter.download);
+router.post('/download/:dataset', DownloadValidator.validateDownload, deserializeDataset, toSQLMiddleware, QueryRouter.download);
 router.post('/fields/:dataset', deserializeDataset, QueryRouter.fields);
 
 module.exports = router;
