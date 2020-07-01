@@ -103,7 +103,7 @@ describe('Query datasets - Simple queries', () => {
             }
         ];
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -323,7 +323,7 @@ describe('Query datasets - Simple queries', () => {
             }
         ];
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -553,7 +553,7 @@ describe('Query datasets - Simple queries', () => {
             }
         ];
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
@@ -828,7 +828,7 @@ describe('Query datasets - Simple queries', () => {
             }
         ];
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
