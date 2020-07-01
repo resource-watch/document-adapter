@@ -117,7 +117,7 @@ describe('Query datasets - GROUP BY queries', () => {
             doc_count: 1
         }, { key: 'VCT', doc_count: 1 }, { key: 'VNM', doc_count: 1 }, { key: 'YEM', doc_count: 1 }];
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -396,7 +396,7 @@ describe('Query datasets - GROUP BY queries', () => {
             }];
 
 
-        nock(`${process.env.CT_URL}`)
+        nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
