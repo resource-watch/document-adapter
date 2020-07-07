@@ -27,9 +27,12 @@ class Scroll {
         let resultQueryElastic;
         try {
             logger.debug('Scroll init - Query explain: ', this.sql);
-            resultQueryElastic = await this.elasticClient.explain({
-                sql: this.sql
+            const translatedQuery = await this.elasticClient.opendistro.explain({
+                body: {
+                    query: this.sql
+                }
             });
+            resultQueryElastic = translatedQuery.body;
         } catch (e) {
             if (e.message.includes('index_out_of_bounds_exception')) {
                 throw new Error('Semantically invalid query', e);
@@ -38,45 +41,64 @@ class Scroll {
             throw e;
         }
 
-        if (this.parsed.group) {
-            logger.debug('Config size of aggregations');
-            let aggregations = { resultQueryElastic };
-            while (aggregations) {
-                const keys = Object.keys(aggregations);
-                if (keys.length === 1) {
-                    if (aggregations[keys[0]] && aggregations[keys[0]].terms) {
-                        aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
-                        // eslint-disable-next-line prefer-destructuring
-                        aggregations = aggregations[keys[0]].aggregations;
-                    } else if (keys[0].indexOf('NESTED') >= -1) {
-                        // eslint-disable-next-line prefer-destructuring
-                        aggregations = aggregations[keys[0]].aggregations;
-                    } else {
-                        aggregations = null;
-                    }
-                } else {
-                    aggregations = null;
-                }
-            }
-        }
-        this.limit = -1;
-        if (this.sql.toLowerCase().indexOf('limit') >= 0) {
-            this.limit = resultQueryElastic.size;
+        // if (this.parsed.group) {
+        //     logger.debug('Config size of aggregations');
+        //     let aggregations = { resultQueryElastic };
+        //     while (aggregations) {
+        //         const keys = Object.keys(aggregations);
+        //         if (keys.length === 1) {
+        //             if (aggregations[keys[0]] && aggregations[keys[0]].terms) {
+        //                 aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
+        //                 // eslint-disable-next-line prefer-destructuring
+        //                 aggregations = aggregations[keys[0]].aggregations;
+        //             } else if (keys[0].indexOf('NESTED') >= -1) {
+        //                 // eslint-disable-next-line prefer-destructuring
+        //                 aggregations = aggregations[keys[0]].aggregations;
+        //             } else {
+        //                 aggregations = null;
+        //             }
+        //         } else {
+        //             aggregations = null;
+        //         }
+        //     }
+        // }
+        // this.limit = -1;
+        // if (this.sql.toLowerCase().indexOf('limit') >= 0) {
+        //     this.limit = resultQueryElastic.size;
+        // }
+        //
+        // if (resultQueryElastic.size > 10000 || this.limit === -1) {
+        //     resultQueryElastic.size = 10000;
+        // }
+        // logger.debug('Creating params to scroll with query', resultQueryElastic);
+
+        if (resultQueryElastic.sort) {
+            const sort = resultQueryElastic.sort.map((element) => {
+                // const result = {};
+                // result[Object.keys(element)[0]] = element[Object.keys(element)[0]].order;
+                // return result;
+                element[Object.keys(element)[0]].unmapped_type = 'long';
+                element[Object.keys(element)[0]].missing = '_last';
+                return element;
+            });
+            resultQueryElastic.sort = sort;
+
         }
 
-        if (resultQueryElastic.size > 10000 || this.limit === -1) {
-            resultQueryElastic.size = 10000;
-        }
-        logger.debug('Creating params to scroll with query', resultQueryElastic);
-        const params = {
-            query: resultQueryElastic,
-            duration: '1m',
-            index: this.index
-        };
+        // if (resultQueryElastic.aggregations) {
+        //     resultQueryElastic.aggs = resultQueryElastic.aggregations;
+        //     delete resultQueryElastic.aggregations;
+        // }
 
         try {
             logger.debug('Creating scroll');
-            this.resultScroll = await this.elasticClient.createScroll(params);
+            const searchResult = await this.elasticClient.search({
+                // ...resultQueryElastic,
+                scroll: '1m',
+                index: this.index,
+                q: resultQueryElastic
+            });
+            this.resultScroll = searchResult.body;
             this.first = true;
             this.total = 0;
 
@@ -97,7 +119,8 @@ class Scroll {
                 data: data ? data.data : [],
                 hasCSVColumnTitle: first
             })}\n`;
-        } if (type === 'json' || type === 'geojson') {
+        }
+        if (type === 'json' || type === 'geojson') {
             let dataString = '';
             if (data) {
                 dataString = JSON.stringify(data);

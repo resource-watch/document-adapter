@@ -13,33 +13,33 @@ class QueryService {
         logger.info('Connecting with elasticsearch');
 
         const sqlAPI = {
-            async sql(opts) {
-                this.transport.requestTimeout = 60000;
-                return this.transport.request({
-                    method: 'POST',
-                    path: encodeURI('/_sql'),
-                    body: opts.sql
-                });
-            },
-            async explain(opts) {
-                const response = await this.transport.request({
-                    method: 'POST',
-                    path: encodeURI('/_sql/_explain'),
-                    body: opts.sql
-                });
-
-                try {
-                    return JSON.parse(response.body);
-                } catch (e) {
-                    return null;
-                }
-            },
-            async mapping(opts) {
-                return this.transport.request({
-                    method: 'GET',
-                    path: `/${opts.index}/_mapping`
-                });
-            },
+            // async sql(opts) {
+            //     this.transport.requestTimeout = 60000;
+            //     return this.transport.request({
+            //         method: 'POST',
+            //         path: encodeURI('/_sql'),
+            //         body: opts.sql
+            //     });
+            // },
+            // async explain(opts) {
+            //     const response = await this.transport.request({
+            //         method: 'POST',
+            //         path: encodeURI('/_sql/_explain'),
+            //         body: opts.sql
+            //     });
+            //
+            //     try {
+            //         return JSON.parse(response.body);
+            //     } catch (e) {
+            //         return null;
+            //     }
+            // },
+            // async mapping(opts) {
+            //     return this.transport.request({
+            //         method: 'GET',
+            //         path: `/${opts.index}/_mapping`
+            //     });
+            // },
             async createScroll(opts) {
                 this.transport.requestTimeout = 60000;
                 logger.debug(`Creating scroll - Path: ${encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`)} - Body: ${JSON.stringify(opts.query)}`);
@@ -53,7 +53,7 @@ class QueryService {
                 return response.body;
             },
             async getScroll(opts) {
-                logger.debug('GETSCROLL ', opts);
+                logger.debug('GET SCROLL ', opts);
                 this.transport.requestTimeout = 60000;
                 const response = await this.transport.request({
                     method: 'GET',
@@ -62,27 +62,60 @@ class QueryService {
                 });
                 return response.body;
             },
-            async ping() {
-                return this.transport.request({
-                    method: 'GET',
-                    path: ''
-                });
-            }
+            // async ping() {
+            //     return this.transport.request({
+            //         method: 'GET',
+            //         path: ''
+            //     });
+            // }
         };
 
         this.elasticClient = new elasticsearch.Client({
-            node: `http://${elasticUri}`,
+            node: elasticUri,
             log: 'info',
             apiVersion: 'sql'
         });
         this.elasticClientV2 = new elasticsearch.Client({
-            node: 'http://elasticsearch-v2.default.svc.cluster.local:9200',
+            node: elasticUri,
             log: 'info',
             apiVersion: 'sql'
         });
 
-        this.elasticClient = Object.assign(this.elasticClient, sqlAPI);
-        this.elasticClientV2 = Object.assign(this.elasticClientV2, sqlAPI);
+        // this.elasticClient = Object.assign(this.elasticClient, sqlAPI);
+        // this.elasticClientV2 = Object.assign(this.elasticClientV2, sqlAPI);
+
+        this.elasticClient.extend('opendistro.explain', ({ makeRequest, ConfigurationError }) => function explain(params, options = {}) {
+            const {
+                body,
+                index,
+                method,
+                ...querystring
+            } = params;
+
+            // params validation
+            if (body == null) {
+                throw new ConfigurationError('Missing required parameter: body');
+            }
+
+            // build request object
+            const request = {
+                method: method || 'POST',
+                path: `/_opendistro/_sql/_explain`,
+                body,
+                querystring
+            };
+
+            // build request options object
+            const requestOptions = {
+                ignore: options.ignore || null,
+                requestTimeout: options.requestTimeout || null,
+                maxRetries: options.maxRetries || null,
+                asStream: options.asStream || false,
+                headers: options.headers || null
+            };
+
+            return makeRequest(request, requestOptions);
+        });
 
         setInterval(() => {
             this.elasticClient.ping({}, (error) => {
@@ -165,7 +198,7 @@ class QueryService {
         // search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
             let mapping = await this.getMapping(index);
-            mapping = mapping.body[index].mappings.type ? mapping.body[index].mappings.type.properties : mapping.body[index].mappings[index].properties;
+            mapping = mapping.body[index].mappings.properties;
             if (parsed.group) {
 
                 for (let i = 0, { length } = parsed.group; i < length; i += 1) {
@@ -325,7 +358,7 @@ class QueryService {
     async getMapping(index) {
         logger.info('Obtaining mapping...');
 
-        return this.elasticClient.mapping({ index });
+        return this.elasticClient.indices.getMapping({ index });
     }
 
 }
