@@ -22,6 +22,7 @@ Dependencies on other Microservices:
 
 - [Dataset](https://github.com/resource-watch/dataset/)
 - [Converter](https://github.com/resource-watch/converter)
+- [Document orchestrator](https://github.com/resource-watch/doc-orchestrator/)
 
 ## Getting started
 
