@@ -12,64 +12,6 @@ class QueryService {
     constructor() {
         logger.info('Connecting with elasticsearch');
 
-        const sqlAPI = {
-            // async sql(opts) {
-            //     this.transport.requestTimeout = 60000;
-            //     return this.transport.request({
-            //         method: 'POST',
-            //         path: encodeURI('/_sql'),
-            //         body: opts.sql
-            //     });
-            // },
-            // async explain(opts) {
-            //     const response = await this.transport.request({
-            //         method: 'POST',
-            //         path: encodeURI('/_sql/_explain'),
-            //         body: opts.sql
-            //     });
-            //
-            //     try {
-            //         return JSON.parse(response.body);
-            //     } catch (e) {
-            //         return null;
-            //     }
-            // },
-            // async mapping(opts) {
-            //     return this.transport.request({
-            //         method: 'GET',
-            //         path: `/${opts.index}/_mapping`
-            //     });
-            // },
-            async createScroll(opts) {
-                this.transport.requestTimeout = 60000;
-                logger.debug(`Creating scroll - Path: ${encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`)} - Body: ${JSON.stringify(opts.query)}`);
-                const response = await this.transport.request({
-                    method: 'POST',
-                    path: encodeURI(`/${opts.index}/_search?scroll=${opts.duration}`),
-                    body: JSON.stringify(opts.query),
-                    requestTimeout: 60000
-                });
-
-                return response.body;
-            },
-            async getScroll(opts) {
-                logger.debug('GET SCROLL ', opts);
-                this.transport.requestTimeout = 60000;
-                const response = await this.transport.request({
-                    method: 'GET',
-                    path: encodeURI(`/_search/scroll?scroll=${opts.scroll}&scroll_id=${opts.scroll_id}`),
-                    requestTimeout: 60000
-                });
-                return response.body;
-            },
-            // async ping() {
-            //     return this.transport.request({
-            //         method: 'GET',
-            //         path: ''
-            //     });
-            // }
-        };
-
         this.elasticClient = new elasticsearch.Client({
             node: elasticUri,
             log: 'info',
@@ -117,10 +59,43 @@ class QueryService {
             return makeRequest(request, requestOptions);
         });
 
+        this.elasticClient.extend('opendistro.query', ({ makeRequest, ConfigurationError }) => function query(params, options = {}) {
+            const {
+                body,
+                index,
+                method,
+                ...querystring
+            } = params;
+
+            // params validation
+            if (body == null) {
+                throw new ConfigurationError('Missing required parameter: body');
+            }
+
+            // build request object
+            const request = {
+                method: method || 'POST',
+                path: `/_opendistro/_sql`,
+                body,
+                querystring
+            };
+
+            // build request options object
+            const requestOptions = {
+                ignore: options.ignore || null,
+                requestTimeout: options.requestTimeout || null,
+                maxRetries: options.maxRetries || null,
+                asStream: options.asStream || false,
+                headers: options.headers || null
+            };
+
+            return makeRequest(request, requestOptions);
+        });
+
         setInterval(() => {
             this.elasticClient.ping({}, (error) => {
                 if (error) {
-                    logger.error('elasticsearch cluster is down!');
+                    logger.error('Elasticsearch cluster is down!');
                     process.exit(1);
                 }
             });
@@ -197,8 +172,7 @@ class QueryService {
     async convertQueryToElastic(parsed, index) {
         // search ST_GeoHash
         if (parsed.group || parsed.orderBy) {
-            let mapping = await this.getMapping(index);
-            mapping = mapping.body[index].mappings.properties;
+            const mapping = await this.getMapping(index);
             if (parsed.group) {
 
                 for (let i = 0, { length } = parsed.group; i < length; i += 1) {
@@ -293,7 +267,7 @@ class QueryService {
     }
 
     async doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
-        logger.info('Doing query...');
+        logger.info('[QueryService - doQuery] Doing query...');
         const elasticQuery = await this.convertQueryToElastic(parsed, index);
         const removeAlias = { ...elasticQuery };
         if (removeAlias.select) {
@@ -310,16 +284,16 @@ class QueryService {
             });
         }
         const sqlFromJson = Json2sql.toSQL(removeAlias);
-        logger.debug('doQuery - Generated sql', sqlFromJson);
+        logger.debug('[QueryService - doQuery] doQuery - Generated sql', sqlFromJson);
 
         const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
         await scroll.init();
         await scroll.continue();
-        logger.info('Finished query');
+        logger.info('[QueryService - doQuery] Finished query');
     }
 
     async doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
-        logger.info('Doing query...');
+        logger.info('[QueryService - doQueryV2] Doing query...');
         const elasticQuery = await this.convertQueryToElastic(parsed, index);
         const removeAlias = { ...elasticQuery };
         if (removeAlias.select) {
@@ -336,29 +310,30 @@ class QueryService {
             });
         }
         const sqlFromJson = Json2sql.toSQL(removeAlias);
-        logger.debug('doQueryV2 - sql', sql);
+        logger.debug('[QueryService - doQueryV2] doQueryV2 - sql', sql);
 
         const scroll = new Scroll(this.elasticClientV2, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
         await scroll.init();
         await scroll.continue();
-        logger.info('Finished query');
+        logger.info('[QueryService - doQueryV2] Finished query');
     }
 
     async downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {
-        logger.info('Download with query...');
+        logger.info('[QueryService - downloadQuery] Download with query...');
         const elasticQuery = await this.convertQueryToElastic(parsed, index);
-        logger.debug('Download query sql: ', sql);
+        logger.debug('[QueryService - downloadQuery] Download query sql: ', sql);
         const sqlFromJson = Json2sql.toSQL(elasticQuery);
         const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, true, null, type);
         await scroll.init();
         await scroll.continue();
-        logger.info('Finished query');
+        logger.info('[QueryService - downloadQuery] Finished query');
     }
 
     async getMapping(index) {
-        logger.info('Obtaining mapping...');
+        logger.info('[QueryService - getMapping] Obtaining mapping...');
 
-        return this.elasticClient.indices.getMapping({ index });
+        const mappingResponse = await this.elasticClient.indices.getMapping({ index });
+        return mappingResponse.body[index].mappings.properties;
     }
 
 }

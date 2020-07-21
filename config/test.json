@@ -10,6 +10,6 @@
   },
   "elasticsearch": {
     "port": 9200,
-    "host": "1.1.1.1"
+    "host": "http://1.1.1.1"
   }
 }

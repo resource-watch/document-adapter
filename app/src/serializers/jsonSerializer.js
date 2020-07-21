@@ -1,6 +1,8 @@
 const Json2sql = require('sql2json').json2sql;
+const GeoJSON = require('geojson');
 
-class CSVSerializer {
+
+class JSONSerializer {
 
     static serializeBucket(key, buckets) {
         let list = [];
@@ -10,15 +12,15 @@ class CSVSerializer {
         }
         alias = alias.replace('.keyword', '');
         for (let i = 0, { length: bucketLength } = buckets; i < bucketLength; i += 1) {
-            const keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
+            const keys = Object.keys(buckets[i]).filter(el => el !== 'doc_count' && el !== 'key');
             if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
-                const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
+                const partialList = JSONSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
                 for (let j = 0, { length: partialListLength } = partialList; j < partialListLength; j += 1) {
                     partialList[j][alias] = buckets[i].key;
                 }
                 list = list.concat(partialList);
             } else if (keys.length === 1 && keys[0].indexOf('NESTED') > -1) {
-                const partialList = CSVSerializer.serializeBucket(keys[0].replace('@NESTED', ''), buckets[i][keys[0]][keys[0].replace('@NESTED', '')].buckets);
+                const partialList = JSONSerializer.serializeBucket(keys[0].replace('@NESTED', ''), buckets[i][keys[0]][keys[0].replace('@NESTED', '')].buckets);
                 for (let j = 0, { length } = partialList; j < length; j += 1) {
                     partialList[j][alias] = buckets[i].key;
                 }
@@ -43,7 +45,7 @@ class CSVSerializer {
             return el;
         }
 
-        const target = { ...el };
+        const target = Object.assign({}, el);
         for (let i = 0, { length } = parsedQuery.select; i < length; i += 1) {
             const currentSelectElement = parsedQuery.select[i];
 
@@ -76,7 +78,7 @@ class CSVSerializer {
         return target;
     }
 
-    static serialize(data, parsed) {
+    static serialize(data, parsed, format = 'json') {
         if (!data) {
             return {
                 data: []
@@ -100,16 +102,16 @@ class CSVSerializer {
                 const nested = data.aggregations[keys[0]];
                 for (let i = 0, { length } = nestedKeys; i < length; i += 1) {
                     if (nested[nestedKeys[i]].buckets) {
-                        const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
-                        const list = values.map((el) => CSVSerializer.formatAlias(el, parsed));
+                        const values = JSONSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
+                        const list = values.map(el => JSONSerializer.formatAlias(el, parsed));
                         return {
                             data: list
                         };
                     }
                 }
             }
-            const values = CSVSerializer.serializeBucket(keys[0], data.aggregations[keys[0]].buckets);
-            const list = values.map((el) => CSVSerializer.formatAlias(el, parsed));
+            const values = JSONSerializer.serializeBucket(keys[0], data.aggregations[keys[0]].buckets);
+            const list = values.map(el => JSONSerializer.formatAlias(el, parsed));
             return {
                 data: list
             };
@@ -121,9 +123,12 @@ class CSVSerializer {
             return {
                 data: data.hits.hits.map((el) => {
                     // eslint-disable-next-line no-underscore-dangle
-                    const formatted = CSVSerializer.formatAlias(Object.assign(el._source, {
+                    const formatted = JSONSerializer.formatAlias(Object.assign(el._source, {
                         _id: el._id
                     }), parsed);
+                    if (format === 'geojson') {
+                        return GeoJSON.parse(formatted, { exclude: ['the_geom'], GeoJSON: 'the_geom' });
+                    }
                     return formatted;
                 })
             };
@@ -134,4 +139,4 @@ class CSVSerializer {
 
 }
 
-module.exports = CSVSerializer;
+module.exports = JSONSerializer;

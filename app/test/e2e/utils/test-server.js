@@ -18,8 +18,8 @@ exports.getTestServer = function getTestServer() {
 
     const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
-    nock(`http://${elasticUri}`)
-        .get('/')
+    nock(elasticUri)
+        .head('/')
         .times(999999)
         .reply(200);
 

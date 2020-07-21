@@ -1,6 +1,7 @@
 const logger = require('logger');
 const json2csv = require('json2csv');
-const csvSerializer = require('serializers/csvSerializer');
+const CSVSerializer = require('serializers/csvSerializer');
+const JSONSerializer = require('serializers/jsonSerializer');
 const IndexNotFound = require('errors/indexNotFound');
 
 class Scroll {
@@ -62,28 +63,29 @@ class Scroll {
         //         }
         //     }
         // }
-        // this.limit = -1;
-        // if (this.sql.toLowerCase().indexOf('limit') >= 0) {
-        //     this.limit = resultQueryElastic.size;
-        // }
-        //
-        // if (resultQueryElastic.size > 10000 || this.limit === -1) {
-        //     resultQueryElastic.size = 10000;
-        // }
-        // logger.debug('Creating params to scroll with query', resultQueryElastic);
 
-        if (resultQueryElastic.sort) {
-            const sort = resultQueryElastic.sort.map((element) => {
-                // const result = {};
-                // result[Object.keys(element)[0]] = element[Object.keys(element)[0]].order;
-                // return result;
-                element[Object.keys(element)[0]].unmapped_type = 'long';
-                element[Object.keys(element)[0]].missing = '_last';
-                return element;
-            });
-            resultQueryElastic.sort = sort;
-
+        this.limit = -1;
+        if (this.sql.toLowerCase().indexOf('limit') >= 0) {
+            this.limit = resultQueryElastic.size;
         }
+
+        if (resultQueryElastic.size > 10000 || this.limit === -1) {
+            resultQueryElastic.size = 10000;
+        }
+        logger.debug('Creating params to scroll with query', resultQueryElastic);
+
+        // if (resultQueryElastic.sort) {
+        //     const sort = resultQueryElastic.sort.map((element) => {
+        //         // const result = {};
+        //         // result[Object.keys(element)[0]] = element[Object.keys(element)[0]].order;
+        //         // return result;
+        //         element[Object.keys(element)[0]].unmapped_type = 'long';
+        //         element[Object.keys(element)[0]].missing = '_last';
+        //         return element;
+        //     });
+        //     resultQueryElastic.sort = sort;
+        //
+        // }
 
         // if (resultQueryElastic.aggregations) {
         //     resultQueryElastic.aggs = resultQueryElastic.aggregations;
@@ -93,10 +95,10 @@ class Scroll {
         try {
             logger.debug('Creating scroll');
             const searchResult = await this.elasticClient.search({
-                // ...resultQueryElastic,
                 scroll: '1m',
                 index: this.index,
-                q: resultQueryElastic
+                body: resultQueryElastic,
+                method: 'POST'
             });
             this.resultScroll = searchResult.body;
             this.first = true;
@@ -123,8 +125,10 @@ class Scroll {
         if (type === 'json' || type === 'geojson') {
             let dataString = '';
             if (data) {
+                // TODO: Evaluate if equivalent to dataString = dataString.substring(9, dataString.length - 2);
+                // remove {"data": [ and ]}
                 dataString = JSON.stringify(data);
-                dataString = dataString.substring(9, dataString.length - 2); // remove {"data": [ and ]}
+                dataString = dataString.substring(9, dataString.length - 2);
             }
             if (first) {
                 if (type === 'geojson') {
@@ -159,24 +163,25 @@ class Scroll {
     async continue() {
 
         if (this.resultScroll.aggregations) {
-            const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
+            const data = Scroll.serialize(this.resultScroll, this.parsed, this.format);
             this.stream.write(this.convertDataToDownload(data, this.format, true, false, this.cloneUrl), {
                 encoding: 'binary'
             });
         } else {
             this.first = true;
-            while (!this.timeout && this.resultScroll.hits && this.resultScroll.hits && this.resultScroll.hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
-                logger.debug('Writting data');
+            while (!this.timeout && this.resultScroll.hits && this.resultScroll.hits.hits && this.resultScroll.hits.hits.length > 0 && (this.total < this.limit || this.limit === -1)) {
+                logger.debug('[Scroll - continue] Writing data');
                 let more = false;
-                const data = csvSerializer.serialize(this.resultScroll, this.parsed, this.datasetId, this.format);
+                const data = Scroll.serialize(this.resultScroll, this.parsed, this.format);
 
                 this.total += this.resultScroll.hits.hits.length;
                 if (this.total < this.limit || this.limit === -1) {
-                    this.resultScroll = await this.elasticClient.getScroll({
+                    const searchResult = await this.elasticClient.scroll({
                         scroll: '1m',
                         // eslint-disable-next-line no-underscore-dangle
-                        scroll_id: this.resultScroll._scroll_id,
+                        scrollId: this.resultScroll._scroll_id,
                     });
+                    this.resultScroll = searchResult.body;
                     if (this.resultScroll.hits && this.resultScroll.hits && this.resultScroll.hits.hits.length > 0) {
                         more = true;
                     }
@@ -202,6 +207,21 @@ class Scroll {
         clearTimeout(this.timeoutFunc);
 
         logger.info('Write correctly');
+    }
+
+    static serialize(resultScroll, parsed, format) {
+        switch (format) {
+
+            case 'json':
+            case 'geojson':
+                return JSONSerializer.serialize(resultScroll, parsed, format);
+            case 'csv':
+            default:
+                return CSVSerializer.serialize(resultScroll, parsed);
+
+        }
+
+
     }
 
 }
