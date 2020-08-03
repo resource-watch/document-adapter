@@ -17,14 +17,6 @@ class QueryService {
             log: 'info',
             apiVersion: 'sql'
         });
-        this.elasticClientV2 = new elasticsearch.Client({
-            node: elasticUri,
-            log: 'info',
-            apiVersion: 'sql'
-        });
-
-        // this.elasticClient = Object.assign(this.elasticClient, sqlAPI);
-        // this.elasticClientV2 = Object.assign(this.elasticClientV2, sqlAPI);
 
         this.elasticClient.extend('opendistro.explain', ({ makeRequest, ConfigurationError }) => function explain(params, options = {}) {
             const {
