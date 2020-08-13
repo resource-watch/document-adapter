@@ -6,7 +6,7 @@ const fieldSerializer = require('serializers/fieldSerializer');
 const Json2sql = require('sql2json').json2sql;
 const passThrough = require('stream').PassThrough;
 const DownloadValidator = require('validators/download.validator');
-const DatasetService = require('services/datasetService');
+const DatasetMiddleware = require('middleware/dataset.middleware');
 
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
@@ -128,32 +128,6 @@ class QueryRouter {
 
 }
 
-const getDatasetById = async (ctx, next) => {
-    const datasetId = ctx.params.dataset;
-    logger.debug('[DatasetRouter - getDatasetById] - Dataset id', datasetId);
-
-    if (!datasetId) {
-        ctx.throw(400, 'Invalid request');
-    }
-
-    const dataset = await DatasetService.getDatasetById(datasetId);
-
-    if (!dataset) {
-        ctx.throw(404, 'Dataset not found');
-    }
-
-    if (dataset.attributes.connectorType !== 'document') {
-        ctx.throw(422, 'This operation is only supported for datasets with type \'document\'');
-    }
-
-    ctx.request.body.dataset = {
-        id: dataset.id,
-        ...dataset.attributes
-    };
-
-    await next();
-};
-
 const toSQLMiddleware = async (ctx, next) => {
 
     const options = {
@@ -266,9 +240,9 @@ const checkPermissionDelete = async (ctx, next) => {
     await next();
 };
 
-router.post('/query/:dataset', getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
-router.post('/query-v2/:dataset', getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
-router.post('/download/:dataset', DownloadValidator.validateDownload, getDatasetById, toSQLMiddleware, QueryRouter.download);
-router.post('/fields/:dataset', getDatasetById, QueryRouter.fields);
+router.post('/query/:dataset', DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
+router.post('/query-v2/:dataset', DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
+router.post('/download/:dataset', DownloadValidator.validateDownload, DatasetMiddleware.getDatasetById, toSQLMiddleware, QueryRouter.download);
+router.post('/fields/:dataset', DatasetMiddleware.getDatasetById, QueryRouter.fields);
 
 module.exports = router;
