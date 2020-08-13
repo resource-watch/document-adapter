@@ -1,7 +1,6 @@
 const Json2sql = require('sql2json').json2sql;
 const GeoJSON = require('geojson');
 
-
 class CSVSerializer {
 
     static serializeBucket(key, buckets) {
@@ -12,7 +11,7 @@ class CSVSerializer {
         }
         alias = alias.replace('.keyword', '');
         for (let i = 0, { length: bucketLength } = buckets; i < bucketLength; i += 1) {
-            const keys = Object.keys(buckets[i]).filter(el => el !== 'doc_count' && el !== 'key');
+            const keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
             if (keys.length === 1 && buckets[i][keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                 const partialList = CSVSerializer.serializeBucket(keys[0], buckets[i][keys[0]].buckets);
                 for (let j = 0, { length: partialListLength } = partialList; j < partialListLength; j += 1) {
@@ -45,7 +44,7 @@ class CSVSerializer {
             return el;
         }
 
-        const target = Object.assign({}, el);
+        const target = { ...el };
         for (let i = 0, { length } = parsedQuery.select; i < length; i += 1) {
             const currentSelectElement = parsedQuery.select[i];
 
@@ -103,7 +102,7 @@ class CSVSerializer {
                 for (let i = 0, { length } = nestedKeys; i < length; i += 1) {
                     if (nested[nestedKeys[i]].buckets) {
                         const values = CSVSerializer.serializeBucket(nestedKeys[i], nested[nestedKeys[i]].buckets);
-                        const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
+                        const list = values.map((el) => CSVSerializer.formatAlias(el, parsed));
                         return {
                             data: list
                         };
@@ -111,7 +110,7 @@ class CSVSerializer {
                 }
             }
             const values = CSVSerializer.serializeBucket(keys[0], data.aggregations[keys[0]].buckets);
-            const list = values.map(el => CSVSerializer.formatAlias(el, parsed));
+            const list = values.map((el) => CSVSerializer.formatAlias(el, parsed));
             return {
                 data: list
             };

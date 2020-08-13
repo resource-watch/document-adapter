@@ -317,7 +317,6 @@ describe('Dataset overwrite tests', () => {
             }
         }
 
-
         await channel.close();
         channel = null;
     });

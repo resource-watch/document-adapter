@@ -152,7 +152,7 @@ describe('Dataset append tests', () => {
 
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
@@ -199,7 +199,7 @@ describe('Dataset append tests', () => {
 
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
@@ -244,7 +244,7 @@ describe('Dataset append tests', () => {
 
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
@@ -338,7 +338,7 @@ describe('Dataset append tests', () => {
 
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
@@ -371,7 +371,6 @@ describe('Dataset append tests', () => {
                 throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
             }
         }
-
 
         await channel.close();
         channel = null;

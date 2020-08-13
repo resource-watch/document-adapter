@@ -8,7 +8,6 @@ const deleteSerializer = new JSONAPISerializer('query', {
     keyForAttribute: 'camelCase'
 });
 
-
 class DeleteSerializer {
 
     static serialize(data) {

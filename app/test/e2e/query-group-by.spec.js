@@ -194,7 +194,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
             .reply(200, {
@@ -238,7 +237,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 GROUP BY ISO.keyword LIMIT 9999999')
             .reply(200, {
@@ -260,7 +258,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'text/plain; charset=UTF-8',
                 'content-length',
                 '415']);
-
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', {
@@ -298,7 +295,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '1895']);
 
-
         const queryResponse = await requester
             .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${query}`)
             .send(requestBody);
@@ -309,7 +305,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
-        const resultList = results.map(elem => ({ ISO: elem.key }));
+        const resultList = results.map((elem) => ({ ISO: elem.key }));
 
         queryResponse.body.data.should.deep.equal(resultList);
     });
@@ -394,7 +390,6 @@ describe('Query datasets - GROUP BY queries', () => {
             {
                 'date_histogram(field=createdAt,interval=1d)': 1537142400000
             }];
-
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
@@ -518,7 +513,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '501']);
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', {
                 from: 0,
@@ -595,7 +589,6 @@ describe('Query datasets - GROUP BY queries', () => {
                 'application/json; charset=UTF-8',
                 'content-length',
                 '1257']);
-
 
         const queryResponse = await requester
             .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${query}`)

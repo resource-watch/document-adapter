@@ -234,7 +234,6 @@ describe('GET dataset fields', () => {
             }
         }
 
-
         await channel.close();
         channel = null;
     });

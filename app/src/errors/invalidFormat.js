@@ -1,4 +1,3 @@
-
 class InvalidFormat extends Error {
 
     constructor(messages) {

@@ -15,11 +15,10 @@ const router = new Router({
 
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
-const serializeObjToQuery = obj => Object.keys(obj).reduce((a, k) => {
+const serializeObjToQuery = (obj) => Object.keys(obj).reduce((a, k) => {
     a.push(`${k}=${encodeURIComponent(obj[k])}`);
     return a;
 }, []).join('&');
-
 
 class QueryRouter {
 
@@ -142,7 +141,6 @@ const deserializeDataset = async (ctx, next) => {
     await next();
 };
 
-
 const toSQLMiddleware = async (ctx, next) => {
 
     const options = {
@@ -156,7 +154,7 @@ const toSQLMiddleware = async (ctx, next) => {
 
     if (ctx.query.sql || ctx.request.body.sql) {
         logger.debug('Checking sql correct');
-        const params = Object.assign({}, ctx.query, ctx.request.body);
+        const params = { ...ctx.query, ...ctx.request.body };
         options.uri = `/convert/sql2SQL?sql=${encodeURI(params.sql)}`;
         if (params.experimental) {
             options.uri += `&experimental=${params.experimental}`;
@@ -172,11 +170,11 @@ const toSQLMiddleware = async (ctx, next) => {
         }
     } else {
         logger.debug('Obtaining sql from featureService');
-        const fs = Object.assign({}, ctx.request.body);
+        const fs = { ...ctx.request.body };
         delete fs.dataset;
         const query = serializeObjToQuery(ctx.request.query);
         const body = fs;
-        const resultQuery = Object.assign({}, query);
+        const resultQuery = { ...query };
 
         if (resultQuery) {
             options.uri = `/convert/fs2SQL${resultQuery}'&tableName=${ctx.request.body.dataset.tableName}`;
@@ -203,7 +201,6 @@ const toSQLMiddleware = async (ctx, next) => {
     }
     await next();
 };
-
 
 const containApps = (apps1, apps2) => {
     if (!apps1 || !apps2) {

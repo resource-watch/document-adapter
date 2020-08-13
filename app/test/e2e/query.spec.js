@@ -131,7 +131,6 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
             .reply(200, {
@@ -156,14 +155,12 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '271']);
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926')
             .reply(200, { from: 0, size: 200 }, ['content-type',
                 'text/plain; charset=UTF-8',
                 'content-length',
                 '21']);
-
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', { from: 0, size: 10000 })
@@ -188,7 +185,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -210,7 +207,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -235,7 +232,7 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.data.should.have.lengthOf(results.length);
 
         // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
+        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
 
         queryResponse.body.data.should.deep.equal(resultList);
 
@@ -369,7 +366,6 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
             .reply(200, {
@@ -394,14 +390,12 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '271']);
 
-
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 WHERE foo LIKE \'%bar%\'')
             .reply(200, { from: 0, size: 200 }, ['content-type',
                 'text/plain; charset=UTF-8',
                 'content-length',
                 '21']);
-
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', { from: 0, size: 10000 })
@@ -426,7 +420,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -448,7 +442,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -473,7 +467,7 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.data.should.have.lengthOf(results.length);
 
         // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
+        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
 
         queryResponse.body.data.should.deep.equal(resultList);
 
@@ -628,7 +622,6 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`)
             .post('/_sql/_explain', 'SELECT year_data.year FROM index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735')
             .reply(200, {
@@ -657,11 +650,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -680,7 +672,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -702,7 +694,7 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.data.should.have.lengthOf(results.length);
 
         // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map(elem => Object.assign({}, { _id: elem._id }, elem._source));
+        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
 
         queryResponse.body.data.should.deep.equal(resultList);
 
@@ -918,7 +910,6 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`)
             .post('/_sql/_explain', 'SELECT numeric_m, A1B_2080s, month FROM index_68860c9097674d6fb04035d473921461_15845284078893 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC LIMIT 9999999')
             .reply(200, {
@@ -1017,11 +1008,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
                 took: 1,
@@ -1040,7 +1030,7 @@ describe('Query datasets - Simple queries', () => {
         nock(`http://${elasticUri}`)
             .get('/_search/scroll')
             .times(1)
-            .query(ESQuery => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
                 took: 1,
