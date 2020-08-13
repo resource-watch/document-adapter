@@ -1,7 +1,7 @@
 const nock = require('nock');
 const chai = require('chai');
 const config = require('config');
-const { getTestServer } = require('./test-server');
+const { getTestServer } = require('./utils/test-server');
 
 chai.should();
 

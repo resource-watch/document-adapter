@@ -23,7 +23,7 @@ exports.getTestServer = function getTestServer() {
         .times(999999)
         .reply(200);
 
-    const server = require('../../src/app');
+    const server = require('../../../src/app');
     requester = chai.request(server).keepOpen();
 
     return requester;
