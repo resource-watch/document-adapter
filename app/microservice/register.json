@@ -292,24 +292,7 @@
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/data-overwrite"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     }
   ]
 }
