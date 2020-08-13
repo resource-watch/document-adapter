@@ -2,7 +2,6 @@ const logger = require('logger');
 const Router = require('koa-router');
 const taskQueueService = require('services/taskQueueService');
 const DatasetService = require('services/datasetService');
-const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
 const router = new Router({
@@ -23,19 +22,6 @@ class DatasetRouter {
             verified: ctx.request.body.connector.verified
         });
         ctx.body = '';
-    }
-
-    static async updateData() {
-        // logger.info(`Update data with id ${ctx.params.id}  of dataset ${ctx.request.body.dataset.id}`);
-        // ctx.assert(ctx.request.body.data, 400, 'Data is required');
-        // if (ctx.request.body.dataset && ctx.request.body.dataset.status !== 'saved') {
-        //     ctx.throw(400, 'Dataset is not in saved status');
-        //     return;
-        // }
-        // const result = await queryService.updateElement(ctx.request.body.dataset.tableName, ctx.params.id, ctx.request.body.data);
-        // await redisDeletePatternProm(ctx.request.body.dataset.id);
-        // ctx.set('cache-control', 'flush');
-        // ctx.body = null;
     }
 
     static async overwrite(ctx) {
@@ -176,18 +162,6 @@ const checkPermissionModify = async (ctx, next) => {
     }
 };
 
-const deserializeDataset = async (ctx, next) => {
-    logger.debug('Body', ctx.request.body);
-    if (ctx.request.body.dataset && ctx.request.body.dataset.data) {
-        ctx.request.body.dataset = await new JSONAPIDeserializer({
-            keyForAttribute: 'camelCase'
-        }).deserialize(ctx.request.body.dataset);
-    } else if (ctx.request.body.dataset && ctx.request.body.dataset.table_name) {
-        ctx.request.body.dataset.tableName = ctx.request.body.dataset.table_name;
-    }
-    await next();
-};
-
 const getDatasetById = async (ctx, next) => {
     const datasetId = ctx.params.dataset;
     logger.debug('[DatasetRouter - getDatasetById] - Dataset id', datasetId);
@@ -206,16 +180,18 @@ const getDatasetById = async (ctx, next) => {
         ctx.throw(422, 'This operation is only supported for datasets with type \'document\'');
     }
 
-    ctx.request.body.dataset = dataset.attributes;
+    ctx.request.body.dataset = {
+        id: dataset.id,
+        ...dataset.attributes
+    };
 
     await next();
 };
 
 router.post('/:provider', DatasetRouter.import);
-router.post('/data/:dataset/:id', deserializeDataset, DatasetRouter.updateData);
 router.post('/:dataset/data-overwrite', getDatasetById, checkPermissionModify, DatasetRouter.overwrite);
-router.post('/:dataset/concat', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
-router.post('/:dataset/append', deserializeDataset, checkPermissionModify, DatasetRouter.append);
+router.post('/:dataset/concat', getDatasetById, checkPermissionModify, DatasetRouter.concat);
+router.post('/:dataset/append', getDatasetById, checkPermissionModify, DatasetRouter.append);
 router.delete('/:dataset', DatasetRouter.deleteIndex);
 
 module.exports = router;

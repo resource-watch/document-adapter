@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars,no-undef,no-await-in-loop */
 const nock = require('nock');
 const chai = require('chai');
 const amqp = require('amqplib');
@@ -9,9 +8,9 @@ const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { getTestServer } = require('./utils/test-server');
 const { ROLES } = require('./utils/test.constants');
 
-const should = chai.should();
+chai.should();
 
-const requester = getTestServer();
+let requester;
 let rabbitmqConnection = null;
 let channel;
 
@@ -37,11 +36,25 @@ describe('Dataset create tests', () => {
         if (!rabbitmqConnection) {
             throw new RabbitMQConnectionError();
         }
+
+        requester = await getTestServer();
     });
 
     beforeEach(async () => {
-        channel = await rabbitmqConnection.createConfirmChannel();
+        let connectAttempts = 10;
+        while (connectAttempts >= 0 && rabbitmqConnection === null) {
+            try {
+                rabbitmqConnection = await amqp.connect(config.get('rabbitmq.url'));
+            } catch (err) {
+                connectAttempts -= 1;
+                await sleep.sleep(5);
+            }
+        }
+        if (!rabbitmqConnection) {
+            throw new RabbitMQConnectionError();
+        }
 
+        channel = await rabbitmqConnection.createConfirmChannel();
         await channel.assertQueue(config.get('queues.tasks'));
         await channel.purgeQueue(config.get('queues.tasks'));
 
@@ -73,24 +86,28 @@ describe('Dataset create tests', () => {
 
         response.status.should.equal(200);
 
-        sleep.sleep(2);
+        let expectedStatusQueueMessageCount = 1;
 
-        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
-        postQueueStatus.messageCount.should.equal(1);
-
-        const validateMessage = async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
+
             content.should.have.property('datasetId').and.equal(connector.id);
             content.should.have.property('fileUrl').and.be.an('array').and.eql(connector.sources);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
 
             await channel.ack(msg);
+
+            expectedStatusQueueMessageCount -= 1;
+
+            if (expectedStatusQueueMessageCount === 0) {
+                resolve();
+            }
         };
 
-        await channel.consume(config.get('queues.tasks'), validateMessage);
-
-        process.on('unhandledRejection', should.fail);
+        return new Promise((resolve) => {
+            channel.consume(config.get('queues.tasks'), validateStatusQueueMessages(resolve));
+        });
     });
 
     it('Create a JSON dataset from a single file should be successful (happy case)', async () => {
@@ -116,24 +133,28 @@ describe('Dataset create tests', () => {
 
         response.status.should.equal(200);
 
-        sleep.sleep(2);
+        let expectedStatusQueueMessageCount = 1;
 
-        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
-        postQueueStatus.messageCount.should.equal(1);
-
-        const validateMessage = async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
+
             content.should.have.property('datasetId').and.equal(connector.id);
             content.should.have.property('fileUrl').and.be.an('array').and.eql(connector.sources);
             content.should.have.property('provider').and.equal('json');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
 
             await channel.ack(msg);
+
+            expectedStatusQueueMessageCount -= 1;
+
+            if (expectedStatusQueueMessageCount === 0) {
+                resolve();
+            }
         };
 
-        await channel.consume(config.get('queues.tasks'), validateMessage);
-
-        process.on('unhandledRejection', should.fail);
+        return new Promise((resolve) => {
+            channel.consume(config.get('queues.tasks'), validateStatusQueueMessages(resolve));
+        });
     });
 
     it('Create a JSON dataset from multiple files should be successful (happy case)', async () => {
@@ -164,29 +185,32 @@ describe('Dataset create tests', () => {
 
         response.status.should.equal(200);
 
-        sleep.sleep(2);
+        let expectedStatusQueueMessageCount = 1;
 
-        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
-        postQueueStatus.messageCount.should.equal(1);
-
-        const validateMessage = async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
+
             content.should.have.property('datasetId').and.equal(connector.id);
             content.should.have.property('fileUrl').and.be.an('array').and.eql(connector.sources);
             content.should.have.property('provider').and.equal('json');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_CREATE);
 
             await channel.ack(msg);
+
+            expectedStatusQueueMessageCount -= 1;
+
+            if (expectedStatusQueueMessageCount === 0) {
+                resolve();
+            }
         };
 
-        await channel.consume(config.get('queues.tasks'), validateMessage);
-
-        process.on('unhandledRejection', should.fail);
+        return new Promise((resolve) => {
+            channel.consume(config.get('queues.tasks'), validateStatusQueueMessages(resolve));
+        });
     });
 
     afterEach(async () => {
         await channel.assertQueue(config.get('queues.tasks'));
-        await channel.purgeQueue(config.get('queues.tasks'));
         const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
         tasksQueueStatus.messageCount.should.equal(0);
 
@@ -199,10 +223,8 @@ describe('Dataset create tests', () => {
 
         await channel.close();
         channel = null;
-    });
 
-    after(async () => {
-        rabbitmqConnection.close();
-        process.removeListener('unhandledRejection', should.fail);
+        await rabbitmqConnection.close();
+        rabbitmqConnection = null;
     });
 });

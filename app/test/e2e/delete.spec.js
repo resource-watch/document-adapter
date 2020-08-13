@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars,no-undef,no-await-in-loop */
 const nock = require('nock');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
@@ -6,14 +5,12 @@ const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
 const sleep = require('sleep');
-const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
 
-const should = chai.should();
+chai.should();
 chai.use(deepEqualInAnyOrder);
 
-const requester = getTestServer();
+let requester;
 let rabbitmqConnection = null;
 let channel;
 
@@ -36,11 +33,25 @@ describe('Dataset delete tests', () => {
         if (!rabbitmqConnection) {
             throw new RabbitMQConnectionError();
         }
+
+        requester = await getTestServer();
     });
 
     beforeEach(async () => {
-        channel = await rabbitmqConnection.createConfirmChannel();
+        let connectAttempts = 10;
+        while (connectAttempts >= 0 && rabbitmqConnection === null) {
+            try {
+                rabbitmqConnection = await amqp.connect(config.get('rabbitmq.url'));
+            } catch (err) {
+                connectAttempts -= 1;
+                await sleep.sleep(5);
+            }
+        }
+        if (!rabbitmqConnection) {
+            throw new RabbitMQConnectionError();
+        }
 
+        channel = await rabbitmqConnection.createConfirmChannel();
         await channel.assertQueue(config.get('queues.tasks'));
         await channel.purgeQueue(config.get('queues.tasks'));
 
@@ -61,11 +72,6 @@ describe('Dataset delete tests', () => {
 
         const response = await requester.delete(`/api/v1/document/${timestamp}`);
         response.status.should.equal(200);
-
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
-        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
-        postQueueStatus.messageCount.should.equal(0);
     });
 
     it('Delete dataset index should be successful (happy case)', async () => {
@@ -82,27 +88,30 @@ describe('Dataset delete tests', () => {
         const response = await requester.delete(`/api/v1/document/${timestamp}`);
         response.status.should.equal(200);
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        let expectedStatusQueueMessageCount = 1;
 
-        const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
-        postQueueStatus.messageCount.should.equal(1);
-
-        const validateMessage = async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
+
             content.should.have.property('index').and.equal('test');
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
 
             await channel.ack(msg);
+
+            expectedStatusQueueMessageCount -= 1;
+
+            if (expectedStatusQueueMessageCount === 0) {
+                resolve();
+            }
         };
 
-        await channel.consume(config.get('queues.tasks'), validateMessage.bind(this));
-
-        process.on('unhandledRejection', should.fail);
+        return new Promise((resolve) => {
+            channel.consume(config.get('queues.tasks'), validateStatusQueueMessages(resolve));
+        });
     });
 
     afterEach(async () => {
         await channel.assertQueue(config.get('queues.tasks'));
-        await channel.purgeQueue(config.get('queues.tasks'));
         const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
         tasksQueueStatus.messageCount.should.equal(0);
 
@@ -115,10 +124,8 @@ describe('Dataset delete tests', () => {
 
         await channel.close();
         channel = null;
-    });
 
-    after(async () => {
-        rabbitmqConnection.close();
-        process.removeListener('unhandledRejection', should.fail);
+        await rabbitmqConnection.close();
+        rabbitmqConnection = null;
     });
 });

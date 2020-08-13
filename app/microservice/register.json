@@ -69,24 +69,7 @@
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/query-v2/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "path": "/v2/query/:dataset",
@@ -95,24 +78,7 @@
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/query-v2/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "path": "/v1/download/:dataset",
@@ -198,24 +164,7 @@
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/concat"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "path": "/v1/dataset/:dataset/append",
@@ -224,50 +173,7 @@
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/append"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "path": "/v1/dataset/:dataset/data/:id",
-      "method": "POST",
-      "authenticated": true,
-      "redirect": {
-        "method": "POST",
-        "path": "/api/v1/document/data/:dataset/:id"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "path": "/v1/doc-datasets/:provider",
