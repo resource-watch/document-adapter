@@ -94,6 +94,17 @@ class Scroll {
 
         try {
             logger.debug('Creating scroll');
+
+            // Removing from, because since ES > 6.X.X it throws a validation error
+            if (resultQueryElastic.from !== undefined) {
+                delete resultQueryElastic.from;
+            }
+
+            // Removing size if 0, because since ES > 6.X.X it throws a validation error
+            if (resultQueryElastic.size === 0) {
+                delete resultQueryElastic.size;
+            }
+
             const searchResult = await this.elasticClient.search({
                 scroll: '1m',
                 index: this.index,
@@ -220,7 +231,6 @@ class Scroll {
                 return CSVSerializer.serialize(resultScroll, parsed);
 
         }
-
 
     }
 
