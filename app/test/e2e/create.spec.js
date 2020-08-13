@@ -6,8 +6,8 @@ const config = require('config');
 const { task } = require('rw-doc-importer-messages');
 const sleep = require('sleep');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
-const { getTestServer } = require('./test-server');
-const { ROLES } = require('./test.constants');
+const { getTestServer } = require('./utils/test-server');
+const { ROLES } = require('./utils/test.constants');
 
 const should = chai.should();
 
