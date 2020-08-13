@@ -1,7 +1,8 @@
 # v1.1.1
 
-## 19/05/2020
+## 13/08/2020
 
+- Refactor `/:dataset/data-overwrite` endpoint to remove dependency on injected dataset details.
 - Add validation for `format` query param on download endpoint.
 - Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
 

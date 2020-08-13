@@ -1,6 +1,7 @@
 const logger = require('logger');
 const Router = require('koa-router');
 const taskQueueService = require('services/taskQueueService');
+const DatasetService = require('services/datasetService');
 const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
@@ -187,10 +188,34 @@ const deserializeDataset = async (ctx, next) => {
     await next();
 };
 
+const getDatasetById = async (ctx, next) => {
+    const datasetId = ctx.params.dataset;
+    logger.debug('[DatasetRouter - getDatasetById] - Dataset id', datasetId);
+
+    if (!datasetId) {
+        ctx.throw(400, 'Invalid request');
+    }
+
+    const dataset = await DatasetService.getDatasetById(datasetId);
+
+    if (!dataset) {
+        ctx.throw(404, 'Dataset not found');
+    }
+
+    if (dataset.attributes.connectorType !== 'document') {
+        ctx.throw(422, 'This operation is only supported for datasets with type \'document\'');
+    }
+
+    ctx.request.body.dataset = dataset.attributes;
+
+    await next();
+};
+
 router.post('/:provider', DatasetRouter.import);
 router.post('/data/:dataset/:id', deserializeDataset, DatasetRouter.updateData);
-router.post('/:dataset/data-overwrite', deserializeDataset, checkPermissionModify, DatasetRouter.overwrite);
+router.post('/:dataset/data-overwrite', getDatasetById, checkPermissionModify, DatasetRouter.overwrite);
 router.post('/:dataset/concat', deserializeDataset, checkPermissionModify, DatasetRouter.concat);
 router.post('/:dataset/append', deserializeDataset, checkPermissionModify, DatasetRouter.append);
 router.delete('/:dataset', DatasetRouter.deleteIndex);
+
 module.exports = router;
