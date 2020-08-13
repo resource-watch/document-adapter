@@ -65,7 +65,6 @@ module.exports = (grunt) => {
         }
     });
 
-
     grunt.registerTask('e2eTest', ['express', 'mochaTest:e2e']);
 
     grunt.registerTask('test', ['mochaTest:unit', 'mochaTest:e2e']);

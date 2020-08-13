@@ -183,5 +183,4 @@ class Scroll {
 
 }
 
-
 module.exports = Scroll;

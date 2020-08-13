@@ -1,4 +1,3 @@
-
 class FieldSerializer {
 
     static searchProperties(el) {

@@ -7,7 +7,6 @@ const Terraformer = require('terraformer-wkt-parser');
 
 const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
-
 class QueryService {
 
     constructor() {
@@ -106,9 +105,7 @@ class QueryService {
 
                 const geojson = JSON.parse(node.value);
 
-                const newResult = Object.assign({}, result || {}, {
-                    geojson
-                });
+                const newResult = { ...result || {}, geojson };
 
                 return newResult;
             } catch (e) {
@@ -117,9 +114,7 @@ class QueryService {
             }
         }
         if (node && node.type === 'number' && node.value && finded) {
-            const newResult = Object.assign({}, result || {}, {
-                wkid: node.value
-            });
+            const newResult = { ...result || {}, wkid: node.value };
             return newResult;
         }
         if (node && node.type === 'function' && (node.value.toLowerCase() === 'st_intersects' || finded)) {
@@ -189,7 +184,7 @@ class QueryService {
                     } else if (node.type === 'literal') {
                         logger.debug('Checking if it is text');
                         logger.debug(mapping[node.value]);
-                        const exists = parsed.select.find(sel => sel.alias === node.value);
+                        const exists = parsed.select.find((sel) => sel.alias === node.value);
                         if (exists) {
                             node.value = exists.value;
                         }
@@ -267,7 +262,7 @@ class QueryService {
     async doQuery(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         const elasticQuery = await this.convertQueryToElastic(parsed, index);
-        const removeAlias = Object.assign({}, elasticQuery);
+        const removeAlias = { ...elasticQuery };
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {
@@ -293,7 +288,7 @@ class QueryService {
     async doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
         logger.info('Doing query...');
         const elasticQuery = await this.convertQueryToElastic(parsed, index);
-        const removeAlias = Object.assign({}, elasticQuery);
+        const removeAlias = { ...elasticQuery };
         if (removeAlias.select) {
             removeAlias.select = removeAlias.select.map((el) => {
                 if (el.type === 'function') {

@@ -313,7 +313,7 @@ describe('Query datasets - Delete queries', () => {
 
         queryResponse.status.should.equal(204);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);

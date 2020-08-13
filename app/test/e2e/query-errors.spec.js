@@ -90,7 +90,6 @@ describe('Query datasets - Errors', () => {
         queryResponse.body.errors[0].detail.should.include('Malformed query');
     });
 
-
     it('Query with invalid function call should return meaningful error message and error code', async () => {
         const requestBody = {
             dataset: {
@@ -157,7 +156,6 @@ describe('Query datasets - Errors', () => {
         queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
         queryResponse.body.errors[0].detail.should.include('Unsupported query element detected');
     });
-
 
     afterEach(() => {
         if (!nock.isDone()) {

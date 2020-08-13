@@ -62,7 +62,7 @@ describe('Dataset delete tests', () => {
         const response = await requester.delete(`/api/v1/document/${timestamp}`);
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(0);
@@ -82,7 +82,7 @@ describe('Dataset delete tests', () => {
         const response = await requester.delete(`/api/v1/document/${timestamp}`);
         response.status.should.equal(200);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
         const postQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         postQueueStatus.messageCount.should.equal(1);
@@ -112,7 +112,6 @@ describe('Dataset delete tests', () => {
                 throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
             }
         }
-
 
         await channel.close();
         channel = null;
