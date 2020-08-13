@@ -1,6 +1,9 @@
 ## 13/08/2020
 
-- Refactor `/:dataset/data-overwrite` endpoint to remove dependency on injected dataset details.
+- Refactor endpoints to remove dependency on injected dataset details.
+- Remove `filter` values for routes exclusive to this microservice.
+- Remove `/data/:dataset/:id` stub route.
+- Refactor tests for faster execution.
 
 ## 19/05/2020
 

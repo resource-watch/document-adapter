@@ -1,7 +1,9 @@
+/* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
 const config = require('config');
 const { getTestServer } = require('./utils/test-server');
+const { createMockGetDataset } = require('./utils/helpers');
 
 chai.should();
 
@@ -15,14 +17,17 @@ describe('Dataset download tests', () => {
         }
     });
 
-    it('Download with CSV format and a query that returns no results should be sucessfull', async () => {
+    it('Download with CSV format and a query that returns no results should be successful', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
 
         const query = 'SELECT treecover_loss__year, SUM(aboveground_biomass_loss__Mg) AS aboveground_biomass_loss__Mg, SUM(aboveground_co2_emissions__Mg) AS aboveground_co2_emissions__Mg, SUM(treecover_loss__ha) AS treecover_loss__ha FROM data WHERE geostore__id = \'f84d74e5dc977606da07cebaf94dc9e6\' AND treecover_density__threshold = 30 GROUP BY treecover_loss__year ORDER BY treecover_loss__year';
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
-            .once()
             .query({ sql: query })
             .reply(200, {
                 data: {
@@ -361,70 +366,19 @@ describe('Dataset download tests', () => {
             });
 
         const response = await requester
-            .post(`/api/v1/document/download/d1ced422-7cd5-480a-8904-d3410d75bf42`)
+            .post(`/api/v1/document/download/${timestamp}`)
             .query({ sql: query })
-            .send({
-                dataset: {
-                    name: 'Tree Cover Loss 2018 Change - Geostore - v20191213',
-                    slug: 'Tree-Cover-Loss-2018-Change-Geostore-v20191213_1',
-                    type: null,
-                    subtitle: null,
-                    application: [
-                        'gfw'
-                    ],
-                    dataPath: null,
-                    attributesPath: null,
-                    connectorType: 'document',
-                    provider: 'tsv',
-                    userId: '5c65c4b9529ae7001113fd06',
-                    connectorUrl: null,
-                    sources: [
-                        'https://gfw-pipelines.s3.amazonaws.com/geotrellis/results/new_user_aoi/2020-03-28/annualupdate_minimal_20200328_1837/geostore/change/part-00000-ea17fbc5-7d5e-49b0-8fb3-2da90aeccb5a-c000.csv'
-                    ],
-                    tableName: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                    status: 'saved',
-                    published: true,
-                    overwrite: true,
-                    mainDateField: null,
-                    env: 'production',
-                    geoInfo: false,
-                    protected: false,
-                    legend: {
-                        date: [],
-                        region: [],
-                        country: [],
-                        nested: [],
-                        integer: [],
-                        short: [],
-                        byte: [],
-                        double: [],
-                        float: [],
-                        halfFloat: [],
-                        scaledFloat: [],
-                        boolean: [],
-                        binary: [],
-                        text: [],
-                        keyword: []
-                    },
-                    clonedHost: {},
-                    errorMessage: 'Url not found: https://gfw-pipelines.s3.amazonaws.com/geotrellis/results/new_user_aoi/2020-04-02/annualupdate_minimal_20200402_0437/geostore/change/part-00009-90dabc00-d956-4cde-bbdc-9f27b0812041-c000.csv',
-                    taskId: '/v1/doc-importer/task/4445e303-5d73-440f-9400-da3c466d1878',
-                    createdAt: '2020-02-10T21:04:49.635Z',
-                    updatedAt: '2020-04-23T09:53:07.019Z',
-                    dataLastUpdated: null,
-                    widgetRelevantProps: [],
-                    layerRelevantProps: [],
-                    id: 'd1ced422-7cd5-480a-8904-d3410d75bf42'
-                },
-            });
+            .send();
 
         response.status.should.equal(200);
         response.body.should.equal('');
     });
 
     it('Download with invalid format should return a 400', async () => {
+        const timestamp = new Date().getTime();
+
         const response = await requester
-            .post(`/api/v1/document/download/d1ced422-7cd5-480a-8904-d3410d75bf42`)
+            .post(`/api/v1/document/download/${timestamp}`)
             .query({ sql: '', format: 'potato' })
             .send();
 
