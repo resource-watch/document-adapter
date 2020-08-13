@@ -3,6 +3,10 @@
 ## 13/08/2020
 
 - Refactor `/:dataset/data-overwrite` endpoint to remove dependency on injected dataset details.
+- Refactor endpoints to remove dependency on injected dataset details.
+- Remove `filter` values for routes exclusive to this microservice.
+- Remove `/data/:dataset/:id` stub route.
+- Refactor tests for faster execution.
 - Add validation for `format` query param on download endpoint.
 - Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
 

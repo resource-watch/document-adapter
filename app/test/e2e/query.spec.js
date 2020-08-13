@@ -1,10 +1,11 @@
-/* eslint-disable no-unused-vars,no-undef,max-len */
+/* eslint-disable max-len */
 const nock = require('nock');
 const config = require('config');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
+const { createMockGetDataset } = require('./utils/helpers');
 
-const should = chai.should();
+chai.should();
 
 const requester = getTestServer();
 
@@ -22,54 +23,19 @@ describe('Query datasets - Simple queries', () => {
     });
 
     it('Basic query to dataset should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Food Demand',
-                slug: 'Food-Demand_3',
-                type: null,
-                subtitle: null,
-                application: [
-                    'rw'
-                ],
-                dataPath: 'data',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'json',
-                userId: '1a10d7c6e0a37126611fd7a7',
-                connectorUrl: 'http://gfw2-data.s3.amazonaws.com/alerts-tsv/output/to-api/output.json',
-                tableName: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/986bd4ee-0bfe-4002-ae17-1d1594dffd0a',
-                updatedAt: '2018-09-14T04:33:48.838Z',
-                dataLastUpdated: null,
-                widgetRelevantProps: [],
-                layerRelevantProps: [],
-                id: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
-            },
             loggedUser: null
         };
 
-        const query = `select * from ${requestBody.dataset.id}`;
+        const query = `select * from ${timestamp}`;
 
         const results = [
             {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'kDZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -77,7 +43,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'USA', adm1: 27, adm2: 1641, area: 41420.47960515353
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'mzZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -85,7 +51,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'nDZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -93,7 +59,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'oTZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -115,7 +81,7 @@ describe('Query datasets - Simple queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: `SELECT * FROM ${requestBody.dataset.id}`,
+                        query: `SELECT * FROM ${timestamp}`,
                         jsonSql: {
                             select: [
                                 {
@@ -124,7 +90,7 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'wildcard'
                                 }
                             ],
-                            from: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
+                            from: timestamp
                         }
                     },
                     relationships: {}
@@ -132,9 +98,9 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -156,14 +122,14 @@ describe('Query datasets - Simple queries', () => {
                 '271']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926')
+            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489')
             .reply(200, { from: 0, size: 200 }, ['content-type',
                 'text/plain; charset=UTF-8',
                 'content-length',
                 '21']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', { from: 0, size: 10000 })
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', { from: 0, size: 10000 })
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
@@ -222,7 +188,7 @@ describe('Query datasets - Simple queries', () => {
                 '381']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -239,54 +205,19 @@ describe('Query datasets - Simple queries', () => {
     });
 
     it('Query with special characters to dataset should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Food Demand',
-                slug: 'Food-Demand_3',
-                type: null,
-                subtitle: null,
-                application: [
-                    'rw'
-                ],
-                dataPath: 'data',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'json',
-                userId: '1a10d7c6e0a37126611fd7a7',
-                connectorUrl: 'http://gfw2-data.s3.amazonaws.com/alerts-tsv/output/to-api/output.json',
-                tableName: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/986bd4ee-0bfe-4002-ae17-1d1594dffd0a',
-                updatedAt: '2018-09-14T04:33:48.838Z',
-                dataLastUpdated: null,
-                widgetRelevantProps: [],
-                layerRelevantProps: [],
-                id: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
-            },
             loggedUser: null
         };
 
-        const query = `SELECT * FROM ${requestBody.dataset.id} WHERE foo LIKE '%bar%'`;
+        const query = `SELECT * FROM ${timestamp} WHERE foo LIKE '%bar%'`;
 
         const results = [
             {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'kDZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -294,7 +225,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'USA', adm1: 27, adm2: 1641, area: 41420.47960515353
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'mzZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -302,7 +233,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'nDZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -310,7 +241,7 @@ describe('Query datasets - Simple queries', () => {
                     thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
                 }
             }, {
-                _index: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'oTZb1mUBbvDJlUQCLHRu',
                 _score: 1,
@@ -341,7 +272,7 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'wildcard'
                                 }
                             ],
-                            from: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2',
+                            from: timestamp,
                             where: [
                                 {
                                     type: 'operator',
@@ -367,9 +298,9 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -391,14 +322,14 @@ describe('Query datasets - Simple queries', () => {
                 '271']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 WHERE foo LIKE \'%bar%\'')
+            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE foo LIKE \'%bar%\'')
             .reply(200, { from: 0, size: 200 }, ['content-type',
                 'text/plain; charset=UTF-8',
                 'content-length',
                 '21']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', { from: 0, size: 10000 })
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', { from: 0, size: 10000 })
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
@@ -457,7 +388,7 @@ describe('Query datasets - Simple queries', () => {
                 '381']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -474,72 +405,37 @@ describe('Query datasets - Simple queries', () => {
     });
 
     it('Query with alias (x AS y) in SELECT clause should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Food Demand',
-                slug: 'Food-Demand_3',
-                type: null,
-                subtitle: null,
-                application: [
-                    'rw'
-                ],
-                dataPath: 'data',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'json',
-                userId: '1a10d7c6e0a37126611fd7a7',
-                connectorUrl: 'http://gfw2-data.s3.amazonaws.com/alerts-tsv/output/to-api/output.json',
-                tableName: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/986bd4ee-0bfe-4002-ae17-1d1594dffd0a',
-                updatedAt: '2018-09-14T04:33:48.838Z',
-                dataLastUpdated: null,
-                widgetRelevantProps: [],
-                layerRelevantProps: [],
-                id: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
-            },
             loggedUser: null
         };
 
-        const query = `SELECT year_data.year AS year FROM ${requestBody.dataset.id}'`;
+        const query = `SELECT year_data.year AS year FROM ${timestamp}'`;
 
         const results = [
             {
-                _index: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AWi9IfXGQ5uNBZJIvxAi',
                 _score: 1,
                 _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
             }, {
-                _index: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AWi9IfXGQ5uNBZJIvxAj',
                 _score: 1,
                 _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
             }, {
-                _index: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AWi9IfXGQ5uNBZJIvxAl',
                 _score: 1,
                 _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
             }, {
-                _index: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AWi9IfXGQ5uNBZJIvxAq',
                 _score: 1,
@@ -555,7 +451,7 @@ describe('Query datasets - Simple queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: 'SELECT year_data.year AS year FROM index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735',
+                        query: 'SELECT year_data.year AS year FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                         jsonSql: {
                             select: [
                                 {
@@ -569,7 +465,7 @@ describe('Query datasets - Simple queries', () => {
                                     alias: 'year',
                                     type: 'literal'
                                 }],
-                            from: 'index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735'
+                            from: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489'
                         }
                     },
                     relationships: {}
@@ -577,9 +473,9 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`)
-            .get('/index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -623,7 +519,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT year_data.year FROM index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735')
+            .post('/_sql/_explain', 'SELECT year_data.year FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489')
             .reply(200, {
                 from: 0,
                 size: 200,
@@ -632,7 +528,7 @@ describe('Query datasets - Simple queries', () => {
                 'text/plain; charset=UTF-8']);
 
         nock(`http://${elasticUri}`)
-            .post('/index_cc7ef6268e4b4d8d9ed0d52c7fcbafc5_1549361341735/_search', {
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
                 from: 0,
                 size: 10000,
                 _source: { includes: ['year_data.year'], excludes: [] }
@@ -684,7 +580,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -701,69 +597,19 @@ describe('Query datasets - Simple queries', () => {
     });
 
     it('Query with order by mapping from Elasticsearch should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Historical and Projected Monthly Hydrographs -- U.S. (Pacific Northwest)',
-                slug: 'Historical-and-Projected-Monthly-Hydrographs-US-Pacific-Northwest_1',
-                type: null,
-                subtitle: null,
-                application: [
-                    'prep'
-                ],
-                dataPath: '',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'csv',
-                userId: 'microservice',
-                connectorUrl: null,
-                sources: [
-                    'https://docs.google.com/spreadsheets/d/1tE7lgXLHwG1vLdmZrxJKEeskZDxHHB6HtgmesxpFkQ0/pub?gid=129085061&single=true&output=csv'
-                ],
-                tableName: 'index_68860c9097674d6fb04035d473921461_15845284078893',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: [],
-                    integer: [],
-                    short: [],
-                    byte: [],
-                    double: [],
-                    float: [],
-                    half_float: [],
-                    scaled_float: [],
-                    boolean: [],
-                    binary: [],
-                    text: [],
-                    keyword: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/cca1dc51-aa6a-43df-bba6-06e6c4e636dd',
-                createdAt: '2020-03-18T10:46:47.759Z',
-                updatedAt: '2020-03-18T10:46:58.803Z',
-                dataLastUpdated: null,
-                user: {},
-                widgetRelevantProps: [],
-                layerRelevantProps: []
-            },
             loggedUser: null
         };
 
-        const query = `select numeric_m as x, A1B_2080s as y, month as z from ${requestBody.dataset.id} where streamflow='Snohomish' order by numeric_m ASC'`;
+        const query = `select numeric_m as x, A1B_2080s as y, month as z from ${timestamp} where streamflow='Snohomish' order by numeric_m ASC'`;
 
         const results = [
             {
-                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AXDtQNBj5xxOSI2DEp2n',
                 _score: null,
@@ -777,7 +623,7 @@ describe('Query datasets - Simple queries', () => {
                 ]
             },
             {
-                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AXDtQNBj5xxOSI2DEp2o',
                 _score: null,
@@ -791,7 +637,7 @@ describe('Query datasets - Simple queries', () => {
                 ]
             },
             {
-                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AXDtQNBj5xxOSI2DEp2p',
                 _score: null,
@@ -805,7 +651,7 @@ describe('Query datasets - Simple queries', () => {
                 ]
             },
             {
-                _index: 'index_68860c9097674d6fb04035d473921461_1584528407829',
+                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                 _type: 'type',
                 _id: 'AXDtQNBj5xxOSI2DEp2q',
                 _score: null,
@@ -827,7 +673,7 @@ describe('Query datasets - Simple queries', () => {
                 data: {
                     type: 'result',
                     attributes: {
-                        query: 'SELECT numeric_m AS x, A1B_2080s AS y, month AS z FROM index_6a18cd92acd34107b85595fa2af24473 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC',
+                        query: 'SELECT numeric_m AS x, A1B_2080s AS y, month AS z FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC',
                         jsonSql: {
                             select: [
                                 {
@@ -846,7 +692,7 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'literal'
                                 }
                             ],
-                            from: 'index_6a18cd92acd34107b85595fa2af24473',
+                            from: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                             where: [
                                 {
                                     type: 'operator',
@@ -879,12 +725,12 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`)
-            .get('/index_68860c9097674d6fb04035d473921461_15845284078893/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .twice()
             .reply(200, {
-                index_68860c9097674d6fb04035d473921461_15845284078893: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        index_68860c9097674d6fb04035d473921461_15845284078893: {
+                        index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                             properties: {
                                 A1B_2040s: {
                                     type: 'double'
@@ -911,7 +757,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT numeric_m, A1B_2080s, month FROM index_68860c9097674d6fb04035d473921461_15845284078893 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC LIMIT 9999999')
+            .post('/_sql/_explain', 'SELECT numeric_m, A1B_2080s, month FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC LIMIT 9999999')
             .reply(200, {
                 from: 0,
                 size: 9999999,
@@ -961,7 +807,7 @@ describe('Query datasets - Simple queries', () => {
                 'text/plain; charset=UTF-8']);
 
         nock(`http://${elasticUri}`)
-            .post('/index_68860c9097674d6fb04035d473921461_15845284078893/_search',
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search',
                 {
                     from: 0,
                     size: 10000,
@@ -1042,7 +888,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);

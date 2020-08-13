@@ -2,7 +2,7 @@
 const errorSerializer = require('serializers/errorSerializer');
 const chai = require('chai');
 
-const should = chai.should();
+chai.should();
 
 describe('Error serializer test', () => {
     const data = [

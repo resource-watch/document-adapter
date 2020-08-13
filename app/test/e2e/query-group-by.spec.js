@@ -1,10 +1,11 @@
-/* eslint-disable no-unused-vars,no-undef,max-len */
+/* eslint-disable max-len */
 const nock = require('nock');
 const config = require('config');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
+const { createMockGetDataset } = require('./utils/helpers');
 
-const should = chai.should();
+chai.should();
 
 const requester = getTestServer();
 
@@ -22,100 +23,66 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by `column` query to dataset should be successful (happy case)', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Food Demand',
-                slug: 'Food-Demand_3',
-                type: null,
-                subtitle: null,
-                application: [
-                    'rw'
-                ],
-                dataPath: 'data',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'json',
-                userId: '1a10d7c6e0a37126611fd7a7',
-                connectorUrl: 'http://gfw2-data.s3.amazonaws.com/alerts-tsv/output/to-api/output.json',
-                tableName: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/986bd4ee-0bfe-4002-ae17-1d1594dffd0a',
-                updatedAt: '2018-09-14T04:33:48.838Z',
-                dataLastUpdated: null,
-                widgetRelevantProps: [],
-                layerRelevantProps: [],
-                id: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
-            },
             loggedUser: null
         };
 
-        const query = `select * from ${requestBody.dataset.id} group by field`;
+        const query = `select * from ${timestamp} group by field`;
 
-        const results = [{ key: 'ARM', doc_count: 1 }, { key: 'AUS', doc_count: 1 }, {
-            key: 'AZE',
-            doc_count: 1
-        }, { key: 'BDI', doc_count: 1 }, { key: 'BIH', doc_count: 1 }, {
-            key: 'BOL',
-            doc_count: 1
-        }, { key: 'BRA', doc_count: 1 }, { key: 'BTN', doc_count: 1 }, {
-            key: 'CAN',
-            doc_count: 1
-        }, { key: 'CHE', doc_count: 1 }, { key: 'CHN', doc_count: 1 }, {
-            key: 'CIV',
-            doc_count: 1
-        }, { key: 'CMR', doc_count: 1 }, { key: 'CRI', doc_count: 1 }, {
-            key: 'ECU',
-            doc_count: 1
-        }, { key: 'GNB', doc_count: 1 }, { key: 'GRD', doc_count: 1 }, {
-            key: 'HTI',
-            doc_count: 1
-        }, { key: 'IDN', doc_count: 1 }, { key: 'IRQ', doc_count: 1 }, {
-            key: 'KAZ',
-            doc_count: 1
-        }, { key: 'KGZ', doc_count: 1 }, { key: 'KNA', doc_count: 1 }, {
-            key: 'LBN',
-            doc_count: 1
-        }, { key: 'LIE', doc_count: 1 }, { key: 'LSO', doc_count: 1 }, {
-            key: 'MAR',
-            doc_count: 1
-        }, { key: 'MEX', doc_count: 1 }, { key: 'MMR', doc_count: 1 }, {
-            key: 'MOZ',
-            doc_count: 1
-        }, { key: 'MUS', doc_count: 1 }, { key: 'NER', doc_count: 1 }, {
-            key: 'NGA',
-            doc_count: 1
-        }, { key: 'NZL', doc_count: 1 }, { key: 'PER', doc_count: 1 }, {
-            key: 'PNG',
-            doc_count: 1
-        }, { key: 'PRK', doc_count: 1 }, { key: 'PRY', doc_count: 1 }, {
-            key: 'RUS',
-            doc_count: 1
-        }, { key: 'RWA', doc_count: 1 }, { key: 'SDN', doc_count: 1 }, {
-            key: 'SLE',
-            doc_count: 1
-        }, { key: 'SLV', doc_count: 1 }, { key: 'TGO', doc_count: 1 }, {
-            key: 'TJK',
-            doc_count: 1
-        }, { key: 'UGA', doc_count: 1 }, { key: 'UKR', doc_count: 1 }, {
-            key: 'USA',
-            doc_count: 1
-        }, { key: 'VCT', doc_count: 1 }, { key: 'VNM', doc_count: 1 }, { key: 'YEM', doc_count: 1 }];
+        const results = [
+            { key: 'ARM', doc_count: 1 }, { key: 'AUS', doc_count: 1 }, {
+                key: 'AZE',
+                doc_count: 1
+            }, { key: 'BDI', doc_count: 1 }, { key: 'BIH', doc_count: 1 }, {
+                key: 'BOL',
+                doc_count: 1
+            }, { key: 'BRA', doc_count: 1 }, { key: 'BTN', doc_count: 1 }, {
+                key: 'CAN',
+                doc_count: 1
+            }, { key: 'CHE', doc_count: 1 }, { key: 'CHN', doc_count: 1 }, {
+                key: 'CIV',
+                doc_count: 1
+            }, { key: 'CMR', doc_count: 1 }, { key: 'CRI', doc_count: 1 }, {
+                key: 'ECU',
+                doc_count: 1
+            }, { key: 'GNB', doc_count: 1 }, { key: 'GRD', doc_count: 1 }, {
+                key: 'HTI',
+                doc_count: 1
+            }, { key: 'IDN', doc_count: 1 }, { key: 'IRQ', doc_count: 1 }, {
+                key: 'KAZ',
+                doc_count: 1
+            }, { key: 'KGZ', doc_count: 1 }, { key: 'KNA', doc_count: 1 }, {
+                key: 'LBN',
+                doc_count: 1
+            }, { key: 'LIE', doc_count: 1 }, { key: 'LSO', doc_count: 1 }, {
+                key: 'MAR',
+                doc_count: 1
+            }, { key: 'MEX', doc_count: 1 }, { key: 'MMR', doc_count: 1 }, {
+                key: 'MOZ',
+                doc_count: 1
+            }, { key: 'MUS', doc_count: 1 }, { key: 'NER', doc_count: 1 }, {
+                key: 'NGA',
+                doc_count: 1
+            }, { key: 'NZL', doc_count: 1 }, { key: 'PER', doc_count: 1 }, {
+                key: 'PNG',
+                doc_count: 1
+            }, { key: 'PRK', doc_count: 1 }, { key: 'PRY', doc_count: 1 }, {
+                key: 'RUS',
+                doc_count: 1
+            }, { key: 'RWA', doc_count: 1 }, { key: 'SDN', doc_count: 1 }, {
+                key: 'SLE',
+                doc_count: 1
+            }, { key: 'SLV', doc_count: 1 }, { key: 'TGO', doc_count: 1 }, {
+                key: 'TJK',
+                doc_count: 1
+            }, { key: 'UGA', doc_count: 1 }, { key: 'UKR', doc_count: 1 }, {
+                key: 'USA',
+                doc_count: 1
+            }, { key: 'VCT', doc_count: 1 }, { key: 'VNM', doc_count: 1 }, { key: 'YEM', doc_count: 1 }];
 
         nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
@@ -129,7 +96,7 @@ describe('Query datasets - GROUP BY queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: 'SELECT * FROM 051364f0-fe44-46c2-bf95-fa4b93e2dbd2',
+                        query: `SELECT * FROM ${timestamp}`,
                         jsonSql: {
                             select: [
                                 {
@@ -138,7 +105,7 @@ describe('Query datasets - GROUP BY queries', () => {
                                     type: 'wildcard'
                                 }
                             ],
-                            from: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2',
+                            from: timestamp,
                             group: [
                                 {
                                     type: 'literal',
@@ -151,10 +118,10 @@ describe('Query datasets - GROUP BY queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+        nock(`http://${elasticUri}`)
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -194,10 +161,10 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+        nock(`http://${elasticUri}`)
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -237,8 +204,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT * FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 GROUP BY ISO.keyword LIMIT 9999999')
+        nock(`http://${elasticUri}`)
+            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 GROUP BY ISO.keyword LIMIT 9999999')
             .reply(200, {
                 from: 0,
                 size: 0,
@@ -259,8 +226,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '415']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', {
+        nock(`http://${elasticUri}`)
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
                 from: 0,
                 size: 0,
                 aggregations: {
@@ -296,7 +263,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 '1895']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${query}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -311,50 +278,15 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by date part query to dataset should be successful', async () => {
+        const timestamp = new Date().getTime();
+
+        createMockGetDataset(timestamp);
+
         const requestBody = {
-            dataset: {
-                name: 'Food Demand',
-                slug: 'Food-Demand_3',
-                type: null,
-                subtitle: null,
-                application: [
-                    'rw'
-                ],
-                dataPath: 'data',
-                attributesPath: null,
-                connectorType: 'document',
-                provider: 'json',
-                userId: '1a10d7c6e0a37126611fd7a7',
-                connectorUrl: 'http://gfw2-data.s3.amazonaws.com/alerts-tsv/output/to-api/output.json',
-                tableName: 'index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926',
-                status: 'saved',
-                published: true,
-                overwrite: false,
-                verified: false,
-                blockchain: {},
-                mainDateField: null,
-                env: 'production',
-                geoInfo: false,
-                protected: false,
-                legend: {
-                    date: [],
-                    region: [],
-                    country: [],
-                    nested: []
-                },
-                clonedHost: {},
-                errorMessage: '',
-                taskId: '/v1/doc-importer/task/986bd4ee-0bfe-4002-ae17-1d1594dffd0a',
-                updatedAt: '2018-09-14T04:33:48.838Z',
-                dataLastUpdated: null,
-                widgetRelevantProps: [],
-                layerRelevantProps: [],
-                id: '051364f0-fe44-46c2-bf95-fa4b93e2dbd2'
-            },
             loggedUser: null
         };
 
-        const query = `select createdAt from ${requestBody.dataset.id} group by date_histogram('field'="createdAt",'interval'='1d')`;
+        const query = `select createdAt from ${timestamp} group by date_histogram('field'="createdAt",'interval'='1d')`;
 
         const results = [
             {
@@ -399,10 +331,10 @@ describe('Query datasets - GROUP BY queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: 'SELECT createdAt FROM 02025df6-9a61-4aed-b8e5-182fb15c840a GROUP BY date_histogram( \'field\'="createdAt", \'interval\'=\'1d\')',
+                        query: `SELECT createdAt FROM ${timestamp} GROUP BY date_histogram( 'field'="createdAt", 'interval'='1d')`,
                         jsonSql: {
                             select: [{ value: 'createdAt', alias: null, type: 'literal' }],
-                            from: '02025df6-9a61-4aed-b8e5-182fb15c840a',
+                            from: timestamp,
                             group: [{
                                 type: 'function',
                                 alias: null,
@@ -430,10 +362,10 @@ describe('Query datasets - GROUP BY queries', () => {
                 'Connection',
                 'close']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+        nock(`http://${elasticUri}`)
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -460,9 +392,9 @@ describe('Query datasets - GROUP BY queries', () => {
                 '388']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: {
@@ -489,7 +421,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 '388']);
 
         nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT createdAt FROM index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926 GROUP BY date_histogram(\'field\'="createdAt", \'interval\'=\'1d\') LIMIT 9999999')
+            .post('/_sql/_explain', 'SELECT createdAt FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 GROUP BY date_histogram(\'field\'="createdAt", \'interval\'=\'1d\') LIMIT 9999999')
             .reply(200, {
                 from: 0,
                 size: 0,
@@ -514,7 +446,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 '501']);
 
         nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_051364f0fe4446c2bf95fa4b93e2dbd2_1536899613926/_search', {
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
                 from: 0,
                 size: 0,
                 _source: { includes: ['createdAt'], excludes: [] },
@@ -591,7 +523,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 '1257']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${requestBody.dataset.id}?sql=${query}`)
+            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars,no-undef,no-await-in-loop */
 const nock = require('nock');
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
@@ -6,9 +5,8 @@ const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
 const sleep = require('sleep');
-const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { createMockGetDataset } = require('./utils/helpers');
 
 const should = chai.should();
 chai.use(deepEqualInAnyOrder);
@@ -103,9 +101,9 @@ describe('GET dataset fields', () => {
         };
 
         nock(`http://${elasticUri}`)
-            .get('/index_ef7d64c631664053a0b7e221d84496a5_1575556546107/_mapping')
+            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
-                index_ef7d64c631664053a0b7e221d84496a5_1575556546107: {
+                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
                         type: {
                             properties: fieldsStructure
@@ -116,108 +114,14 @@ describe('GET dataset fields', () => {
 
         const timestamp = new Date().getTime();
 
+        createMockGetDataset(timestamp);
+
         const response = await requester
             .post(`/api/v1/document/fields/${timestamp}`)
-            .send({
-                dataset: {
-                    data: {
-                        id: timestamp,
-                        type: 'dataset',
-                        attributes: {
-                            name: 'Tree Cover Loss 2018 Summary - GADM Adm1 level - v20190701',
-                            slug: 'Tree-Cover-Loss-2018-Summary-GADM-Adm1-level-v20190701',
-                            type: null,
-                            subtitle: null,
-                            application: [
-                                'gfw'
-                            ],
-                            dataPath: null,
-                            attributesPath: null,
-                            connectorType: 'document',
-                            provider: 'json',
-                            userId: 'microservice',
-                            connectorUrl: null,
-                            sources: [
-                                'https://gfw-files.s3.amazonaws.com/2018_update/results/annualupdate_minimal_20190701_1825/adm1/adm1-part-0000.json',
-                                'https://gfw-files.s3.amazonaws.com/2018_update/results/annualupdate_minimal_20190701_1825/adm1/adm1-part-0002.json',
-                                'https://gfw-files.s3.amazonaws.com/2018_update/results/annualupdate_minimal_20190701_1825/adm1/adm1-part-0003.json',
-                                'https://gfw-files.s3.amazonaws.com/2018_update/results/annualupdate_minimal_20190701_1825/adm1/adm1-part-0001.json'
-                            ],
-                            tableName: 'index_ef7d64c631664053a0b7e221d84496a5_1575556546107',
-                            status: 'saved',
-                            published: true,
-                            overwrite: true,
-                            verified: false,
-                            blockchain: {},
-                            mainDateField: null,
-                            env: 'production',
-                            geoInfo: false,
-                            protected: false,
-                            legend: {
-                                date: [],
-                                region: [],
-                                country: [],
-                                nested: [
-                                    'year_data'
-                                ],
-                                integer: [
-                                    'threshold'
-                                ],
-                                short: [],
-                                byte: [],
-                                double: [
-                                    'total_area',
-                                    'extent_2000',
-                                    'extent_2010',
-                                    'total_gain',
-                                    'total_biomass',
-                                    'avg_biomass_per_ha',
-                                    'total_co2'
-                                ],
-                                float: [],
-                                half_float: [],
-                                scaled_float: [],
-                                boolean: [],
-                                binary: [],
-                                text: [],
-                                keyword: [
-                                    'iso',
-                                    'adm1',
-                                    'ifl',
-                                    'tcs',
-                                    'global_land_cover',
-                                    'wdpa',
-                                    'plantations',
-                                    'water_stress',
-                                    'primary_forest',
-                                    'aze',
-                                    'tiger_cl',
-                                    'landmark',
-                                    'land_right',
-                                    'kba',
-                                    'mining',
-                                    'oil_palm',
-                                    'idn_forest_moratorium',
-                                    'wood_fiber',
-                                    'resource_right',
-                                    'managed_forests'
-                                ]
-                            },
-                            clonedHost: {},
-                            errorMessage: '',
-                            taskId: '/v1/doc-importer/task/4d3da319-eb8a-461f-80c2-21831515e352',
-                            createdAt: '2019-11-27T10:32:19.483Z',
-                            updatedAt: '2019-12-05T14:39:07.966Z',
-                            dataLastUpdated: null,
-                            widgetRelevantProps: [],
-                            layerRelevantProps: []
-                        }
-                    }
-                }
-            });
+            .send();
 
         response.status.should.equal(200);
-        response.body.should.have.property('tableName').and.equal('index_ef7d64c631664053a0b7e221d84496a5_1575556546107');
+        response.body.should.have.property('tableName').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
         response.body.should.have.property('fields').and.eql(fieldsStructure);
     });
 

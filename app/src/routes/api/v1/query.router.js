@@ -6,14 +6,13 @@ const fieldSerializer = require('serializers/fieldSerializer');
 const Json2sql = require('sql2json').json2sql;
 const passThrough = require('stream').PassThrough;
 const DownloadValidator = require('validators/download.validator');
+const DatasetService = require('services/datasetService');
 
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
 const router = new Router({
     prefix: '/document'
 });
-
-const JSONAPIDeserializer = require('jsonapi-serializer').Deserializer;
 
 const serializeObjToQuery = (obj) => Object.keys(obj).reduce((a, k) => {
     a.push(`${k}=${encodeURIComponent(obj[k])}`);
@@ -32,7 +31,7 @@ class QueryRouter {
                 ctx.state.parsed.from = ctx.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(ctx.state.parsed);
                 ctx.body = await taskQueueService.delete({
-                    datasetId: ctx.request.body.dataset.id,
+                    datasetId: ctx.params.dataset,
                     query: sql,
                     index: ctx.request.body.dataset.tableName
                 });
@@ -43,7 +42,7 @@ class QueryRouter {
                 const sql = Json2sql.toSQL(ctx.state.parsed);
                 logger.debug(ctx.request.body.dataset);
                 logger.debug('ElasticSearch query', sql);
-                await queryService.doQuery(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.request.body.dataset.id, ctx.body, cloneUrl, ctx.query.format);
+                await queryService.doQuery(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.params.dataset, ctx.body, cloneUrl, ctx.query.format);
             } else {
                 ctx.throw(400, 'Query not valid');
             }
@@ -64,7 +63,7 @@ class QueryRouter {
                 ctx.state.parsed.from = ctx.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(ctx.state.parsed);
                 ctx.body = await taskQueueService.delete({
-                    datasetId: ctx.request.body.dataset.id,
+                    datasetId: ctx.params.dataset,
                     query: sql,
                     index: ctx.request.body.dataset.tableName
                 });
@@ -74,7 +73,7 @@ class QueryRouter {
                 ctx.state.parsed.from = ctx.request.body.dataset.tableName;
                 const sql = Json2sql.toSQL(ctx.state.parsed);
                 logger.debug(ctx.request.body.dataset);
-                await queryService.doQueryV2(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.request.body.dataset.id, ctx.body, cloneUrl, ctx.query.format);
+                await queryService.doQueryV2(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.params.dataset, ctx.body, cloneUrl, ctx.query.format);
             } else {
                 ctx.throw(400, 'Query not valid');
             }
@@ -87,7 +86,7 @@ class QueryRouter {
     static async download(ctx) {
         ctx.body = passThrough();
         const format = ctx.query.format ? ctx.query.format : 'csv';
-        ctx.set('Content-disposition', `attachment; filename=${ctx.request.body.dataset.id}.${format}`);
+        ctx.set('Content-disposition', `attachment; filename=${ctx.params.dataset}.${format}`);
         let mimetype;
         switch (format) {
 
@@ -129,15 +128,29 @@ class QueryRouter {
 
 }
 
-const deserializeDataset = async (ctx, next) => {
-    logger.debug('Body', ctx.request.body);
-    if (ctx.request.body.dataset && ctx.request.body.dataset.data) {
-        ctx.request.body.dataset = await new JSONAPIDeserializer({
-            keyForAttribute: 'camelCase'
-        }).deserialize(ctx.request.body.dataset);
-    } else if (ctx.request.body.dataset && ctx.request.body.dataset.table_name) {
-        ctx.request.body.dataset.tableName = ctx.request.body.dataset.table_name;
+const getDatasetById = async (ctx, next) => {
+    const datasetId = ctx.params.dataset;
+    logger.debug('[DatasetRouter - getDatasetById] - Dataset id', datasetId);
+
+    if (!datasetId) {
+        ctx.throw(400, 'Invalid request');
     }
+
+    const dataset = await DatasetService.getDatasetById(datasetId);
+
+    if (!dataset) {
+        ctx.throw(404, 'Dataset not found');
+    }
+
+    if (dataset.attributes.connectorType !== 'document') {
+        ctx.throw(422, 'This operation is only supported for datasets with type \'document\'');
+    }
+
+    ctx.request.body.dataset = {
+        id: dataset.id,
+        ...dataset.attributes
+    };
+
     await next();
 };
 
@@ -253,9 +266,9 @@ const checkPermissionDelete = async (ctx, next) => {
     await next();
 };
 
-router.post('/query/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
-router.post('/query-v2/:dataset', deserializeDataset, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
-router.post('/download/:dataset', DownloadValidator.validateDownload, deserializeDataset, toSQLMiddleware, QueryRouter.download);
-router.post('/fields/:dataset', deserializeDataset, QueryRouter.fields);
+router.post('/query/:dataset', getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
+router.post('/query-v2/:dataset', getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
+router.post('/download/:dataset', DownloadValidator.validateDownload, getDatasetById, toSQLMiddleware, QueryRouter.download);
+router.post('/fields/:dataset', getDatasetById, QueryRouter.fields);
 
 module.exports = router;

@@ -184,7 +184,7 @@ describe('Dataset overwrite tests', () => {
 
         let expectedStatusQueueMessageCount = 1;
 
-        const validateStatusQueueMessages = resolve => async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('data').and.equalInAnyOrder(postBody.data);
@@ -193,7 +193,7 @@ describe('Dataset overwrite tests', () => {
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql([postBody.url]);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('new-table-name');
+            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('legend').and.equal(postBody.legend);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
@@ -230,14 +230,14 @@ describe('Dataset overwrite tests', () => {
 
         let expectedStatusQueueMessageCount = 1;
 
-        const validateStatusQueueMessages = resolve => async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('new-table-name');
+            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
 
@@ -279,14 +279,14 @@ describe('Dataset overwrite tests', () => {
 
         let expectedStatusQueueMessageCount = 1;
 
-        const validateStatusQueueMessages = resolve => async (msg) => {
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('datasetId').and.equal(`${timestamp}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.eql(postBody.sources);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('new-table-name');
+            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_OVERWRITE);
 
