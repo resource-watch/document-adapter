@@ -97,22 +97,20 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
+        nock(elasticUri, { encodedQueryParams: true })
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area: { type: 'float' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' }
-                            }
+                        properties: {
+                            adm1: { type: 'long' },
+                            adm2: { type: 'long' },
+                            area: { type: 'float' },
+                            iso: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            thresh: { type: 'long' }
                         }
                     }
                 }
@@ -121,15 +119,15 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '271']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489')
+        nock(elasticUri, { encodedQueryParams: true })
+            .post('/_opendistro/_sql/_explain')
             .reply(200, { from: 0, size: 200 }, ['content-type',
-                'text/plain; charset=UTF-8',
+                'application/json; charset=UTF-8',
                 'content-length',
                 '21']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', { from: 0, size: 10000 })
+        nock(elasticUri, { encodedQueryParams: true })
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
@@ -148,10 +146,10 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '792']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/_search/scroll')
+        nock(elasticUri, { encodedQueryParams: true })
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -170,10 +168,10 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '817']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/_search/scroll')
+        nock(elasticUri, { encodedQueryParams: true })
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -297,22 +295,20 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
+        nock(elasticUri, { encodedQueryParams: true })
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area: { type: 'float' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' }
-                            }
+                        properties: {
+                            adm1: { type: 'long' },
+                            adm2: { type: 'long' },
+                            area: { type: 'float' },
+                            iso: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            thresh: { type: 'long' }
                         }
                     }
                 }
@@ -321,15 +317,15 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '271']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE foo LIKE \'%bar%\'')
+        nock(elasticUri, { encodedQueryParams: true })
+            .post('/_opendistro/_sql/_explain')
             .reply(200, { from: 0, size: 200 }, ['content-type',
-                'text/plain; charset=UTF-8',
+                'application/json; charset=UTF-8',
                 'content-length',
                 '21']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', { from: 0, size: 10000 })
+        nock(elasticUri, { encodedQueryParams: true })
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
@@ -348,10 +344,10 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '792']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/_search/scroll')
+        nock(elasticUri, { encodedQueryParams: true })
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -370,10 +366,10 @@ describe('Query datasets - Simple queries', () => {
                 'content-length',
                 '817']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .get('/_search/scroll')
+        nock(elasticUri, { encodedQueryParams: true })
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
                 took: 1,
@@ -472,45 +468,43 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area_admin: { type: 'float' },
-                                area_extent: { type: 'float' },
-                                area_extent_2000: { type: 'float' },
-                                area_gain: { type: 'float' },
-                                area_poly_aoi: { type: 'float' },
-                                bound1: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                bound2: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                bound3: { type: 'long' },
-                                bound4: { type: 'long' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                polyname: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' },
-                                year_data: {
-                                    properties: {
-                                        area_loss: { type: 'long' },
-                                        emissions: { type: 'long' },
-                                        year: { type: 'long' }
-                                    }
+                        properties: {
+                            adm1: { type: 'long' },
+                            adm2: { type: 'long' },
+                            area_admin: { type: 'float' },
+                            area_extent: { type: 'float' },
+                            area_extent_2000: { type: 'float' },
+                            area_gain: { type: 'float' },
+                            area_poly_aoi: { type: 'float' },
+                            bound1: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            bound2: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            bound3: { type: 'long' },
+                            bound4: { type: 'long' },
+                            iso: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            polyname: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            thresh: { type: 'long' },
+                            year_data: {
+                                properties: {
+                                    area_loss: { type: 'long' },
+                                    emissions: { type: 'long' },
+                                    year: { type: 'long' }
                                 }
                             }
                         }
@@ -518,21 +512,16 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT year_data.year FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489')
+        nock(elasticUri)
+            .post('/_opendistro/_sql/_explain')
             .reply(200, {
                 from: 0,
                 size: 200,
                 _source: { includes: ['year_data.year'], excludes: [] }
-            }, ['content-type',
-                'text/plain; charset=UTF-8']);
+            }, ['content-type', 'application/json; charset=UTF-8']);
 
-        nock(`http://${elasticUri}`)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
-                from: 0,
-                size: 10000,
-                _source: { includes: ['year_data.year'], excludes: [] }
-            })
+        nock(elasticUri)
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
@@ -546,10 +535,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .get('/_search/scroll')
+        nock(elasticUri)
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -565,10 +554,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .get('/_search/scroll')
+        nock(elasticUri)
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
                 took: 1,
@@ -724,40 +713,38 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .twice()
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                            properties: {
-                                A1B_2040s: {
-                                    type: 'double'
-                                },
-                                A1B_2080s: {
-                                    type: 'double'
-                                },
-                                historical: {
-                                    type: 'long'
-                                },
-                                month: {
-                                    type: 'string'
-                                },
-                                numeric_m: {
-                                    type: 'long'
-                                },
-                                streamflow: {
-                                    type: 'string'
-                                }
+                        properties: {
+                            A1B_2040s: {
+                                type: 'double'
+                            },
+                            A1B_2080s: {
+                                type: 'double'
+                            },
+                            historical: {
+                                type: 'long'
+                            },
+                            month: {
+                                type: 'string'
+                            },
+                            numeric_m: {
+                                type: 'long'
+                            },
+                            streamflow: {
+                                type: 'string'
                             }
                         }
                     }
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT numeric_m, A1B_2080s, month FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC LIMIT 9999999')
+        nock(elasticUri)
+            .post('/_opendistro/_sql/_explain')
             .reply(200, {
                 from: 0,
                 size: 9999999,
@@ -803,40 +790,10 @@ describe('Query datasets - Simple queries', () => {
                         }
                     }
                 ]
-            }, ['content-type',
-                'text/plain; charset=UTF-8']);
+            }, ['content-type', 'application/json; charset=UTF-8']);
 
-        nock(`http://${elasticUri}`)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search',
-                {
-                    from: 0,
-                    size: 10000,
-                    query: {
-                        bool: {
-                            filter: [{
-                                bool: {
-                                    must: [{
-                                        match_phrase: {
-                                            streamflow: {
-                                                query: 'Snohomish',
-                                                slop: 0,
-                                                boost: 1
-                                            }
-                                        }
-                                    }],
-                                    disable_coord: false,
-                                    adjust_pure_negative: true,
-                                    boost: 1
-                                }
-                            }],
-                            disable_coord: false,
-                            adjust_pure_negative: true,
-                            boost: 1
-                        }
-                    },
-                    _source: { includes: ['numeric_m', 'A1B_2080s', 'month'], excludes: [] },
-                    sort: [{ numeric_m: { order: 'asc' } }]
-                })
+        nock(elasticUri)
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
@@ -854,10 +811,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .get('/_search/scroll')
+        nock(elasticUri)
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw%3D%3D')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
                 took: 1,
@@ -873,10 +830,10 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
-            .get('/_search/scroll')
+        nock(elasticUri)
+            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw%3D%3D')
             .times(1)
-            .query((ESQuery) => ESQuery.scroll === '1m' && ESQuery.scroll_id === 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==')
+            .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
                 took: 1,

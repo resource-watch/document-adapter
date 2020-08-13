@@ -118,41 +118,39 @@ describe('Query datasets - GROUP BY queries', () => {
                 }
             });
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'INDC-vs-NDC': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'economyWide-Target': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'economyWide-Target-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-GHG': { type: 'long' },
-                                'landUse-GHG-Description': { type: 'long' },
-                                'landUse-NonGHG': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-NonGHG-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landuse-excluded': { type: 'long' },
-                                'landuse-excluded-description': { type: 'long' }
-                            }
+                        properties: {
+                            Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            'INDC-vs-NDC': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            'economyWide-Target': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'economyWide-Target-Description': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landUse-GHG': { type: 'long' },
+                            'landUse-GHG-Description': { type: 'long' },
+                            'landUse-NonGHG': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landUse-NonGHG-Description': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landuse-excluded': { type: 'long' },
+                            'landuse-excluded-description': { type: 'long' }
                         }
                     }
                 }
@@ -161,41 +159,39 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'INDC-vs-NDC': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'economyWide-Target': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'economyWide-Target-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-GHG': { type: 'long' },
-                                'landUse-GHG-Description': { type: 'long' },
-                                'landUse-NonGHG': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-NonGHG-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landuse-excluded': { type: 'long' },
-                                'landuse-excluded-description': { type: 'long' }
-                            }
+                        properties: {
+                            Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            'INDC-vs-NDC': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                            'economyWide-Target': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'economyWide-Target-Description': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landUse-GHG': { type: 'long' },
+                            'landUse-GHG-Description': { type: 'long' },
+                            'landUse-NonGHG': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landUse-NonGHG-Description': {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            'landuse-excluded': { type: 'long' },
+                            'landuse-excluded-description': { type: 'long' }
                         }
                     }
                 }
@@ -204,8 +200,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '989']);
 
-        nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT * FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 GROUP BY ISO.keyword LIMIT 9999999')
+        nock(elasticUri)
+            .post('/_opendistro/_sql/_explain')
             .reply(200, {
                 from: 0,
                 size: 0,
@@ -226,23 +222,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '415']);
 
-        nock(`http://${elasticUri}`)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
-                from: 0,
-                size: 0,
-                aggregations: {
-                    'ISO.keyword': {
-                        terms: {
-                            field: 'ISO.keyword',
-                            size: 9999999,
-                            min_doc_count: 1,
-                            shard_min_doc_count: 0,
-                            show_term_doc_count_error: false,
-                            order: [{ _count: 'desc' }, { _term: 'asc' }]
-                        }
-                    }
-                }
-            })
+        nock(elasticUri)
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAMFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAACxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3AAAAAAAAAA0WSXVZdkNZQl9Tdm1FSjk5VnA4RVo2dwAAAAAAAAAOFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAADxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3',
@@ -362,26 +343,24 @@ describe('Query datasets - GROUP BY queries', () => {
                 'Connection',
                 'close']);
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                createdAt: { type: 'date' },
-                                profilePictureUrl: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                screenName: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                text: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                }
+                        properties: {
+                            createdAt: { type: 'date' },
+                            profilePictureUrl: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            screenName: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            text: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                             }
                         }
                     }
@@ -391,26 +370,24 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '388']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
+        nock(elasticUri, { encodedQueryParams: true })
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: {
-                                createdAt: { type: 'date' },
-                                profilePictureUrl: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                screenName: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                text: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                }
+                        properties: {
+                            createdAt: { type: 'date' },
+                            profilePictureUrl: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            screenName: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            },
+                            text: {
+                                type: 'text',
+                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                             }
                         }
                     }
@@ -420,8 +397,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '388']);
 
-        nock(`http://${elasticUri}`)
-            .post('/_sql/_explain', 'SELECT createdAt FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 GROUP BY date_histogram(\'field\'="createdAt", \'interval\'=\'1d\') LIMIT 9999999')
+        nock(elasticUri)
+            .post('/_opendistro/_sql/_explain')
             .reply(200, {
                 from: 0,
                 size: 0,
@@ -445,26 +422,8 @@ describe('Query datasets - GROUP BY queries', () => {
                 'content-length',
                 '501']);
 
-        nock(`http://${elasticUri}`, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
-                from: 0,
-                size: 0,
-                _source: { includes: ['createdAt'], excludes: [] },
-                stored_fields: 'createdAt',
-                aggregations: {
-                    'date_histogram(field=createdAt,interval=1d)': {
-                        date_histogram: {
-                            field: 'createdAt',
-                            format: 'yyyy-MM-dd HH:mm:ss',
-                            interval: '1d',
-                            offset: 0,
-                            order: { _key: 'asc' },
-                            keyed: false,
-                            min_doc_count: 0
-                        }
-                    }
-                }
-            })
+        nock(elasticUri, { encodedQueryParams: true })
+            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
             .query({ scroll: '1m' })
             .reply(200, {
                 _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAVFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAAFxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3AAAAAAAAABYWSXVZdkNZQl9Tdm1FSjk5VnA4RVo2dwAAAAAAAAAYFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAAGRZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3',

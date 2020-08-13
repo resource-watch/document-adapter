@@ -100,14 +100,12 @@ describe('GET dataset fields', () => {
             }
         };
 
-        nock(`http://${elasticUri}`)
+        nock(elasticUri)
             .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        type: {
-                            properties: fieldsStructure
-                        }
+                        properties: fieldsStructure
                     }
                 }
             });
