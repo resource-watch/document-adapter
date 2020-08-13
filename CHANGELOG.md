@@ -1,3 +1,7 @@
+## 13/08/2020
+
+- Refactor `/:dataset/data-overwrite` endpoint to remove dependency on injected dataset details.
+
 ## 19/05/2020
 
 - Add validation for `format` query param on download endpoint.
