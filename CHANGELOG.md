@@ -1,3 +1,10 @@
+# 2.0.0
+
+## 01/09/2020
+
+- Migrate to Elasticsearch 7.x
+- Clarify error messages due to malformed queries
+
 ## 13/08/2020
 
 - Refactor endpoints to remove dependency on injected dataset details.
