@@ -3,6 +3,7 @@ const json2csv = require('json2csv');
 const CSVSerializer = require('serializers/csvSerializer');
 const JSONSerializer = require('serializers/jsonSerializer');
 const IndexNotFound = require('errors/indexNotFound');
+const InvalidQueryError = require('errors/invalidQuery.error');
 
 class Scroll {
 
@@ -42,28 +43,6 @@ class Scroll {
             throw e;
         }
 
-        // if (this.parsed.group) {
-        //     logger.debug('Config size of aggregations');
-        //     let aggregations = { resultQueryElastic };
-        //     while (aggregations) {
-        //         const keys = Object.keys(aggregations);
-        //         if (keys.length === 1) {
-        //             if (aggregations[keys[0]] && aggregations[keys[0]].terms) {
-        //                 aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
-        //                 // eslint-disable-next-line prefer-destructuring
-        //                 aggregations = aggregations[keys[0]].aggregations;
-        //             } else if (keys[0].indexOf('NESTED') >= -1) {
-        //                 // eslint-disable-next-line prefer-destructuring
-        //                 aggregations = aggregations[keys[0]].aggregations;
-        //             } else {
-        //                 aggregations = null;
-        //             }
-        //         } else {
-        //             aggregations = null;
-        //         }
-        //     }
-        // }
-
         this.limit = -1;
         if (this.sql.toLowerCase().indexOf('limit') >= 0) {
             this.limit = resultQueryElastic.size;
@@ -73,24 +52,6 @@ class Scroll {
             resultQueryElastic.size = 10000;
         }
         logger.debug('Creating params to scroll with query', resultQueryElastic);
-
-        // if (resultQueryElastic.sort) {
-        //     const sort = resultQueryElastic.sort.map((element) => {
-        //         // const result = {};
-        //         // result[Object.keys(element)[0]] = element[Object.keys(element)[0]].order;
-        //         // return result;
-        //         element[Object.keys(element)[0]].unmapped_type = 'long';
-        //         element[Object.keys(element)[0]].missing = '_last';
-        //         return element;
-        //     });
-        //     resultQueryElastic.sort = sort;
-        //
-        // }
-
-        // if (resultQueryElastic.aggregations) {
-        //     resultQueryElastic.aggs = resultQueryElastic.aggregations;
-        //     delete resultQueryElastic.aggregations;
-        // }
 
         try {
             logger.debug('Creating scroll');
@@ -118,6 +79,9 @@ class Scroll {
         } catch (err) {
             if (err.statusCode === 404) {
                 throw new IndexNotFound(404, 'Table not found');
+            }
+            if (err.statusCode === 400) {
+                throw new InvalidQueryError(400, err.body.error.root_cause[0].reason);
             }
             throw err;
         }
