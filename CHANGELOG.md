@@ -5,19 +5,16 @@
 - Migrate to Elasticsearch 7.x
 - Clarify error messages due to malformed queries
 
+# v1.1.1
+
 ## 13/08/2020
 
+- Refactor `/:dataset/data-overwrite` endpoint to remove dependency on injected dataset details.
 - Refactor endpoints to remove dependency on injected dataset details.
 - Remove `filter` values for routes exclusive to this microservice.
 - Remove `/data/:dataset/:id` stub route.
 - Refactor tests for faster execution.
-
-## 19/05/2020
-
 - Add validation for `format` query param on download endpoint.
-
-## 23/02/2020
-
 - Fix issue where attempting to download a csv of a query resulting in an empty result would cause an error.
 
 # v1.1.0
@@ -39,7 +36,7 @@
 ## 14/11/2019
 - Refactor usage of JSONAPI deserializer
 - Updated ElasticSearch integration lib
-- Replaced generators with async/await 
+- Replaced generators with async/await
 
 ## 12/11/2019
 - Add support for dataset overwrite using multiple files in parallel.
