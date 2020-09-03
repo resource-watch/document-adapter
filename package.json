@@ -34,7 +34,7 @@
     "node": "~12"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^7.8.0",
+    "@elastic/elasticsearch": "^6.8.8",
     "JSONStream": "^1.3.4",
     "amqplib": "^0.5.2",
     "bunyan": "^1.8.5",
@@ -56,7 +56,7 @@
     "md5": "2.1.0",
     "randomstring": "1.1.5",
     "request": "^2.88.0",
-    "rw-doc-importer-messages": "1.2.1",
+    "rw-doc-importer-messages": "1.5.0",
     "sleep": "^6.1.0",
     "sql2json": "^2.0.6",
     "terraformer-wkt-parser": "^1.2.0",

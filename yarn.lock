@@ -200,14 +200,16 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@elastic/elasticsearch@^7.8.0":
-  version "7.8.0"
-  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-7.8.0.tgz#3f9ee54fe8ef79874ebd231db03825fa500a7111"
-  integrity sha512-rUOTNN1At0KoN0Fcjd6+J7efghuURnoMTB/od9EMK6Mcdebi6N3z5ulShTsKRn6OanS9Eq3l/OmheQY1Y+WLcg==
+"@elastic/elasticsearch@^6.8.8":
+  version "6.8.8"
+  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-6.8.8.tgz#363d332d4de3a3ee5420ac0ced2eb4bfadf04548"
+  integrity sha512-51Jp3ZZ0oPqYPNlPG58XJ773MqJBx91rGNWCgVvy2UtxjxHsExAJooesOyLcoADnW0Dhyxu6yB8tziHnmyl8Vw==
   dependencies:
     debug "^4.1.1"
     decompress-response "^4.2.0"
+    into-stream "^5.1.0"
     ms "^2.1.1"
+    once "^1.4.0"
     pump "^3.0.0"
     secure-json-parse "^2.1.0"
 
@@ -2242,6 +2244,14 @@ fresh@~0.5.2:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-0.5.2.tgz#3d8cadd90d976569fa835ab1f8e4b23a105605a7"
   integrity sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac=
 
+from2@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/from2/-/from2-2.3.0.tgz#8bfb5502bde4a4d36cfdeea007fcca21d7e382af"
+  integrity sha1-i/tVAr3kpNNs/e6gB/zKIdfjgq8=
+  dependencies:
+    inherits "^2.0.1"
+    readable-stream "^2.0.0"
+
 fromentries@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/fromentries/-/fromentries-1.2.1.tgz#64c31665630479bc993cd800d53387920dc61b4d"
@@ -2872,6 +2882,14 @@ interpret@~1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.1.0.tgz#7ed1b1410c6a0e0f78cf95d3b8440c63f78b8614"
   integrity sha1-ftGxQQxqDg94z5XTuEQMY/eLhhQ=
+
+into-stream@^5.1.0:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/into-stream/-/into-stream-5.1.1.tgz#f9a20a348a11f3c13face22763f2d02e127f4db8"
+  integrity sha512-krrAJ7McQxGGmvaYbB7Q1mcA+cRwg9Ij2RfWIeVesNBgVDZmzY/Fa4IpZUT3bmdRzMzdf/mzltCG2Dq99IZGBA==
+  dependencies:
+    from2 "^2.3.0"
+    p-is-promise "^3.0.0"
 
 ip-regex@^2.0.0:
   version "2.1.0"
@@ -4524,6 +4542,11 @@ p-cancelable@^1.0.0:
   resolved "https://registry.yarnpkg.com/p-cancelable/-/p-cancelable-1.1.0.tgz#d078d15a3af409220c886f1d9a0ca2e441ab26cc"
   integrity sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==
 
+p-is-promise@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/p-is-promise/-/p-is-promise-3.0.0.tgz#58e78c7dfe2e163cf2a04ff869e7c1dba64a5971"
+  integrity sha512-Wo8VsW4IRQSKVXsJCn7TomUaVtyfjVDn3nUP7kE967BQk0CwFpdbZs0X0uk5sW9mkBa9eNM7hCMaG93WUAwxYQ==
+
 p-limit@^1.1.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-1.3.0.tgz#b86bd5f0c25690911c7590fcbfc2010d54b3ccb8"
@@ -5285,10 +5308,10 @@ rimraf@~2.4.0:
   dependencies:
     glob "^6.0.1"
 
-rw-doc-importer-messages@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/rw-doc-importer-messages/-/rw-doc-importer-messages-1.2.1.tgz#26f0d10afafe90a312d4761670323d9abf18775d"
-  integrity sha512-eAEbWNLbrmaxXQQlc9lXShyF0jCwtJLEJH1KVXmEJcuAHUquLymadRYBcH9d9decGG9ok+p1o86iqLBn88m6MQ==
+rw-doc-importer-messages@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/rw-doc-importer-messages/-/rw-doc-importer-messages-1.5.0.tgz#2f604da0376f44a7f3ad559b8ab3575e519bf0e6"
+  integrity sha512-7qU9zZmwcI/kcHcp0tNvX6BBSrfDX29x8lGbdwtOtfMbZW4vtX/8IZr6+LhhaaEv0GjQRWdAIZSEr24NDbZpCw==
   dependencies:
     uuid4 "^1.0.0"
 

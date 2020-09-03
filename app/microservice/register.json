@@ -167,6 +167,15 @@
       }
     },
     {
+      "path": "/v1/dataset/:dataset/reindex",
+      "method": "POST",
+      "authenticated": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/:dataset/reindex"
+      }
+    },
+    {
       "path": "/v1/dataset/:dataset/append",
       "method": "POST",
       "authenticated": true,

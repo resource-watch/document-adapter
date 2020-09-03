@@ -88,6 +88,22 @@ class DatasetRouter {
         ctx.body = '';
     }
 
+    static async reindex(ctx) {
+        logger.info('Reindex dataset with dataset id: ', ctx.params.dataset);
+        if (ctx.request.body.dataset && (ctx.request.body.dataset.status !== 'saved' && ctx.request.body.dataset.status !== 'failed')) {
+            ctx.throw(400, 'Dataset is not in saved status');
+            return;
+        }
+        await taskQueueService.reindex({
+            datasetId: ctx.params.dataset,
+            provider: ctx.request.body.provider || 'csv',
+            legend: ctx.request.body.dataset.legend,
+            index: ctx.request.body.dataset.tableName
+        });
+        ctx.set('cache-control', 'flush');
+        ctx.body = '';
+    }
+
     static async deleteIndex(ctx) {
         logger.info('Deleting index with dataset', ctx.request.body);
         const response = await ctRegisterMicroservice.requestToMicroservice({
@@ -166,6 +182,7 @@ router.post('/:provider', DatasetRouter.import);
 router.post('/:dataset/data-overwrite', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.overwrite);
 router.post('/:dataset/concat', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.concat);
 router.post('/:dataset/append', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.append);
+router.post('/:dataset/reindex', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.reindex);
 router.delete('/:dataset', DatasetRouter.deleteIndex);
 
 module.exports = router;
