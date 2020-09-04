@@ -3,7 +3,7 @@
     "url": "RABBITMQ_URL"
   },
   "elasticsearch": {
-    "host": "ELASTIC_URI",
+    "host": "ELASTIC_URL",
     "user": "ELASTIC_USER",
     "password": "ELASTIC_PASSWORD"
   },

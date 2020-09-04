@@ -93,6 +93,6 @@ Follow the instruction above for setting up the runtime environment for Docker e
 - **CT_URL** => Control Tower URL
 - **LOCAL_URL** => Local URL
 - **RABBITMQ_URL** => RabbitMQ connection URL - if using RabbitMQ with default configurations, you should set this variable to something like `amqp://0.0.0.0:5672/`
-- **ELASTIC_URI** => Elasticsearch connection URL - if using ES with default configurations, you should set this variable to something like `127.0.0.1:9200`
+- **ELASTIC_URL** => Elasticsearch connection URL - if using ES with default configurations, you should set this variable to something like `127.0.0.1:9200`
 
 You can optionally set other variables, see [this file](config/custom-environment-variables.json) for an extended list.

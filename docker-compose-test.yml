@@ -19,7 +19,7 @@ services:
       CT_URL: http://mymachine:9000
       LOCAL_URL: http://mymachine:3000
       RABBITMQ_URL: amqp://rabbitmq:5672
-      ELASTIC_URI: http://127.0.0.1:9000
+      ELASTIC_URL: http://127.0.0.1:9000
     command: test
     depends_on:
       - rabbitmq

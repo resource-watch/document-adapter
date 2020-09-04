@@ -45,10 +45,10 @@ spec:
               value: app/src
             - name: LOCAL_URL
               value: http://document.default.svc.cluster.local:4000
-            - name: ELASTIC_URI
+            - name: ELASTIC_URL
               valueFrom:
                 secretKeyRef:
-                  key: ELASTIC_URI
+                  key: ELASTIC_URL
                   name: dbsecrets
             - name: ELASTIC_USER
               valueFrom:

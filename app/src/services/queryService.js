@@ -13,9 +13,7 @@ class QueryService {
         logger.info(`Connecting to Elasticsearch at ${elasticUri}`);
 
         const elasticSearchConfig = {
-            node: elasticUri,
-            log: 'info',
-            apiVersion: 'sql'
+            node: elasticUri
         };
 
         if (config.get('elasticsearch.user') && config.get('elasticsearch.password')) {
