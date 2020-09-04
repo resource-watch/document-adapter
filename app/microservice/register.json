@@ -63,24 +63,6 @@
       ]
     },
     {
-      "path": "/v2/query/:dataset",
-      "method": "GET",
-      "binary": true,
-      "redirect": {
-        "method": "POST",
-        "path": "/api/v1/document/query-v2/:dataset"
-      }
-    },
-    {
-      "path": "/v2/query/:dataset",
-      "method": "POST",
-      "binary": true,
-      "redirect": {
-        "method": "POST",
-        "path": "/api/v1/document/query-v2/:dataset"
-      }
-    },
-    {
       "path": "/v1/download/:dataset",
       "method": "GET",
       "binary": true,

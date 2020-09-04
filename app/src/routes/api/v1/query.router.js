@@ -52,37 +52,6 @@ class QueryRouter {
         }
     }
 
-    static async queryV2(ctx) {
-        logger.info('Doing query V2');
-        logger.info('Do Query with dataset', ctx.request.body);
-        logger.debug('Checking if is delete or select');
-
-        try {
-            if (ctx.state.parsed.delete) {
-                logger.debug('Doing delete');
-                ctx.state.parsed.from = ctx.request.body.dataset.tableName;
-                const sql = Json2sql.toSQL(ctx.state.parsed);
-                ctx.body = await taskQueueService.delete({
-                    datasetId: ctx.params.dataset,
-                    query: sql,
-                    index: ctx.request.body.dataset.tableName
-                });
-            } else if (ctx.state.parsed.select) {
-                ctx.body = passThrough();
-                const cloneUrl = QueryRouter.getCloneUrl(ctx.request.url, ctx.params.dataset);
-                ctx.state.parsed.from = ctx.request.body.dataset.tableName;
-                const sql = Json2sql.toSQL(ctx.state.parsed);
-                logger.debug(ctx.request.body.dataset);
-                await queryService.doQueryV2(sql, ctx.state.parsed, ctx.request.body.dataset.tableName, ctx.params.dataset, ctx.body, cloneUrl, ctx.query.format);
-            } else {
-                ctx.throw(400, 'Query not valid');
-            }
-        } catch (err) {
-            logger.error(err);
-            throw err;
-        }
-    }
-
     static async download(ctx) {
         ctx.body = passThrough();
         const format = ctx.query.format ? ctx.query.format : 'csv';
@@ -241,7 +210,6 @@ const checkPermissionDelete = async (ctx, next) => {
 };
 
 router.post('/query/:dataset', DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
-router.post('/query-v2/:dataset', DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.queryV2);
 router.post('/download/:dataset', DownloadValidator.validateDownload, DatasetMiddleware.getDatasetById, toSQLMiddleware, QueryRouter.download);
 router.post('/fields/:dataset', DatasetMiddleware.getDatasetById, QueryRouter.fields);
 
