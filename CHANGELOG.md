@@ -1,5 +1,6 @@
 ## 04/09/2020
 
+- Add username and password support for Elasticsearch connection
 - Remove query v2 endpoint
 
 # 2.0.0
