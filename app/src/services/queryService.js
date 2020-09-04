@@ -10,7 +10,7 @@ const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host'
 class QueryService {
 
     constructor() {
-        logger.info('Connecting with elasticsearch');
+        logger.info(`Connecting to Elasticsearch at ${elasticUri}`);
 
         this.elasticClient = new elasticsearch.Client({
             node: elasticUri,
