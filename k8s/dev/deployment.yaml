@@ -1,13 +1,25 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
+  creationTimestamp: null
   labels:
     name: document
   name: document
 spec:
+  progressDeadlineSeconds: 2147483647
+  replicas: 1
   revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      name: document
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
+      creationTimestamp: null
       labels:
         name: document
     spec:
@@ -20,92 +32,103 @@ spec:
                     operator: In
                     values:
                       - apps
-      restartPolicy: Always
       containers:
-      - name: document
-        image: vizzuality/document
-        imagePullPolicy: Always
-        resources:
-          requests:
-            cpu: "0.25"
-            memory: "256M"
-          limits:
-            cpu: "1"
-            memory: "512M"
-        args:
-          - start
-        env:
-          - name: PORT
-            value: "4000"
-          - name: NODE_ENV
-            value: staging
-          - name: NODE_PATH
-            value: app/src
-          - name: LOCAL_URL
-            value: http://document.default.svc.cluster.local:4000
-          - name: LOGGER_LEVEL
-            value: debug
-          - name: ELASTIC_URI
-            valueFrom:
+        - args:
+            - start
+          env:
+            - name: PORT
+              value: "4000"
+            - name: NODE_ENV
+              value: staging
+            - name: NODE_PATH
+              value: app/src
+            - name: LOCAL_URL
+              value: http://document.default.svc.cluster.local:4000
+            - name: LOGGER_LEVEL
+              value: debug
+            - name: ELASTIC_URI
+              valueFrom:
                 secretKeyRef:
-                  name: dbsecrets
                   key: ELASTIC_URI
-          - name: CT_URL
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: CT_URL
-          - name: CT_TOKEN
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: CT_TOKEN
-          - name: CT_REGISTER_MODE
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: CT_REGISTER_MODE
-          - name: API_VERSION
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: API_VERSION
-          - name: STAMPERY_TOKEN
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: STAMPERY_TOKEN
-          - name: S3_ACCESS_KEY_ID
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: DOCUMENT_S3_ACCESS_KEY_ID
-          - name: S3_SECRET_ACCESS_KEY
-            valueFrom:
-                secretKeyRef:
-                  name: mssecrets
-                  key: DOCUMENT_S3_SECRET_ACCESS_KEY
-          - name: RABBITMQ_URL
-            valueFrom:
-                secretKeyRef:
                   name: dbsecrets
+            - name: CT_URL
+              valueFrom:
+                secretKeyRef:
+                  key: CT_URL
+                  name: mssecrets
+            - name: CT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: CT_TOKEN
+                  name: mssecrets
+            - name: CT_REGISTER_MODE
+              valueFrom:
+                secretKeyRef:
+                  key: CT_REGISTER_MODE
+                  name: mssecrets
+            - name: API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  key: API_VERSION
+                  name: mssecrets
+            - name: STAMPERY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: STAMPERY_TOKEN
+                  name: mssecrets
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: DOCUMENT_S3_ACCESS_KEY_ID
+                  name: mssecrets
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: DOCUMENT_S3_SECRET_ACCESS_KEY
+                  name: mssecrets
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
                   key: RABBITMQ_URI
-        ports:
-          - containerPort: 4000
-        readinessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /healthcheck
-            port: 4000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 15
-        livenessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /healthcheck
-            port: 4000
-          failureThreshold: 3
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 15
+                  name: dbsecrets
+          image: vizzuality/document
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthcheck
+              port: 4000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: document
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthcheck
+              port: 4000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512M
+            requests:
+              cpu: 250m
+              memory: 256M
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status: {}
