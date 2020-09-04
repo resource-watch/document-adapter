@@ -50,6 +50,16 @@ spec:
                 secretKeyRef:
                   key: ELASTIC_URI
                   name: dbsecrets
+            - name: ELASTIC_USER
+              valueFrom:
+                secretKeyRef:
+                  key: ELASTIC_USER
+                  name: dbsecrets
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: ELASTIC_PASSWORD
+                  name: dbsecrets
             - name: CT_URL
               valueFrom:
                 secretKeyRef:

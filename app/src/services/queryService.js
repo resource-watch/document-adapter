@@ -5,18 +5,27 @@ const Scroll = require('services/scroll');
 const Json2sql = require('sql2json').json2sql;
 const Terraformer = require('terraformer-wkt-parser');
 
-const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+const elasticUri = config.get('elasticsearch.host');
 
 class QueryService {
 
     constructor() {
         logger.info(`Connecting to Elasticsearch at ${elasticUri}`);
 
-        this.elasticClient = new elasticsearch.Client({
+        const elasticSearchConfig = {
             node: elasticUri,
             log: 'info',
             apiVersion: 'sql'
-        });
+        };
+
+        if (config.get('elasticsearch.user') && config.get('elasticsearch.password')) {
+            elasticSearchConfig.auth = {
+                username: config.get('elasticsearch.user'),
+                password: config.get('elasticsearch.password')
+            };
+        }
+
+        this.elasticClient = new elasticsearch.Client(elasticSearchConfig);
 
         this.elasticClient.extend('opendistro.explain', ({ makeRequest, ConfigurationError }) => function explain(params, options = {}) {
             const {
@@ -282,32 +291,6 @@ class QueryService {
         await scroll.init();
         await scroll.continue();
         logger.info('[QueryService - doQuery] Finished query');
-    }
-
-    async doQueryV2(sql, parsed, index, datasetId, body, cloneUrl, format) {
-        logger.info('[QueryService - doQueryV2] Doing query...');
-        const elasticQuery = await this.convertQueryToElastic(parsed, index);
-        const removeAlias = { ...elasticQuery };
-        if (removeAlias.select) {
-            removeAlias.select = removeAlias.select.map((el) => {
-                if (el.type === 'function') {
-                    return el;
-                }
-                return {
-                    value: el.value,
-                    type: el.type,
-                    alias: null,
-                    arguments: el.arguments
-                };
-            });
-        }
-        const sqlFromJson = Json2sql.toSQL(removeAlias);
-        logger.debug('[QueryService - doQueryV2] doQueryV2 - sql', sql);
-
-        const scroll = new Scroll(this.elasticClientV2, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
-        await scroll.init();
-        await scroll.continue();
-        logger.info('[QueryService - doQueryV2] Finished query');
     }
 
     async downloadQuery(sql, parsed, index, datasetId, body, type = 'json') {

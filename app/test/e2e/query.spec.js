@@ -9,7 +9,7 @@ chai.should();
 
 const requester = getTestServer();
 
-const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+const elasticUri = config.get('elasticsearch.host');
 
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);

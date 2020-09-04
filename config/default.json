@@ -13,7 +13,9 @@
     },
     "elasticsearch": {
         "port": 9200,
-        "host": "localhost"
+        "host": "localhost",
+        "user": null,
+        "password": null
     },
     "timeCache": 1500,
     "stampery": "",

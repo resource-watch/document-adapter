@@ -22,7 +22,7 @@ describe('Dataset download tests', () => {
 
         createMockGetDataset(timestamp);
 
-        const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+        const elasticUri = config.get('elasticsearch.host');
 
         const query = 'SELECT treecover_loss__year, SUM(aboveground_biomass_loss__Mg) AS aboveground_biomass_loss__Mg, SUM(aboveground_co2_emissions__Mg) AS aboveground_co2_emissions__Mg, SUM(treecover_loss__ha) AS treecover_loss__ha FROM data WHERE geostore__id = \'f84d74e5dc977606da07cebaf94dc9e6\' AND treecover_density__threshold = 30 GROUP BY treecover_loss__year ORDER BY treecover_loss__year';
 

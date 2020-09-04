@@ -3,8 +3,9 @@
     "url": "RABBITMQ_URL"
   },
   "elasticsearch": {
-    "host": "ELASTIC_PORT_9200_TCP_ADDR",
-    "port": "ELASTIC_PORT_9200_TCP_PORT"
+    "host": "ELASTIC_URI",
+    "user": "ELASTIC_USER",
+    "password": "ELASTIC_PASSWORD"
   },
   "service": {
     "port": "PORT"

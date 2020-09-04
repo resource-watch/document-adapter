@@ -18,7 +18,7 @@ let channel;
 nock.disableNetConnect();
 nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
 
-const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+const elasticUri = config.get('elasticsearch.host');
 
 describe('GET dataset fields', () => {
 

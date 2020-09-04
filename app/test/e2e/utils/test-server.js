@@ -16,7 +16,7 @@ exports.getTestServer = function getTestServer() {
         .post(`/api/v1/microservice`)
         .reply(200);
 
-    const elasticUri = process.env.ELASTIC_URI || `${config.get('elasticsearch.host')}:${config.get('elasticsearch.port')}`;
+    const elasticUri = config.get('elasticsearch.host');
 
     nock(elasticUri)
         .head('/')
