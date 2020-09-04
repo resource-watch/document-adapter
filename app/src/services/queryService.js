@@ -96,7 +96,7 @@ class QueryService {
         setInterval(() => {
             this.elasticClient.ping({}, (error) => {
                 if (error) {
-                    logger.error('Elasticsearch cluster is down!');
+                    logger.error(`Elasticsearch cluster is down! - ${error.message}`);
                     process.exit(1);
                 }
             });
