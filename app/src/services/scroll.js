@@ -34,7 +34,12 @@ class Scroll {
                     query: this.sql
                 }
             });
-            resultQueryElastic = translatedQuery.body;
+
+            if (typeof translatedQuery.body === 'string') {
+                resultQueryElastic = JSON.parse(translatedQuery.body);
+            } else {
+                resultQueryElastic = translatedQuery.body;
+            }
         } catch (e) {
             if (e.message.includes('index_out_of_bounds_exception')) {
                 throw new Error('Semantically invalid query', e);

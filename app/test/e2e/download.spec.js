@@ -282,7 +282,7 @@ describe('Dataset download tests', () => {
                         }
                     }
                 }
-            }, ['content-type', 'text/plain; charset=UTF-8']);
+            }, ['content-type', 'application/json; charset=UTF-8']);
 
         nock(elasticUri)
             .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
