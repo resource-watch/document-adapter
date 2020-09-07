@@ -105,7 +105,9 @@ describe('GET dataset fields', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: fieldsStructure
+                        _doc: {
+                            properties: fieldsStructure
+                        }
                     }
                 }
             });

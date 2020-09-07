@@ -89,44 +89,46 @@ describe('Dataset download tests', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            aboveground_biomass_loss__Mg: { type: 'float' },
-                            aboveground_co2_emissions__Mg: { type: 'float' },
-                            geostore__id: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            gfw_plantation__type: { type: 'long' },
-                            global_land_cover__class: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            intact_forest_landscape__year: { type: 'long' },
-                            is__alliance_for_zero_extinction_site: { type: 'boolean' },
-                            is__gfw_land_right: { type: 'boolean' },
-                            is__gfw_logging: { type: 'boolean' },
-                            is__gfw_mining: { type: 'boolean' },
-                            is__gfw_oil_palm: { type: 'boolean' },
-                            is__gfw_resource_right: { type: 'boolean' },
-                            is__gfw_wood_fiber: { type: 'boolean' },
-                            is__idn_forest_moratorium: { type: 'boolean' },
-                            is__key_biodiversity_area: { type: 'boolean' },
-                            is__landmark: { type: 'boolean' },
-                            is__mangroves_1996: { type: 'boolean' },
-                            is__mangroves_2016: { type: 'boolean' },
-                            is__peat_land: { type: 'boolean' },
-                            is__regional_primary_forest: { type: 'boolean' },
-                            is__tiger_conservation_landscape: { type: 'boolean' },
-                            tcs_driver__type: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            treecover_density__threshold: { type: 'long' },
-                            treecover_loss__ha: { type: 'float' },
-                            treecover_loss__year: { type: 'long' },
-                            wdpa_protected_area__iucn_cat: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                        _doc: {
+                            properties: {
+                                aboveground_biomass_loss__Mg: { type: 'float' },
+                                aboveground_co2_emissions__Mg: { type: 'float' },
+                                geostore__id: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                gfw_plantation__type: { type: 'long' },
+                                global_land_cover__class: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                intact_forest_landscape__year: { type: 'long' },
+                                is__alliance_for_zero_extinction_site: { type: 'boolean' },
+                                is__gfw_land_right: { type: 'boolean' },
+                                is__gfw_logging: { type: 'boolean' },
+                                is__gfw_mining: { type: 'boolean' },
+                                is__gfw_oil_palm: { type: 'boolean' },
+                                is__gfw_resource_right: { type: 'boolean' },
+                                is__gfw_wood_fiber: { type: 'boolean' },
+                                is__idn_forest_moratorium: { type: 'boolean' },
+                                is__key_biodiversity_area: { type: 'boolean' },
+                                is__landmark: { type: 'boolean' },
+                                is__mangroves_1996: { type: 'boolean' },
+                                is__mangroves_2016: { type: 'boolean' },
+                                is__peat_land: { type: 'boolean' },
+                                is__regional_primary_forest: { type: 'boolean' },
+                                is__tiger_conservation_landscape: { type: 'boolean' },
+                                tcs_driver__type: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                treecover_density__threshold: { type: 'long' },
+                                treecover_loss__ha: { type: 'float' },
+                                treecover_loss__year: { type: 'long' },
+                                wdpa_protected_area__iucn_cat: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                }
                             }
                         }
                     }
@@ -138,44 +140,46 @@ describe('Dataset download tests', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            aboveground_biomass_loss__Mg: { type: 'float' },
-                            aboveground_co2_emissions__Mg: { type: 'float' },
-                            geostore__id: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            gfw_plantation__type: { type: 'long' },
-                            global_land_cover__class: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            intact_forest_landscape__year: { type: 'long' },
-                            is__alliance_for_zero_extinction_site: { type: 'boolean' },
-                            is__gfw_land_right: { type: 'boolean' },
-                            is__gfw_logging: { type: 'boolean' },
-                            is__gfw_mining: { type: 'boolean' },
-                            is__gfw_oil_palm: { type: 'boolean' },
-                            is__gfw_resource_right: { type: 'boolean' },
-                            is__gfw_wood_fiber: { type: 'boolean' },
-                            is__idn_forest_moratorium: { type: 'boolean' },
-                            is__key_biodiversity_area: { type: 'boolean' },
-                            is__landmark: { type: 'boolean' },
-                            is__mangroves_1996: { type: 'boolean' },
-                            is__mangroves_2016: { type: 'boolean' },
-                            is__peat_land: { type: 'boolean' },
-                            is__regional_primary_forest: { type: 'boolean' },
-                            is__tiger_conservation_landscape: { type: 'boolean' },
-                            tcs_driver__type: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            treecover_density__threshold: { type: 'long' },
-                            treecover_loss__ha: { type: 'float' },
-                            treecover_loss__year: { type: 'long' },
-                            wdpa_protected_area__iucn_cat: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                        _doc: {
+                            properties: {
+                                aboveground_biomass_loss__Mg: { type: 'float' },
+                                aboveground_co2_emissions__Mg: { type: 'float' },
+                                geostore__id: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                gfw_plantation__type: { type: 'long' },
+                                global_land_cover__class: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                intact_forest_landscape__year: { type: 'long' },
+                                is__alliance_for_zero_extinction_site: { type: 'boolean' },
+                                is__gfw_land_right: { type: 'boolean' },
+                                is__gfw_logging: { type: 'boolean' },
+                                is__gfw_mining: { type: 'boolean' },
+                                is__gfw_oil_palm: { type: 'boolean' },
+                                is__gfw_resource_right: { type: 'boolean' },
+                                is__gfw_wood_fiber: { type: 'boolean' },
+                                is__idn_forest_moratorium: { type: 'boolean' },
+                                is__key_biodiversity_area: { type: 'boolean' },
+                                is__landmark: { type: 'boolean' },
+                                is__mangroves_1996: { type: 'boolean' },
+                                is__mangroves_2016: { type: 'boolean' },
+                                is__peat_land: { type: 'boolean' },
+                                is__regional_primary_forest: { type: 'boolean' },
+                                is__tiger_conservation_landscape: { type: 'boolean' },
+                                tcs_driver__type: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                treecover_density__threshold: { type: 'long' },
+                                treecover_loss__ha: { type: 'float' },
+                                treecover_loss__year: { type: 'long' },
+                                wdpa_protected_area__iucn_cat: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                }
                             }
                         }
                     }

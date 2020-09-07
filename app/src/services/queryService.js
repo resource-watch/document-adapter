@@ -306,7 +306,15 @@ class QueryService {
         logger.info('[QueryService - getMapping] Obtaining mapping...');
 
         const mappingResponse = await this.elasticClient.indices.getMapping({ index });
-        return mappingResponse.body[index].mappings.properties;
+        const mappingRoot = mappingResponse.body[index].mappings;
+
+        // ES7 support
+        if (Object.prototype.hasOwnProperty.call(mappingRoot, 'properties')) {
+            return mappingRoot.properties;
+        }
+
+        // ES6/5 support
+        return mappingRoot[Object.keys(mappingRoot)[0]].properties;
     }
 
 }

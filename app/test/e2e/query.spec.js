@@ -102,15 +102,17 @@ describe('Query datasets - Simple queries', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            adm1: { type: 'long' },
-                            adm2: { type: 'long' },
-                            area: { type: 'float' },
-                            iso: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            thresh: { type: 'long' }
+                        _doc: {
+                            properties: {
+                                adm1: { type: 'long' },
+                                adm2: { type: 'long' },
+                                area: { type: 'float' },
+                                iso: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                thresh: { type: 'long' }
+                            }
                         }
                     }
                 }
@@ -300,15 +302,17 @@ describe('Query datasets - Simple queries', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            adm1: { type: 'long' },
-                            adm2: { type: 'long' },
-                            area: { type: 'float' },
-                            iso: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            thresh: { type: 'long' }
+                        _doc: {
+                            properties: {
+                                adm1: { type: 'long' },
+                                adm2: { type: 'long' },
+                                area: { type: 'float' },
+                                iso: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                thresh: { type: 'long' }
+                            }
                         }
                     }
                 }
@@ -473,38 +477,40 @@ describe('Query datasets - Simple queries', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            adm1: { type: 'long' },
-                            adm2: { type: 'long' },
-                            area_admin: { type: 'float' },
-                            area_extent: { type: 'float' },
-                            area_extent_2000: { type: 'float' },
-                            area_gain: { type: 'float' },
-                            area_poly_aoi: { type: 'float' },
-                            bound1: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            bound2: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            bound3: { type: 'long' },
-                            bound4: { type: 'long' },
-                            iso: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            polyname: {
-                                type: 'text',
-                                fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                            },
-                            thresh: { type: 'long' },
-                            year_data: {
-                                properties: {
-                                    area_loss: { type: 'long' },
-                                    emissions: { type: 'long' },
-                                    year: { type: 'long' }
+                        _doc: {
+                            properties: {
+                                adm1: { type: 'long' },
+                                adm2: { type: 'long' },
+                                area_admin: { type: 'float' },
+                                area_extent: { type: 'float' },
+                                area_extent_2000: { type: 'float' },
+                                area_gain: { type: 'float' },
+                                area_poly_aoi: { type: 'float' },
+                                bound1: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                bound2: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                bound3: { type: 'long' },
+                                bound4: { type: 'long' },
+                                iso: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                polyname: {
+                                    type: 'text',
+                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                                },
+                                thresh: { type: 'long' },
+                                year_data: {
+                                    properties: {
+                                        area_loss: { type: 'long' },
+                                        emissions: { type: 'long' },
+                                        year: { type: 'long' }
+                                    }
                                 }
                             }
                         }
@@ -719,24 +725,26 @@ describe('Query datasets - Simple queries', () => {
             .reply(200, {
                 index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
                     mappings: {
-                        properties: {
-                            A1B_2040s: {
-                                type: 'double'
-                            },
-                            A1B_2080s: {
-                                type: 'double'
-                            },
-                            historical: {
-                                type: 'long'
-                            },
-                            month: {
-                                type: 'string'
-                            },
-                            numeric_m: {
-                                type: 'long'
-                            },
-                            streamflow: {
-                                type: 'string'
+                        _doc: {
+                            properties: {
+                                A1B_2040s: {
+                                    type: 'double'
+                                },
+                                A1B_2080s: {
+                                    type: 'double'
+                                },
+                                historical: {
+                                    type: 'long'
+                                },
+                                month: {
+                                    type: 'string'
+                                },
+                                numeric_m: {
+                                    type: 'long'
+                                },
+                                streamflow: {
+                                    type: 'string'
+                                }
                             }
                         }
                     }
