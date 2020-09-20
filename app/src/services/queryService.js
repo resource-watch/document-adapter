@@ -227,7 +227,7 @@ class QueryService {
             }
 
             if (!parsed.limit) {
-                parsed.limit = 9999999; // in group by is need it because elastic has a 10000 limit by default
+                parsed.limit = 999999999; // in group by is need it because elastic has a 10000 limit by default
             }
         }
         if (parsed.select) {

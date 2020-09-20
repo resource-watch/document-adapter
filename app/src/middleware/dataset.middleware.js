@@ -18,7 +18,11 @@ class DatasetMiddleware {
         }
 
         if (dataset.attributes.connectorType !== 'document') {
-            ctx.throw(422, 'This operation is only supported for datasets with type \'document\'');
+            ctx.throw(422, 'This operation is only supported for datasets with connectorType \'document\'');
+        }
+
+        if (!['json', 'csv', 'tsv', 'xml'].includes(dataset.attributes.provider)) {
+            ctx.throw(422, 'This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
         }
 
         ctx.request.body.dataset = {

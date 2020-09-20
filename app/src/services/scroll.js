@@ -48,8 +48,30 @@ class Scroll {
             throw e;
         }
 
+        if (this.parsed.group) {
+            logger.debug('Config size of aggregations');
+            let aggregations = { resultQueryElastic };
+            while (aggregations) {
+                const keys = Object.keys(aggregations);
+                if (keys.length === 1) {
+                    if (aggregations[keys[0]] && aggregations[keys[0]].terms) {
+                        aggregations[keys[0]].terms.size = this.parsed.limit || 999999;
+                        // eslint-disable-next-line prefer-destructuring
+                        aggregations = aggregations[keys[0]].aggregations;
+                    } else if (keys[0].indexOf('NESTED') >= -1) {
+                        // eslint-disable-next-line prefer-destructuring
+                        aggregations = aggregations[keys[0]].aggregations;
+                    } else {
+                        aggregations = null;
+                    }
+                } else {
+                    aggregations = null;
+                }
+            }
+        }
+
         this.limit = -1;
-        if (this.sql.toLowerCase().indexOf('limit') >= 0) {
+        if (this.sql.toLowerCase().indexOf('limit') >= 0 && resultQueryElastic.size !== 0) {
             this.limit = resultQueryElastic.size;
         }
 

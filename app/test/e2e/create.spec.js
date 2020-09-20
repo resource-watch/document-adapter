@@ -15,7 +15,7 @@ let rabbitmqConnection = null;
 let channel;
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Dataset create tests', () => {
 
@@ -67,10 +67,10 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
         const connector = {
-            id: timestamp,
-            name: `Carto DB Dataset - ${timestamp}`,
+            id: datasetId,
+            name: `Carto DB Dataset - ${datasetId}`,
             application: ['rw'],
             connectorType: 'rest',
             env: 'production',
@@ -114,10 +114,10 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
         const connector = {
-            id: timestamp,
-            name: `JSON Dataset - ${timestamp}`,
+            id: datasetId,
+            name: `JSON Dataset - ${datasetId}`,
             application: ['rw'],
             connectorType: 'rest',
             env: 'production',
@@ -161,10 +161,10 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
         const connector = {
-            id: timestamp,
-            name: `Carto DB Dataset - ${timestamp}`,
+            id: datasetId,
+            name: `Carto DB Dataset - ${datasetId}`,
             application: ['rw'],
             connectorType: 'rest',
             env: 'production',
