@@ -167,7 +167,8 @@ const checkPermissionModify = async (ctx, next) => {
         ctx.throw(400, 'Dataset not found');
     }
     if (checkUserHasPermission(user, dataset)) {
-        if (dataset.overwrite) {
+        // eslint-disable-next-line no-underscore-dangle
+        if (dataset.overwrite || (ctx._matchedRoute === '/document/:dataset/reindex' && user.role === 'ADMIN')) {
             await next();
             return;
         }

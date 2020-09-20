@@ -203,6 +203,49 @@ describe('Dataset reindex tests', () => {
         });
     });
 
+    it('Reindex a dataset with overwrite=false by an ADMIN should be successful (happy case)', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { overwrite: false });
+
+        const postBody = {
+            data: [{ data: 'value' }],
+            dataPath: 'new data path',
+            provider: 'csv',
+            loggedUser: ROLES.ADMIN
+        };
+        const response = await requester
+            .post(`/api/v1/document/${datasetId}/reindex`)
+            .send(postBody);
+
+        response.status.should.equal(200);
+
+        let expectedStatusQueueMessageCount = 1;
+
+        const validateStatusQueueMessages = (resolve) => async (msg) => {
+            const content = JSON.parse(msg.content.toString());
+
+            content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_REINDEX);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
+            content.should.have.property('provider').and.equal('csv');
+            content.should.have.property('id');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('legend').and.deep.equal({});
+            content.should.have.property('provider').and.equal('csv');
+            await channel.ack(msg);
+
+            expectedStatusQueueMessageCount -= 1;
+
+            if (expectedStatusQueueMessageCount === 0) {
+                resolve();
+            }
+        };
+
+        return new Promise((resolve) => {
+            channel.consume(config.get('queues.tasks'), validateStatusQueueMessages(resolve));
+        });
+    });
+
     afterEach(async () => {
         await channel.assertQueue(config.get('queues.tasks'));
         const tasksQueueStatus = await channel.checkQueue(config.get('queues.tasks'));
