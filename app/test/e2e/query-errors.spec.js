@@ -8,7 +8,7 @@ chai.should();
 const requester = getTestServer();
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Query datasets - Errors', () => {
 
@@ -19,19 +19,19 @@ describe('Query datasets - Errors', () => {
     });
 
     it('Invalid query to dataset should return meaningful error message and error code', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `potato ${timestamp}`;
+        const query = `potato ${datasetId}`;
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
-            .query({ sql: `potato ${timestamp}` })
+            .query({ sql: `potato ${datasetId}` })
             .reply(400, { errors: [{ status: 400, detail: 'Malformed query' }] }, ['Vary',
                 'Origin',
                 'Content-Type',
@@ -46,7 +46,7 @@ describe('Query datasets - Errors', () => {
                 'close']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(400);
@@ -55,15 +55,15 @@ describe('Query datasets - Errors', () => {
     });
 
     it('Query with invalid function call should return meaningful error message and error code', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `queryResponse.body.errors[0] ${timestamp}`;
+        const query = `queryResponse.body.errors[0] ${datasetId}`;
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
@@ -78,7 +78,7 @@ describe('Query datasets - Errors', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(400);

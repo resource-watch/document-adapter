@@ -1,18 +1,17 @@
 /* eslint-disable max-len */
 const nock = require('nock');
-const config = require('config');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset } = require('./utils/helpers');
+const {
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData
+} = require('./utils/helpers');
 
 chai.should();
 
 const requester = getTestServer();
 
-const elasticUri = config.get('elasticsearch.host');
-
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Query datasets - Simple queries', () => {
 
@@ -22,50 +21,70 @@ describe('Query datasets - Simple queries', () => {
         }
     });
 
-    it('Basic query to dataset should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+    beforeEach(async () => {
+        await deleteTestIndeces();
+    });
 
-        createMockGetDataset(timestamp);
+    it('Query to dataset without connectorType document should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { connectorType: 'foo' });
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `select * from ${timestamp}`;
+        const query = `select * from ${datasetId}`;
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with connectorType \'document\'');
+    });
+
+    it('Query to dataset without a supported provider should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { provider: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+    });
+
+    it('Basic query to dataset should be successful (happy case)', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId);
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
 
         const results = [
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'kDZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'USA', adm1: 27, adm2: 1641, area: 41420.47960515353
-                }
+                thresh: 75, iso: 'USA', adm1: 27, adm2: 1641, area: 41420.47960515353
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'mzZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
-                }
+                thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'nDZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
-                }
+                thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'oTZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'COL', adm1: 30, adm2: 1017, area: 128570.48945388374
-                }
+                thresh: 75, iso: 'COL', adm1: 30, adm2: 1017, area: 128570.48945388374
             }
         ];
 
@@ -81,7 +100,7 @@ describe('Query datasets - Simple queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: `SELECT * FROM ${timestamp}`,
+                        query: `SELECT * FROM ${datasetId}`,
                         jsonSql: {
                             select: [
                                 {
@@ -90,105 +109,36 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'wildcard'
                                 }
                             ],
-                            from: timestamp
+                            from: datasetId
                         }
                     },
                     relationships: {}
                 }
             });
 
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area: { type: 'float' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '271']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, { from: 0, size: 200 }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '21']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 0,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                adm1: { type: 'long' },
+                adm2: { type: 'long' },
+                area: { type: 'float' },
+                iso: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 },
-                hits: {
-                    total: 16384,
-                    max_score: 1,
-                    hits: [results[0], results[1]]
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '792']);
+                thresh: { type: 'long' }
+            }
+        );
 
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 1,
-                timed_out: false,
-                terminated_early: true,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: {
-                    total: 16384,
-                    max_score: 1,
-                    hits: [results[2], results[3]]
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '817']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 1,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: { total: 16384, max_score: 1, hits: [] }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '381']);
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            results
+        );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -197,57 +147,38 @@ describe('Query datasets - Simple queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
-        // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
+        const resultList = queryResponse.body.data.map((elem) => ({
+            thresh: elem.thresh,
+            iso: elem.iso,
+            adm1: elem.adm1,
+            adm2: elem.adm2,
+            area: elem.area
+        }));
 
-        queryResponse.body.data.should.deep.equal(resultList);
+        resultList.should.deep.equal(results);
 
     });
 
     it('Query with special characters to dataset should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `SELECT * FROM ${timestamp} WHERE foo LIKE '%bar%'`;
+        const query = `SELECT * FROM ${datasetId} WHERE iso = 'US&%'`;
 
         const results = [
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'kDZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'USA', adm1: 27, adm2: 1641, area: 41420.47960515353
-                }
+                thresh: 75, iso: 'US&%', adm1: 27, adm2: 1641, area: 41420.47960515353
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'mzZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
-                }
+                thresh: 75, iso: 'BRA', adm1: 12, adm2: 1450, area: 315602.3928570104
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'nDZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
-                }
+                thresh: 75, iso: 'RUS', adm1: 35, adm2: 925, area: 1137359.9711284428
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'oTZb1mUBbvDJlUQCLHRu',
-                _score: 1,
-                _source: {
-                    thresh: 75, iso: 'COL', adm1: 30, adm2: 1017, area: 128570.48945388374
-                }
+                thresh: 75, iso: 'COL', adm1: 30, adm2: 1017, area: 128570.48945388374
             }
         ];
 
@@ -272,20 +203,20 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'wildcard'
                                 }
                             ],
-                            from: timestamp,
+                            from: datasetId,
                             where: [
                                 {
                                     type: 'operator',
-                                    value: 'LIKE',
+                                    value: '=',
                                     left: [
                                         {
-                                            value: 'foo',
+                                            value: 'iso',
                                             type: 'literal'
                                         }
                                     ],
                                     right: [
                                         {
-                                            value: '%bar%',
+                                            value: 'US&%',
                                             type: 'string'
                                         }
                                     ]
@@ -297,151 +228,140 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area: { type: 'float' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '271']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, { from: 0, size: 200 }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '21']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 0,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                adm1: { type: 'long' },
+                adm2: { type: 'long' },
+                area: { type: 'float' },
+                iso: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 },
-                hits: {
-                    total: 16384,
-                    max_score: 1,
-                    hits: [results[0], results[1]]
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '792']);
+                thresh: { type: 'long' }
+            }
+        );
 
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 1,
-                timed_out: false,
-                terminated_early: true,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: {
-                    total: 16384,
-                    max_score: 1,
-                    hits: [results[2], results[3]]
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '817']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAADJFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAyxZhbkhuZlNJRFFSMm1YWUlZdldQZDZnAAAAAAAAAMoWYW5IbmZTSURRUjJtWFlJWXZXUGQ2ZwAAAAAAAADMFmFuSG5mU0lEUVIybVhZSVl2V1BkNmcAAAAAAAAAzRZhbkhuZlNJRFFSMm1YWUlZdldQZDZn',
-                took: 1,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: { total: 16384, max_score: 1, hits: [] }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '381']);
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            results
+        );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${datasetId}`)
+            .query({
+                sql: query
+            })
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
         queryResponse.body.should.have.property('data').and.be.an('array');
         queryResponse.body.should.have.property('meta').and.be.an('object');
 
-        queryResponse.body.data.should.have.lengthOf(results.length);
+        queryResponse.body.data.should.have.lengthOf(1);
 
-        // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
+        delete queryResponse.body.data[0]._id;
 
-        queryResponse.body.data.should.deep.equal(resultList);
-
+        queryResponse.body.data[0].should.deep.equal({
+            thresh: 75, iso: 'US&%', adm1: 27, adm2: 1641, area: 41420.47960515353
+        });
     });
 
     it('Query with alias (x AS y) in SELECT clause should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `SELECT year_data.year AS year FROM ${timestamp}'`;
+        const query = `SELECT year_data.year AS year FROM ${datasetId}'`;
 
         const results = [
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AWi9IfXGQ5uNBZJIvxAi',
-                _score: 1,
-                _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
+                year_data: [
+                    { year: 2001 },
+                    { year: 2002 },
+                    { year: 2003 },
+                    { year: 2004 },
+                    { year: 2005 },
+                    { year: 2006 },
+                    { year: 2007 },
+                    { year: 2008 },
+                    { year: 2009 },
+                    { year: 2010 },
+                    { year: 2011 },
+                    { year: 2012 },
+                    { year: 2013 },
+                    { year: 2014 },
+                    { year: 2015 },
+                    { year: 2016 },
+                    { year: 2017 }
+                ]
             }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AWi9IfXGQ5uNBZJIvxAj',
-                _score: 1,
-                _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
-            }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AWi9IfXGQ5uNBZJIvxAl',
-                _score: 1,
-                _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
-            }, {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AWi9IfXGQ5uNBZJIvxAq',
-                _score: 1,
-                _source: { year_data: [{ year: 2001 }, { year: 2002 }, { year: 2003 }, { year: 2004 }, { year: 2005 }, { year: 2006 }, { year: 2007 }, { year: 2008 }, { year: 2009 }, { year: 2010 }, { year: 2011 }, { year: 2012 }, { year: 2013 }, { year: 2014 }, { year: 2015 }, { year: 2016 }, { year: 2017 }] }
+                year_data: [
+                    { year: 2001 },
+                    { year: 2002 },
+                    { year: 2003 },
+                    { year: 2004 },
+                    { year: 2005 },
+                    { year: 2006 },
+                    { year: 2007 },
+                    { year: 2008 },
+                    { year: 2009 },
+                    { year: 2010 },
+                    { year: 2011 },
+                    { year: 2012 },
+                    { year: 2013 },
+                    { year: 2014 },
+                    { year: 2015 },
+                    { year: 2016 },
+                    { year: 2017 }
+                ]
+            },
+            {
+                year_data: [
+                    { year: 2001 },
+                    { year: 2002 },
+                    { year: 2003 },
+                    { year: 2004 },
+                    { year: 2005 },
+                    { year: 2006 },
+                    { year: 2007 },
+                    { year: 2008 },
+                    { year: 2009 },
+                    { year: 2010 },
+                    { year: 2011 },
+                    { year: 2012 },
+                    { year: 2013 },
+                    { year: 2014 },
+                    { year: 2015 },
+                    { year: 2016 },
+                    { year: 2017 }
+                ]
             }
         ];
+
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                year_data: {
+                    properties: {
+                        year: { type: 'long' }
+                    }
+                }
+            }
+        );
+
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            results
+        );
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
@@ -451,7 +371,7 @@ describe('Query datasets - Simple queries', () => {
                     type: 'result',
                     id: 'undefined',
                     attributes: {
-                        query: 'SELECT year_data.year AS year FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+                        query: 'SELECT year_data.year AS year FROM test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                         jsonSql: {
                             select: [
                                 {
@@ -465,117 +385,15 @@ describe('Query datasets - Simple queries', () => {
                                     alias: 'year',
                                     type: 'literal'
                                 }],
-                            from: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489'
+                            from: 'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489'
                         }
                     },
                     relationships: {}
                 }
             });
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                adm1: { type: 'long' },
-                                adm2: { type: 'long' },
-                                area_admin: { type: 'float' },
-                                area_extent: { type: 'float' },
-                                area_extent_2000: { type: 'float' },
-                                area_gain: { type: 'float' },
-                                area_poly_aoi: { type: 'float' },
-                                bound1: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                bound2: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                bound3: { type: 'long' },
-                                bound4: { type: 'long' },
-                                iso: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                polyname: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                thresh: { type: 'long' },
-                                year_data: {
-                                    properties: {
-                                        area_loss: { type: 'long' },
-                                        emissions: { type: 'long' },
-                                        year: { type: 'long' }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        nock(elasticUri)
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, {
-                from: 0,
-                size: 200,
-                _source: { includes: ['year_data.year'], excludes: [] }
-            }, ['content-type', 'application/json; charset=UTF-8']);
-
-        nock(elasticUri)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
-                took: 2,
-                timed_out: false,
-                _shards: { total: 5, successful: 5, failed: 0 },
-                hits: {
-                    total: 99,
-                    max_score: 1,
-                    hits: [results[0], results[1]]
-                }
-            });
-
-        nock(elasticUri)
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
-                took: 1,
-                timed_out: false,
-                terminated_early: true,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: {
-                    total: 16384,
-                    max_score: 1,
-                    hits: [results[2], results[3]]
-                }
-            });
-
-        nock(elasticUri)
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAABRFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAUhYyUlRYeEl0dFNBNjhfNXZiUk8yMndRAAAAAAAAAFMWMlJUWHhJdHRTQTY4XzV2YlJPMjJ3UQAAAAAAAABUFjJSVFh4SXR0U0E2OF81dmJSTzIyd1EAAAAAAAAAVRYyUlRYeEl0dFNBNjhfNXZiUk8yMndR',
-                took: 1,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: { total: 16384, max_score: 1, hits: [] }
-            });
-
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -584,82 +402,84 @@ describe('Query datasets - Simple queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
-        // eslint-disable-next-line no-underscore-dangle
-        const resultList = results.map((elem) => ({ _id: elem._id, ...elem._source }));
+        const responseResults = queryResponse.body.data.map((e) => ({
+            year_data: e.year_data
+        }));
 
-        queryResponse.body.data.should.deep.equal(resultList);
-
+        responseResults.should.deep.equal(results);
     });
 
     it('Query with order by mapping from Elasticsearch should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `select numeric_m as x, A1B_2080s as y, month as z from ${timestamp} where streamflow='Snohomish' order by numeric_m ASC'`;
+        const query = `SELECT numeric_m as x, A1B_2080s as y, month as z from ${datasetId} where streamflow = 'Snohomish' order by numeric_m ASC`;
 
         const results = [
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AXDtQNBj5xxOSI2DEp2n',
-                _score: null,
-                _source: {
-                    numeric_m: 1,
-                    month: 'Oct',
-                    A1B_2080s: 6933.430769
-                },
-                sort: [
-                    1
-                ]
+                numeric_m: 1,
+                month: 'Oct',
+                A1B_2080s: 6933.430769
             },
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AXDtQNBj5xxOSI2DEp2o',
-                _score: null,
-                _source: {
-                    numeric_m: 2,
-                    month: 'Nov',
-                    A1B_2080s: 15743.70549
-                },
-                sort: [
-                    2
-                ]
+                numeric_m: 2,
+                month: 'Nov',
+                A1B_2080s: 15743.70549
             },
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AXDtQNBj5xxOSI2DEp2p',
-                _score: null,
-                _source: {
-                    numeric_m: 3,
-                    month: 'Dec',
-                    A1B_2080s: 20168.46484
-                },
-                sort: [
-                    3
-                ]
+                numeric_m: 3,
+                month: 'Dec',
+                A1B_2080s: 20168.46484
             },
             {
-                _index: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-                _type: 'type',
-                _id: 'AXDtQNBj5xxOSI2DEp2q',
-                _score: null,
-                _source: {
-                    numeric_m: 4,
-                    month: 'Jan',
-                    A1B_2080s: 19139.62198
-                },
-                sort: [
-                    4
-                ]
+                numeric_m: 4,
+                month: 'Jan',
+                A1B_2080s: 19139.62198
             }
         ];
+
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                A1B_2040s: {
+                    type: 'double'
+                },
+                A1B_2080s: {
+                    type: 'double'
+                },
+                historical: {
+                    type: 'long'
+                },
+                month: {
+                    type: 'text'
+                },
+                numeric_m: {
+                    type: 'long'
+                },
+                streamflow: {
+                    type: 'keyword'
+                }
+            }
+        );
+
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            results.map((elem, index) => ({
+                A1B_2040s: 123.456,
+                A1B_2080s: elem.A1B_2080s,
+                historical: 2345678,
+                month: elem.month,
+                numeric_m: index + 1,
+                streamflow: 'Snohomish'
+            }))
+        );
 
         nock(process.env.CT_URL)
             .get('/v1/convert/sql2SQL')
@@ -668,7 +488,7 @@ describe('Query datasets - Simple queries', () => {
                 data: {
                     type: 'result',
                     attributes: {
-                        query: 'SELECT numeric_m AS x, A1B_2080s AS y, month AS z FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC',
+                        query: 'SELECT numeric_m AS x, A1B_2080s AS y, month AS z FROM test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE streamflow = \'Snohomish\' ORDER BY numeric_m ASC',
                         jsonSql: {
                             select: [
                                 {
@@ -687,7 +507,7 @@ describe('Query datasets - Simple queries', () => {
                                     type: 'literal'
                                 }
                             ],
-                            from: 'index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+                            from: 'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
                             where: [
                                 {
                                     type: 'operator',
@@ -719,141 +539,11 @@ describe('Query datasets - Simple queries', () => {
                 }
             });
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .twice()
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                A1B_2040s: {
-                                    type: 'double'
-                                },
-                                A1B_2080s: {
-                                    type: 'double'
-                                },
-                                historical: {
-                                    type: 'long'
-                                },
-                                month: {
-                                    type: 'string'
-                                },
-                                numeric_m: {
-                                    type: 'long'
-                                },
-                                streamflow: {
-                                    type: 'string'
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        nock(elasticUri)
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, {
-                from: 0,
-                size: 9999999,
-                query: {
-                    bool: {
-                        filter: [
-                            {
-                                bool: {
-                                    must: [
-                                        {
-                                            match_phrase: {
-                                                streamflow: {
-                                                    query: 'Snohomish',
-                                                    slop: 0,
-                                                    boost: 1.0
-                                                }
-                                            }
-                                        }
-                                    ],
-                                    disable_coord: false,
-                                    adjust_pure_negative: true,
-                                    boost: 1.0
-                                }
-                            }
-                        ],
-                        disable_coord: false,
-                        adjust_pure_negative: true,
-                        boost: 1.0
-                    }
-                },
-                _source: {
-                    includes: [
-                        'numeric_m',
-                        'A1B_2080s',
-                        'month'
-                    ],
-                    excludes: []
-                },
-                sort: [
-                    {
-                        numeric_m: {
-                            order: 'asc'
-                        }
-                    }
-                ]
-            }, ['content-type', 'application/json; charset=UTF-8']);
-
-        nock(elasticUri)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
-                took: 1,
-                timed_out: false,
-                _shards: {
-                    total: 3,
-                    successful: 3,
-                    failed: 0
-                },
-                hits: {
-                    total: 4,
-                    max_score: null,
-                    hits: [results[0], results[1]]
-                }
-            });
-
-        nock(elasticUri)
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw%3D%3D')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
-                took: 1,
-                timed_out: false,
-                terminated_early: true,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: {
-                    total: 4,
-                    max_score: 1,
-                    hits: [results[2], results[3]]
-                }
-            });
-
-        nock(elasticUri)
-            .get('/_search/scroll/DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw%3D%3D')
-            .times(1)
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAAbFlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAGRZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAABoWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
-                took: 1,
-                timed_out: false,
-                _shards: {
-                    total: 5, successful: 5, skipped: 0, failed: 0
-                },
-                hits: { total: 4, max_score: 1, hits: [] }
-            });
-
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${datasetId}`)
+            .query({
+                sql: query
+            })
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -867,7 +557,6 @@ describe('Query datasets - Simple queries', () => {
                 numeric_m: 1,
                 month: 'Oct',
                 A1B_2080s: 6933.430769,
-                _id: 'AXDtQNBj5xxOSI2DEp2n',
                 x: 1,
                 y: 6933.430769,
                 z: 'Oct'
@@ -876,7 +565,6 @@ describe('Query datasets - Simple queries', () => {
                 numeric_m: 2,
                 month: 'Nov',
                 A1B_2080s: 15743.70549,
-                _id: 'AXDtQNBj5xxOSI2DEp2o',
                 x: 2,
                 y: 15743.70549,
                 z: 'Nov'
@@ -885,7 +573,6 @@ describe('Query datasets - Simple queries', () => {
                 numeric_m: 3,
                 month: 'Dec',
                 A1B_2080s: 20168.46484,
-                _id: 'AXDtQNBj5xxOSI2DEp2p',
                 x: 3,
                 y: 20168.46484,
                 z: 'Dec'
@@ -894,18 +581,28 @@ describe('Query datasets - Simple queries', () => {
                 numeric_m: 4,
                 month: 'Jan',
                 A1B_2080s: 19139.62198,
-                _id: 'AXDtQNBj5xxOSI2DEp2q',
                 x: 4,
                 y: 19139.62198,
                 z: 'Jan'
             }
         ];
 
-        queryResponse.body.data.should.deep.equal(resultList);
+        const responseResults = queryResponse.body.data.map((e) => ({
+            numeric_m: e.numeric_m,
+            month: e.month,
+            A1B_2080s: e.A1B_2080s,
+            x: e.x,
+            y: e.y,
+            z: e.z,
+        }));
+
+        responseResults.should.deep.equal(resultList);
 
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await deleteTestIndeces();
+
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
             if (pendingMocks.length > 1) {

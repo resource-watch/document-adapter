@@ -1,88 +1,89 @@
 /* eslint-disable max-len */
 const nock = require('nock');
-const config = require('config');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset } = require('./utils/helpers');
+const {
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData
+} = require('./utils/helpers');
 
 chai.should();
 
 const requester = getTestServer();
 
-const elasticUri = config.get('elasticsearch.host');
-
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Query datasets - GROUP BY queries', () => {
 
     before(async () => {
+        await deleteTestIndeces();
+
         if (process.env.NODE_ENV !== 'test') {
             throw Error(`Running the test suite with NODE_ENV ${process.env.NODE_ENV} may result in permanent data loss. Please use NODE_ENV=test.`);
         }
     });
 
     it('Group by `column` query to dataset should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const requestBody = {
             loggedUser: null
         };
 
-        const query = `select * from ${timestamp} group by field`;
+        const query = `select COUNT(*) as count, iso as country_iso from ${datasetId} GROUP BY iso`;
 
         const results = [
-            { key: 'ARM', doc_count: 1 }, { key: 'AUS', doc_count: 1 }, {
-                key: 'AZE',
-                doc_count: 1
-            }, { key: 'BDI', doc_count: 1 }, { key: 'BIH', doc_count: 1 }, {
-                key: 'BOL',
-                doc_count: 1
-            }, { key: 'BRA', doc_count: 1 }, { key: 'BTN', doc_count: 1 }, {
-                key: 'CAN',
-                doc_count: 1
-            }, { key: 'CHE', doc_count: 1 }, { key: 'CHN', doc_count: 1 }, {
-                key: 'CIV',
-                doc_count: 1
-            }, { key: 'CMR', doc_count: 1 }, { key: 'CRI', doc_count: 1 }, {
-                key: 'ECU',
-                doc_count: 1
-            }, { key: 'GNB', doc_count: 1 }, { key: 'GRD', doc_count: 1 }, {
-                key: 'HTI',
-                doc_count: 1
-            }, { key: 'IDN', doc_count: 1 }, { key: 'IRQ', doc_count: 1 }, {
-                key: 'KAZ',
-                doc_count: 1
-            }, { key: 'KGZ', doc_count: 1 }, { key: 'KNA', doc_count: 1 }, {
-                key: 'LBN',
-                doc_count: 1
-            }, { key: 'LIE', doc_count: 1 }, { key: 'LSO', doc_count: 1 }, {
-                key: 'MAR',
-                doc_count: 1
-            }, { key: 'MEX', doc_count: 1 }, { key: 'MMR', doc_count: 1 }, {
-                key: 'MOZ',
-                doc_count: 1
-            }, { key: 'MUS', doc_count: 1 }, { key: 'NER', doc_count: 1 }, {
-                key: 'NGA',
-                doc_count: 1
-            }, { key: 'NZL', doc_count: 1 }, { key: 'PER', doc_count: 1 }, {
-                key: 'PNG',
-                doc_count: 1
-            }, { key: 'PRK', doc_count: 1 }, { key: 'PRY', doc_count: 1 }, {
-                key: 'RUS',
-                doc_count: 1
-            }, { key: 'RWA', doc_count: 1 }, { key: 'SDN', doc_count: 1 }, {
-                key: 'SLE',
-                doc_count: 1
-            }, { key: 'SLV', doc_count: 1 }, { key: 'TGO', doc_count: 1 }, {
-                key: 'TJK',
-                doc_count: 1
-            }, { key: 'UGA', doc_count: 1 }, { key: 'UKR', doc_count: 1 }, {
-                key: 'USA',
-                doc_count: 1
-            }, { key: 'VCT', doc_count: 1 }, { key: 'VNM', doc_count: 1 }, { key: 'YEM', doc_count: 1 }];
+            { country_iso: 'ARM', count: 1 }, { country_iso: 'AUS', count: 1 }, {
+                country_iso: 'AZE',
+                count: 1
+            }, { country_iso: 'BDI', count: 1 }, { country_iso: 'BIH', count: 1 }, {
+                country_iso: 'BOL',
+                count: 1
+            }, { country_iso: 'BRA', count: 1 }, { country_iso: 'BTN', count: 1 }, {
+                country_iso: 'CAN',
+                count: 1
+            }, { country_iso: 'CHE', count: 1 }, { country_iso: 'CHN', count: 1 }, {
+                country_iso: 'CIV',
+                count: 1
+            }, { country_iso: 'CMR', count: 1 }, { country_iso: 'CRI', count: 1 }, {
+                country_iso: 'ECU',
+                count: 1
+            }, { country_iso: 'GNB', count: 1 }, { country_iso: 'GRD', count: 1 }, {
+                country_iso: 'HTI',
+                count: 1
+            }, { country_iso: 'IDN', count: 1 }, { country_iso: 'IRQ', count: 1 }, {
+                country_iso: 'KAZ',
+                count: 1
+            }, { country_iso: 'KGZ', count: 1 }, { country_iso: 'KNA', count: 1 }, {
+                country_iso: 'LBN',
+                count: 1
+            }, { country_iso: 'LIE', count: 1 }, { country_iso: 'LSO', count: 1 }, {
+                country_iso: 'MAR',
+                count: 1
+            }, { country_iso: 'MEX', count: 1 }, { country_iso: 'MMR', count: 1 }, {
+                country_iso: 'MOZ',
+                count: 1
+            }, { country_iso: 'MUS', count: 1 }, { country_iso: 'NER', count: 1 }, {
+                country_iso: 'NGA',
+                count: 1
+            }, { country_iso: 'NZL', count: 1 }, { country_iso: 'PER', count: 1 }, {
+                country_iso: 'PNG',
+                count: 1
+            }, { country_iso: 'PRK', count: 1 }, { country_iso: 'PRY', count: 1 }, {
+                country_iso: 'RUS',
+                count: 1
+            }, { country_iso: 'RWA', count: 1 }, { country_iso: 'SDN', count: 1 }, {
+                country_iso: 'SLE',
+                count: 1
+            }, { country_iso: 'SLV', count: 1 }, { country_iso: 'TGO', count: 1 }, {
+                country_iso: 'TJK',
+                count: 1
+            }, { country_iso: 'UGA', count: 1 }, { country_iso: 'UKR', count: 1 }, {
+                country_iso: 'USA',
+                count: 1
+            }, { country_iso: 'VCT', count: 1 }, { country_iso: 'VNM', count: 1 }, { country_iso: 'YEM', count: 1 }];
 
         nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
@@ -94,161 +95,97 @@ describe('Query datasets - GROUP BY queries', () => {
                 status: 200,
                 data: {
                     type: 'result',
-                    id: 'undefined',
                     attributes: {
-                        query: `SELECT * FROM ${timestamp}`,
+                        query: `SELECT COUNT(*) AS count, iso AS country_iso FROM ${datasetId} GROUP BY iso`,
                         jsonSql: {
                             select: [
                                 {
-                                    value: '*',
-                                    alias: null,
-                                    type: 'wildcard'
+                                    type: 'function',
+                                    alias: 'count',
+                                    value: 'COUNT',
+                                    arguments: [
+                                        {
+                                            value: '*',
+                                            alias: null,
+                                            type: 'wildcard'
+                                        }
+                                    ]
+                                },
+                                {
+                                    value: 'iso',
+                                    alias: 'country_iso',
+                                    type: 'literal'
                                 }
                             ],
-                            from: timestamp,
+                            from: `${datasetId}`,
                             group: [
                                 {
                                     type: 'literal',
-                                    value: 'ISO'
+                                    value: 'iso'
                                 }
                             ]
                         }
-                    },
-                    relationships: {}
+                    }
                 }
             });
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'INDC-vs-NDC': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'economyWide-Target': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'economyWide-Target-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-GHG': { type: 'long' },
-                                'landUse-GHG-Description': { type: 'long' },
-                                'landUse-NonGHG': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-NonGHG-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landuse-excluded': { type: 'long' },
-                                'landuse-excluded-description': { type: 'long' }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '989']);
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                'INDC-vs-NDC': {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                iso: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
+                'economyWide-Target': {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                'economyWide-Target-Description': {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                'landUse-GHG': { type: 'long' },
+                'landUse-GHG-Description': { type: 'long' },
+                'landUse-NonGHG': {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                'landUse-NonGHG-Description': {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                'landuse-excluded': { type: 'long' },
+                'landuse-excluded-description': { type: 'long' }
+            }
+        );
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'INDC-vs-NDC': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                ISO: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                data_id: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
-                                'economyWide-Target': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'economyWide-Target-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-GHG': { type: 'long' },
-                                'landUse-GHG-Description': { type: 'long' },
-                                'landUse-NonGHG': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landUse-NonGHG-Description': {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                'landuse-excluded': { type: 'long' },
-                                'landuse-excluded-description': { type: 'long' }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '989']);
-
-        nock(elasticUri)
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, {
-                from: 0,
-                size: 0,
-                aggregations: {
-                    'ISO.keyword': {
-                        terms: {
-                            field: 'ISO.keyword',
-                            size: 9999999,
-                            min_doc_count: 1,
-                            shard_min_doc_count: 0,
-                            show_term_doc_count_error: false,
-                            order: [{ _count: 'desc' }, { _term: 'asc' }]
-                        }
-                    }
-                }
-            }, ['content-type',
-                'text/plain; charset=UTF-8',
-                'content-length',
-                '415']);
-
-        nock(elasticUri)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAMFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAACxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3AAAAAAAAAA0WSXVZdkNZQl9Tdm1FSjk5VnA4RVo2dwAAAAAAAAAOFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAADxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3',
-                took: 5,
-                timed_out: false,
-                _shards: { total: 5, successful: 5, failed: 0 },
-                hits: { total: 51, max_score: 0, hits: [] },
-                aggregations: {
-                    'ISO.keyword': {
-                        doc_count_error_upper_bound: 0,
-                        sum_other_doc_count: 0,
-                        buckets: results
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '1895']);
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            results.map(
+                (e) => ({
+                    Country: e.country_iso,
+                    'INDC-vs-NDC': 'string',
+                    iso: e.country_iso,
+                    data_id: 'string',
+                    'economyWide-Target': 'string',
+                    'economyWide-Target-Description': 'string',
+                    'landUse-GHG': 1,
+                    'landUse-GHG-Description': 1,
+                    'landUse-NonGHG': 'string',
+                    'landUse-NonGHG-Description': 'string',
+                    'landuse-excluded': 1,
+                    'landuse-excluded-description': 1
+                })
+            )
+        );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -257,21 +194,15 @@ describe('Query datasets - GROUP BY queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(results.length);
 
-        const resultList = results.map((elem) => ({ ISO: elem.key }));
-
-        queryResponse.body.data.should.deep.equal(resultList);
+        queryResponse.body.data.should.deep.equal(results.map((e) => ({ iso: e.country_iso, ...e })));
     });
 
     it('Group by date part query to dataset should be successful', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
-        const requestBody = {
-            loggedUser: null
-        };
-
-        const query = `select createdAt from ${timestamp} group by date_histogram('field'="createdAt",'interval'='1d')`;
+        const query = `select createdAt from ${datasetId} group by date_histogram('field'="createdAt",'interval'='1d')`;
 
         const results = [
             {
@@ -314,184 +245,96 @@ describe('Query datasets - GROUP BY queries', () => {
             .reply(200, {
                 data: {
                     type: 'result',
-                    id: 'undefined',
                     attributes: {
-                        query: `SELECT createdAt FROM ${timestamp} GROUP BY date_histogram( 'field'="createdAt", 'interval'='1d')`,
+                        query: `SELECT createdAt FROM ${datasetId} GROUP BY date_histogram('field'="createdAt", 'interval'='1d')`,
                         jsonSql: {
-                            select: [{ value: 'createdAt', alias: null, type: 'literal' }],
-                            from: timestamp,
-                            group: [{
-                                type: 'function',
-                                alias: null,
-                                value: 'date_histogram',
-                                arguments: [{
-                                    name: 'field',
-                                    type: 'literal',
-                                    value: 'createdAt'
-                                }, { name: 'interval', type: 'string', value: '1d' }]
-                            }]
-                        }
-                    },
-                    relationships: {}
-                }
-            }, ['Vary',
-                'Origin',
-                'Content-Type',
-                'application/vnd.api+json',
-                'X-Response-Time',
-                '17 ms',
-                'Content-Length',
-                '517',
-                'Date',
-                'Tue, 25 Sep 2018 06:32:01 GMT',
-                'Connection',
-                'close']);
-
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                createdAt: { type: 'date' },
-                                profilePictureUrl: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                screenName: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                text: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            select: [
+                                {
+                                    value: 'createdAt',
+                                    alias: null,
+                                    type: 'literal'
                                 }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '388']);
-
-        nock(elasticUri, { encodedQueryParams: true })
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                createdAt: { type: 'date' },
-                                profilePictureUrl: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                screenName: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                text: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                            ],
+                            from: 'foo',
+                            group: [
+                                {
+                                    type: 'function',
+                                    alias: null,
+                                    value: 'date_histogram',
+                                    arguments: [
+                                        {
+                                            name: 'field',
+                                            type: 'literal',
+                                            value: 'createdAt'
+                                        },
+                                        {
+                                            name: 'interval',
+                                            type: 'string',
+                                            value: '1d'
+                                        }
+                                    ]
                                 }
-                            }
+                            ]
                         }
                     }
                 }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '388']);
+            });
 
-        nock(elasticUri)
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, {
-                from: 0,
-                size: 0,
-                _source: { includes: ['createdAt'], excludes: [] },
-                stored_fields: 'createdAt',
-                aggregations: {
-                    'date_histogram(field=createdAt,interval=1d)': {
-                        date_histogram: {
-                            field: 'createdAt',
-                            format: 'yyyy-MM-dd HH:mm:ss',
-                            interval: '1d',
-                            offset: 0,
-                            order: { _key: 'asc' },
-                            keyed: false,
-                            min_doc_count: 0
-                        }
-                    }
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                createdAt: { type: 'date' },
+                profilePictureUrl: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                screenName: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                text: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 }
-            }, ['content-type',
-                'text/plain; charset=UTF-8',
-                'content-length',
-                '501']);
+            }
+        );
 
-        nock(elasticUri, { encodedQueryParams: true })
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search')
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAAVFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAAFxZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3AAAAAAAAABYWSXVZdkNZQl9Tdm1FSjk5VnA4RVo2dwAAAAAAAAAYFkl1WXZDWUJfU3ZtRUo5OVZwOEVaNncAAAAAAAAAGRZJdVl2Q1lCX1N2bUVKOTlWcDhFWjZ3',
-                took: 1,
-                timed_out: false,
-                _shards: { total: 5, successful: 5, failed: 0 },
-                hits: { total: 20, max_score: 0, hits: [] },
-                aggregations: {
-                    'date_histogram(field=createdAt,interval=1d)': {
-                        buckets: [{
-                            key_as_string: '2018-09-07 00:00:00',
-                            key: 1536278400000,
-                            doc_count: 4
-                        }, {
-                            key_as_string: '2018-09-08 00:00:00',
-                            key: 1536364800000,
-                            doc_count: 0
-                        }, {
-                            key_as_string: '2018-09-09 00:00:00',
-                            key: 1536451200000,
-                            doc_count: 0
-                        }, {
-                            key_as_string: '2018-09-10 00:00:00',
-                            key: 1536537600000,
-                            doc_count: 1
-                        }, {
-                            key_as_string: '2018-09-11 00:00:00',
-                            key: 1536624000000,
-                            doc_count: 2
-                        }, {
-                            key_as_string: '2018-09-12 00:00:00',
-                            key: 1536710400000,
-                            doc_count: 3
-                        }, {
-                            key_as_string: '2018-09-13 00:00:00',
-                            key: 1536796800000,
-                            doc_count: 0
-                        }, {
-                            key_as_string: '2018-09-14 00:00:00',
-                            key: 1536883200000,
-                            doc_count: 5
-                        }, {
-                            key_as_string: '2018-09-15 00:00:00',
-                            key: 1536969600000,
-                            doc_count: 0
-                        }, {
-                            key_as_string: '2018-09-16 00:00:00',
-                            key: 1537056000000,
-                            doc_count: 0
-                        }, { key_as_string: '2018-09-17 00:00:00', key: 1537142400000, doc_count: 5 }]
-                    }
-                }
-            }, ['content-type',
-                'application/json; charset=UTF-8',
-                'content-length',
-                '1257']);
+        const dates = [
+            '2018-09-07T00:00:01Z',
+            '2018-09-08T00:00:01Z',
+            '2018-09-09T00:00:01Z',
+            '2018-09-10T00:00:01Z',
+            '2018-09-11T00:00:01Z',
+            '2018-09-12T00:00:01Z',
+            '2018-09-13T00:00:01Z',
+            '2018-09-14T00:00:01Z',
+            '2018-09-15T00:00:01Z',
+            '2018-09-16T00:00:01Z',
+            '2018-09-17T00:00:01Z',
+        ];
+
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            dates.map(
+                (e) => ({
+                    createdAt: e,
+                    profilePictureUrl: 'string',
+                    screenName: 'string',
+                    text: 'string'
+                })
+            )
+        );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${query}`)
-            .send(requestBody);
+            .post(`/api/v1/document/query/${datasetId}`)
+            .query({
+                sql: query
+            })
+            .send({
+                loggedUser: null
+            });
 
         queryResponse.status.should.equal(200);
         queryResponse.body.should.have.property('data').and.be.an('array');
@@ -502,7 +345,9 @@ describe('Query datasets - GROUP BY queries', () => {
         queryResponse.body.data.should.deep.equal(results);
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await deleteTestIndeces();
+
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
             if (pendingMocks.length > 1) {

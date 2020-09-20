@@ -3,6 +3,9 @@ const { getTestServer } = require('./utils/test-server');
 
 let requester;
 
+nock.disableNetConnect();
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
+
 describe('GET healthcheck', () => {
     before(async () => {
         if (process.env.NODE_ENV !== 'test') {

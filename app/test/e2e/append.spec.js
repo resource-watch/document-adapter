@@ -18,7 +18,7 @@ let rabbitmqConnection = null;
 let channel;
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Dataset append tests', () => {
 
@@ -66,9 +66,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset without user should return an error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -78,7 +78,7 @@ describe('Dataset append tests', () => {
             provider: 'csv'
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(401);
@@ -87,15 +87,15 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset without a valid dataset should return a 400 error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
         nock(process.env.CT_URL)
-            .get(`/v1/dataset/${timestamp}`)
+            .get(`/v1/dataset/${datasetId}`)
             .reply(404, {
                 errors: [
                     {
                         status: 404,
-                        detail: `Dataset with id '${timestamp}' doesn't exist`
+                        detail: `Dataset with id '${datasetId}' doesn't exist`
                     }
                 ]
             });
@@ -110,18 +110,18 @@ describe('Dataset append tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(404);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`Dataset with id '${timestamp}' doesn't exist`);
+        response.body.errors[0].should.have.property('detail').and.equal(`Dataset with id '${datasetId}' doesn't exist`);
     });
 
     it('Append a dataset for a different application should return an error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp, { application: ['fake-app'] });
+        createMockGetDataset(datasetId, { application: ['fake-app'] });
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -133,7 +133,7 @@ describe('Dataset append tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(403);
@@ -142,9 +142,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset with an invalid type should fail', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp, { connectorType: 'carto' });
+        createMockGetDataset(datasetId, { connectorType: 'carto' });
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -156,18 +156,18 @@ describe('Dataset append tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(422);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`This operation is only supported for datasets with type 'document'`);
+        response.body.errors[0].should.have.property('detail').and.equal(`This operation is only supported for datasets with connectorType 'document'`);
     });
 
     it('Append a CSV dataset with data POST body should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -176,7 +176,7 @@ describe('Dataset append tests', () => {
             loggedUser: ROLES.ADMIN
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -189,10 +189,10 @@ describe('Dataset append tests', () => {
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
             content.should.have.property('data').and.equalInAnyOrder(postBody.data);
             content.should.have.property('dataPath').and.equal(postBody.dataPath);
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('legend').and.deep.equal({});
             content.should.have.property('provider').and.equal('csv');
 
@@ -211,9 +211,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from URL/file using the \'url\' deprecated field should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             url: 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
@@ -221,7 +221,7 @@ describe('Dataset append tests', () => {
             loggedUser: ROLES.ADMIN
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -231,11 +231,11 @@ describe('Dataset append tests', () => {
         const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql([postBody.url]);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
 
@@ -254,9 +254,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from URL/file using the \'sources\' field should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
@@ -264,7 +264,7 @@ describe('Dataset append tests', () => {
             loggedUser: ROLES.ADMIN
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -274,11 +274,11 @@ describe('Dataset append tests', () => {
         const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
 
@@ -297,9 +297,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from multiple files should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             sources: [
@@ -312,7 +312,7 @@ describe('Dataset append tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append`)
+            .post(`/api/v1/document/${datasetId}/append`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -322,11 +322,11 @@ describe('Dataset append tests', () => {
         const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
 
@@ -345,9 +345,9 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with append=true should be successful (param is ignored)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp, { append: true });
+        createMockGetDataset(datasetId, { append: true });
 
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
@@ -355,7 +355,7 @@ describe('Dataset append tests', () => {
             loggedUser: ROLES.ADMIN
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/append?append=true`)
+            .post(`/api/v1/document/${datasetId}/append?append=true`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -365,11 +365,11 @@ describe('Dataset append tests', () => {
         const validateStatusQueueMessages = (resolve) => async (msg) => {
             const content = JSON.parse(msg.content.toString());
 
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('fileUrl').and.be.an('array').and.eql(postBody.sources);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_APPEND);
 

@@ -1,3 +1,8 @@
+## 20/09/2020
+
+- Reset ES version to 6.x
+- Modify tests to run with Opendistro for ES instance.
+
 ## 04/09/2020
 
 - Add username and password support for Elasticsearch connection

@@ -1,13 +1,15 @@
 /* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
-const config = require('config');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset } = require('./utils/helpers');
+const { createMockGetDataset, createIndex, deleteTestIndeces } = require('./utils/helpers');
 
 chai.should();
 
 const requester = getTestServer();
+
+nock.disableNetConnect();
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Dataset download tests', () => {
 
@@ -17,12 +19,50 @@ describe('Dataset download tests', () => {
         }
     });
 
+    it('Download from a dataset without connectorType document should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { connectorType: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/download/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with connectorType \'document\'');
+    });
+
+    it('Download from a without a supported provider should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { provider: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/download/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+    });
+
     it('Download with CSV format and a query that returns no results should be successful', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
-
-        const elasticUri = config.get('elasticsearch.host');
+        createMockGetDataset(datasetId);
 
         const query = 'SELECT treecover_loss__year, SUM(aboveground_biomass_loss__Mg) AS aboveground_biomass_loss__Mg, SUM(aboveground_co2_emissions__Mg) AS aboveground_co2_emissions__Mg, SUM(treecover_loss__ha) AS treecover_loss__ha FROM data WHERE geostore__id = \'f84d74e5dc977606da07cebaf94dc9e6\' AND treecover_density__threshold = 30 GROUP BY treecover_loss__year ORDER BY treecover_loss__year';
 
@@ -84,285 +124,53 @@ describe('Dataset download tests', () => {
                 }
             });
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                aboveground_biomass_loss__Mg: { type: 'float' },
-                                aboveground_co2_emissions__Mg: { type: 'float' },
-                                geostore__id: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                gfw_plantation__type: { type: 'long' },
-                                global_land_cover__class: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                intact_forest_landscape__year: { type: 'long' },
-                                is__alliance_for_zero_extinction_site: { type: 'boolean' },
-                                is__gfw_land_right: { type: 'boolean' },
-                                is__gfw_logging: { type: 'boolean' },
-                                is__gfw_mining: { type: 'boolean' },
-                                is__gfw_oil_palm: { type: 'boolean' },
-                                is__gfw_resource_right: { type: 'boolean' },
-                                is__gfw_wood_fiber: { type: 'boolean' },
-                                is__idn_forest_moratorium: { type: 'boolean' },
-                                is__key_biodiversity_area: { type: 'boolean' },
-                                is__landmark: { type: 'boolean' },
-                                is__mangroves_1996: { type: 'boolean' },
-                                is__mangroves_2016: { type: 'boolean' },
-                                is__peat_land: { type: 'boolean' },
-                                is__regional_primary_forest: { type: 'boolean' },
-                                is__tiger_conservation_landscape: { type: 'boolean' },
-                                tcs_driver__type: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                treecover_density__threshold: { type: 'long' },
-                                treecover_loss__ha: { type: 'float' },
-                                treecover_loss__year: { type: 'long' },
-                                wdpa_protected_area__iucn_cat: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: {
-                                aboveground_biomass_loss__Mg: { type: 'float' },
-                                aboveground_co2_emissions__Mg: { type: 'float' },
-                                geostore__id: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                gfw_plantation__type: { type: 'long' },
-                                global_land_cover__class: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                intact_forest_landscape__year: { type: 'long' },
-                                is__alliance_for_zero_extinction_site: { type: 'boolean' },
-                                is__gfw_land_right: { type: 'boolean' },
-                                is__gfw_logging: { type: 'boolean' },
-                                is__gfw_mining: { type: 'boolean' },
-                                is__gfw_oil_palm: { type: 'boolean' },
-                                is__gfw_resource_right: { type: 'boolean' },
-                                is__gfw_wood_fiber: { type: 'boolean' },
-                                is__idn_forest_moratorium: { type: 'boolean' },
-                                is__key_biodiversity_area: { type: 'boolean' },
-                                is__landmark: { type: 'boolean' },
-                                is__mangroves_1996: { type: 'boolean' },
-                                is__mangroves_2016: { type: 'boolean' },
-                                is__peat_land: { type: 'boolean' },
-                                is__regional_primary_forest: { type: 'boolean' },
-                                is__tiger_conservation_landscape: { type: 'boolean' },
-                                tcs_driver__type: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                },
-                                treecover_density__threshold: { type: 'long' },
-                                treecover_loss__ha: { type: 'float' },
-                                treecover_loss__year: { type: 'long' },
-                                wdpa_protected_area__iucn_cat: {
-                                    type: 'text',
-                                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        nock(elasticUri)
-            .post('/_opendistro/_sql/_explain')
-            .reply(200, {
-                query: {
-                    bool: {
-                        filter: [
-                            {
-                                bool: {
-                                    must: [
-                                        {
-                                            bool: {
-                                                must: [
-                                                    {
-                                                        match_phrase: {
-                                                            geostore__id: {
-                                                                query: 'f84d74e5dc977606da07cebaf94dc9e6',
-                                                                slop: 0,
-                                                                boost: 1
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        match_phrase: {
-                                                            treecover_density__threshold: {
-                                                                query: 30,
-                                                                slop: 0,
-                                                                boost: 1
-                                                            }
-                                                        }
-                                                    }
-                                                ],
-                                                disable_coord: false,
-                                                adjust_pure_negative: true,
-                                                boost: 1
-                                            }
-                                        }
-                                    ],
-                                    disable_coord: false,
-                                    adjust_pure_negative: true,
-                                    boost: 1
-                                }
-                            }
-                        ],
-                        disable_coord: false,
-                        adjust_pure_negative: true,
-                        boost: 1
-                    }
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
+            {
+                aboveground_biomass_loss__Mg: { type: 'float' },
+                aboveground_co2_emissions__Mg: { type: 'float' },
+                geostore__id: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 },
-                _source: {
-                    includes: [
-                        'treecover_loss__year',
-                        'SUM',
-                        'SUM',
-                        'SUM'
-                    ],
-                    excludes: []
+                gfw_plantation__type: { type: 'long' },
+                global_land_cover__class: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 },
-                stored_fields: 'treecover_loss__year',
-                sort: [
-                    {
-                        treecover_loss__year: {
-                            order: 'asc'
-                        }
-                    }
-                ],
-                aggregations: {
-                    treecover_loss__year: {
-                        terms: {
-                            field: 'treecover_loss__year',
-                            size: 9999999,
-                            min_doc_count: 1,
-                            shard_min_doc_count: 0,
-                            show_term_doc_count_error: false,
-                            order: {
-                                _term: 'asc'
-                            }
-                        },
-                        aggregations: {
-                            aboveground_biomass_loss__Mg: {
-                                sum: {
-                                    field: 'aboveground_biomass_loss__Mg'
-                                }
-                            },
-                            aboveground_co2_emissions__Mg: {
-                                sum: {
-                                    field: 'aboveground_co2_emissions__Mg'
-                                }
-                            },
-                            treecover_loss__ha: {
-                                sum: {
-                                    field: 'treecover_loss__ha'
-                                }
-                            }
-                        }
-                    }
-                }
-            }, ['content-type', 'application/json; charset=UTF-8']);
-
-        nock(elasticUri)
-            .post('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_search', {
-                query: {
-                    bool: {
-                        filter: [{
-                            bool: {
-                                must: [{
-                                    bool: {
-                                        must: [{
-                                            match_phrase: {
-                                                geostore__id: {
-                                                    query: 'f84d74e5dc977606da07cebaf94dc9e6',
-                                                    slop: 0,
-                                                    boost: 1
-                                                }
-                                            }
-                                        }, {
-                                            match_phrase: {
-                                                treecover_density__threshold: {
-                                                    query: 30,
-                                                    slop: 0,
-                                                    boost: 1
-                                                }
-                                            }
-                                        }],
-                                        disable_coord: false,
-                                        adjust_pure_negative: true,
-                                        boost: 1
-                                    }
-                                }],
-                                disable_coord: false,
-                                adjust_pure_negative: true,
-                                boost: 1
-                            }
-                        }],
-                        disable_coord: false,
-                        adjust_pure_negative: true,
-                        boost: 1
-                    }
+                intact_forest_landscape__year: { type: 'long' },
+                is__alliance_for_zero_extinction_site: { type: 'boolean' },
+                is__gfw_land_right: { type: 'boolean' },
+                is__gfw_logging: { type: 'boolean' },
+                is__gfw_mining: { type: 'boolean' },
+                is__gfw_oil_palm: { type: 'boolean' },
+                is__gfw_resource_right: { type: 'boolean' },
+                is__gfw_wood_fiber: { type: 'boolean' },
+                is__idn_forest_moratorium: { type: 'boolean' },
+                is__key_biodiversity_area: { type: 'boolean' },
+                is__landmark: { type: 'boolean' },
+                is__mangroves_1996: { type: 'boolean' },
+                is__mangroves_2016: { type: 'boolean' },
+                is__peat_land: { type: 'boolean' },
+                is__regional_primary_forest: { type: 'boolean' },
+                is__tiger_conservation_landscape: { type: 'boolean' },
+                tcs_driver__type: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 },
-                _source: { includes: ['treecover_loss__year', 'SUM', 'SUM', 'SUM'], excludes: [] },
-                stored_fields: 'treecover_loss__year',
-                sort: [{ treecover_loss__year: { order: 'asc' } }],
-                aggregations: {
-                    treecover_loss__year: {
-                        terms: {
-                            field: 'treecover_loss__year',
-                            size: 9999999,
-                            min_doc_count: 1,
-                            shard_min_doc_count: 0,
-                            show_term_doc_count_error: false,
-                            order: { _term: 'asc' }
-                        },
-                        aggregations: {
-                            aboveground_biomass_loss__Mg: { sum: { field: 'aboveground_biomass_loss__Mg' } },
-                            aboveground_co2_emissions__Mg: { sum: { field: 'aboveground_co2_emissions__Mg' } },
-                            treecover_loss__ha: { sum: { field: 'treecover_loss__ha' } }
-                        }
-                    }
+                treecover_density__threshold: { type: 'long' },
+                treecover_loss__ha: { type: 'float' },
+                treecover_loss__year: { type: 'long' },
+                wdpa_protected_area__iucn_cat: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
                 }
-            })
-            .query({ scroll: '1m' })
-            .reply(200, {
-                _scroll_id: 'DnF1ZXJ5VGhlbkZldGNoAwAAAAAAAAB_FlEyNDFqczN0UzFpcVlxSHdaZC1QN2cAAAAAAAAAgBZRMjQxanMzdFMxaXFZcUh3WmQtUDdnAAAAAAAAAIEWUTI0MWpzM3RTMWlxWXFId1pkLVA3Zw==',
-                took: 1,
-                timed_out: false,
-                _shards: { total: 3, successful: 3, failed: 0 },
-                hits: { total: 0, max_score: 0, hits: [] },
-                aggregations: {
-                    treecover_loss__year: {
-                        doc_count_error_upper_bound: 0,
-                        sum_other_doc_count: 0,
-                        buckets: []
-                    }
-                }
-            });
+            }
+        );
 
         const response = await requester
-            .post(`/api/v1/document/download/${timestamp}`)
+            .post(`/api/v1/document/download/${datasetId}`)
             .query({ sql: query })
             .send();
 
@@ -371,10 +179,10 @@ describe('Dataset download tests', () => {
     });
 
     it('Download with invalid format should return a 400', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
         const response = await requester
-            .post(`/api/v1/document/download/${timestamp}`)
+            .post(`/api/v1/document/download/${datasetId}`)
             .query({ sql: '', format: 'potato' })
             .send();
 
@@ -384,6 +192,8 @@ describe('Dataset download tests', () => {
     });
 
     afterEach(() => {
+        deleteTestIndeces();
+
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
             if (pendingMocks.length > 1) {

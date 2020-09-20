@@ -14,6 +14,9 @@ let requester;
 let rabbitmqConnection = null;
 let channel;
 
+nock.disableNetConnect();
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
+
 describe('Dataset delete tests', () => {
 
     before(async () => {
@@ -60,9 +63,9 @@ describe('Dataset delete tests', () => {
     });
 
     it('Delete dataset index with tableName null should nothing to do and return success (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        nock(process.env.CT_URL).get(`/v1/dataset/${timestamp}`).reply(200, {
+        nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
             data: {
                 attributes: {
                     tableName: null
@@ -70,14 +73,14 @@ describe('Dataset delete tests', () => {
             }
         });
 
-        const response = await requester.delete(`/api/v1/document/${timestamp}`);
+        const response = await requester.delete(`/api/v1/document/${datasetId}`);
         response.status.should.equal(200);
     });
 
     it('Delete dataset index should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        nock(process.env.CT_URL).get(`/v1/dataset/${timestamp}`).reply(200, {
+        nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
             data: {
                 attributes: {
                     tableName: 'test'
@@ -85,7 +88,7 @@ describe('Dataset delete tests', () => {
             }
         });
 
-        const response = await requester.delete(`/api/v1/document/${timestamp}`);
+        const response = await requester.delete(`/api/v1/document/${datasetId}`);
         response.status.should.equal(200);
 
         let expectedStatusQueueMessageCount = 1;
@@ -94,7 +97,7 @@ describe('Dataset delete tests', () => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('index').and.equal('test');
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
 
             await channel.ack(msg);
 

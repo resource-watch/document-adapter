@@ -111,7 +111,7 @@ const toSQLMiddleware = async (ctx, next) => {
     if (ctx.query.sql || ctx.request.body.sql) {
         logger.debug('Checking sql correct');
         const params = { ...ctx.query, ...ctx.request.body };
-        options.uri = `/convert/sql2SQL?sql=${encodeURI(params.sql)}`;
+        options.uri = `/convert/sql2SQL?sql=${encodeURIComponent(params.sql)}`;
         if (params.experimental) {
             options.uri += `&experimental=${params.experimental}`;
         }

@@ -6,7 +6,7 @@ const amqp = require('amqplib');
 const config = require('config');
 const sleep = require('sleep');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset } = require('./utils/helpers');
+const { createMockGetDataset, createIndex, deleteTestIndeces } = require('./utils/helpers');
 
 const should = chai.should();
 chai.use(deepEqualInAnyOrder);
@@ -16,9 +16,7 @@ let rabbitmqConnection = null;
 let channel;
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
-
-const elasticUri = config.get('elasticsearch.host');
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('GET dataset fields', () => {
 
@@ -39,12 +37,6 @@ describe('GET dataset fields', () => {
         if (!rabbitmqConnection) {
             throw new RabbitMQConnectionError();
         }
-
-        process.on('unhandledRejection', should.fail);
-        // process.on('unhandledRejection', (error) => {
-        //     console.log(error);
-        //     should.fail(error);
-        // });
     });
 
     beforeEach(async () => {
@@ -57,7 +49,43 @@ describe('GET dataset fields', () => {
         tasksQueueStatus.messageCount.should.equal(0);
     });
 
-    it('Append a dataset without user should return an error', async () => {
+    it('Getting the fields for a dataset without connectorType document should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { connectorType: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/fields/${datasetId}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with connectorType \'document\'');
+    });
+
+    it('Getting the fields for a dataset without a supported provider should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { provider: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/fields/${datasetId}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+    });
+
+    it('Getting the fields for a dataset should return a 200 (happy case)', async () => {
         const fieldsStructure = {
             adm1: { type: 'keyword' },
             avg_biomass_per_ha: { type: 'double' },
@@ -100,28 +128,18 @@ describe('GET dataset fields', () => {
             }
         };
 
-        nock(elasticUri)
-            .get('/index_d1ced4227cd5480a8904d3410d75bf42_1587619728489/_mapping')
-            .reply(200, {
-                index_d1ced4227cd5480a8904d3410d75bf42_1587619728489: {
-                    mappings: {
-                        _doc: {
-                            properties: fieldsStructure
-                        }
-                    }
-                }
-            });
+        await createIndex('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489', '_doc', fieldsStructure);
 
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const response = await requester
-            .post(`/api/v1/document/fields/${timestamp}`)
+            .post(`/api/v1/document/fields/${datasetId}`)
             .send();
 
         response.status.should.equal(200);
-        response.body.should.have.property('tableName').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+        response.body.should.have.property('tableName').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
         response.body.should.have.property('fields').and.eql(fieldsStructure);
     });
 
@@ -143,6 +161,8 @@ describe('GET dataset fields', () => {
     });
 
     after(async () => {
+        await deleteTestIndeces();
+
         rabbitmqConnection.close();
         process.removeListener('unhandledRejection', should.fail);
     });

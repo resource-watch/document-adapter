@@ -17,7 +17,7 @@ let rabbitmqConnection = null;
 let channel;
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Query datasets - Delete queries', () => {
 
@@ -51,11 +51,11 @@ describe('Query datasets - Delete queries', () => {
     });
 
     it('Doing a delete query without being authenticated should return a 403 error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
-        const query = `delete from ${timestamp} where 1=1`;
+        const query = `delete from ${datasetId} where 1=1`;
 
         nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
@@ -95,7 +95,7 @@ describe('Query datasets - Delete queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
             .send();
 
         queryResponse.status.should.equal(403);
@@ -109,11 +109,11 @@ describe('Query datasets - Delete queries', () => {
             loggedUser: ROLES.ADMIN
         };
 
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
-        const query = `delete from ${timestamp} where 1=1`;
+        const query = `delete from ${datasetId} where 1=1`;
 
         nock(process.env.CT_URL)
             .get(`/v1/convert/sql2SQL`)
@@ -153,7 +153,7 @@ describe('Query datasets - Delete queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${timestamp}`)
+            .post(`/api/v1/document/query/${datasetId}`)
             .query({
                 sql: query
             })
@@ -167,10 +167,10 @@ describe('Query datasets - Delete queries', () => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_DELETE);
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
-            content.should.have.property('query').and.equal(`DELETE FROM index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE 1 = 1`);
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('query').and.equal(`DELETE FROM test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489 WHERE 1 = 1`);
 
             await channel.ack(msg);
 

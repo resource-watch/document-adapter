@@ -18,7 +18,7 @@ let rabbitmqConnection = null;
 let channel;
 
 nock.disableNetConnect();
-nock.enableNetConnect(`${process.env.HOST_IP}:${process.env.PORT}`);
+nock.enableNetConnect((host) => [`${process.env.HOST_IP}:${process.env.PORT}`, process.env.ELASTIC_TEST_URL].includes(host));
 
 describe('Dataset reindex tests', () => {
 
@@ -66,9 +66,9 @@ describe('Dataset reindex tests', () => {
     });
 
     it('Reindex a dataset without user should return an error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -77,7 +77,7 @@ describe('Dataset reindex tests', () => {
             provider: 'csv'
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/reindex`)
+            .post(`/api/v1/document/${datasetId}/reindex`)
             .send(postBody);
 
         response.status.should.equal(401);
@@ -86,15 +86,15 @@ describe('Dataset reindex tests', () => {
     });
 
     it('Reindex a dataset without a valid dataset should return a 400 error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
         nock(process.env.CT_URL)
-            .get(`/v1/dataset/${timestamp}`)
+            .get(`/v1/dataset/${datasetId}`)
             .reply(404, {
                 errors: [
                     {
                         status: 404,
-                        detail: `Dataset with id '${timestamp}' doesn't exist`
+                        detail: `Dataset with id '${datasetId}' doesn't exist`
                     }
                 ]
             });
@@ -108,18 +108,18 @@ describe('Dataset reindex tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/reindex`)
+            .post(`/api/v1/document/${datasetId}/reindex`)
             .send(postBody);
 
         response.status.should.equal(404);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`Dataset with id '${timestamp}' doesn't exist`);
+        response.body.errors[0].should.have.property('detail').and.equal(`Dataset with id '${datasetId}' doesn't exist`);
     });
 
     it('Reindex a dataset for a different application should return an error', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp, { application: ['fake-app'] });
+        createMockGetDataset(datasetId, { application: ['fake-app'] });
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -130,7 +130,7 @@ describe('Dataset reindex tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/reindex`)
+            .post(`/api/v1/document/${datasetId}/reindex`)
             .send(postBody);
 
         response.status.should.equal(403);
@@ -139,9 +139,9 @@ describe('Dataset reindex tests', () => {
     });
 
     it('Reindex a dataset with an invalid type should fail', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp, { connectorType: 'carto' });
+        createMockGetDataset(datasetId, { connectorType: 'carto' });
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -152,18 +152,18 @@ describe('Dataset reindex tests', () => {
         };
 
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/reindex`)
+            .post(`/api/v1/document/${datasetId}/reindex`)
             .send(postBody);
 
         response.status.should.equal(422);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`This operation is only supported for datasets with type 'document'`);
+        response.body.errors[0].should.have.property('detail').and.equal(`This operation is only supported for datasets with connectorType 'document'`);
     });
 
     it('Reindex a CSV dataset with data POST body should be successful (happy case)', async () => {
-        const timestamp = new Date().getTime();
+        const datasetId = new Date().getTime();
 
-        createMockGetDataset(timestamp);
+        createMockGetDataset(datasetId);
 
         const postBody = {
             data: [{ data: 'value' }],
@@ -172,7 +172,7 @@ describe('Dataset reindex tests', () => {
             loggedUser: ROLES.ADMIN
         };
         const response = await requester
-            .post(`/api/v1/document/${timestamp}/reindex`)
+            .post(`/api/v1/document/${datasetId}/reindex`)
             .send(postBody);
 
         response.status.should.equal(200);
@@ -183,10 +183,10 @@ describe('Dataset reindex tests', () => {
             const content = JSON.parse(msg.content.toString());
 
             content.should.have.property('type').and.equal(task.MESSAGE_TYPES.TASK_REINDEX);
-            content.should.have.property('datasetId').and.equal(`${timestamp}`);
+            content.should.have.property('datasetId').and.equal(`${datasetId}`);
             content.should.have.property('provider').and.equal('csv');
             content.should.have.property('id');
-            content.should.have.property('index').and.equal('index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
+            content.should.have.property('index').and.equal('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489');
             content.should.have.property('legend').and.deep.equal({});
             content.should.have.property('provider').and.equal('csv');
             await channel.ack(msg);
