@@ -1,5 +1,6 @@
 const logger = require('logger');
 const config = require('config');
+const sleep = require('sleep');
 const elasticsearch = require('@elastic/elasticsearch');
 const Scroll = require('services/scroll');
 const Json2sql = require('sql2json').json2sql;
@@ -24,6 +25,36 @@ class QueryService {
         }
 
         this.elasticClient = new elasticsearch.Client(elasticSearchConfig);
+
+        let retries = 10;
+
+        const pingES = () => {
+            this.elasticClient.ping({}, (error) => {
+                if (error) {
+                    if (retries >= 0) {
+                        retries--;
+                        logger.error(`Elasticsearch cluster is down, attempt #${10 - retries} ... - ${error.message}`);
+                        sleep.sleep(5);
+                        pingES();
+                    } else {
+                        logger.error(`Elasticsearch cluster is down, baiging! - ${error.message}`);
+                        logger.error(error);
+                        throw new Error(error);
+                    }
+                } else {
+                    setInterval(() => {
+                        this.elasticClient.ping({}, (error) => {
+                            if (error) {
+                                logger.error(`Elasticsearch cluster is down! - ${error.message}`);
+                                process.exit(1);
+                            }
+                        });
+                    }, 3000);
+                }
+            });
+        };
+
+        pingES();
 
         this.elasticClient.extend('opendistro.explain', ({ makeRequest, ConfigurationError }) => function explain(params, options = {}) {
             const {
@@ -90,15 +121,6 @@ class QueryService {
 
             return makeRequest(request, requestOptions);
         });
-
-        setInterval(() => {
-            this.elasticClient.ping({}, (error) => {
-                if (error) {
-                    logger.error(`Elasticsearch cluster is down! - ${error.message}`);
-                    process.exit(1);
-                }
-            });
-        }, 3000);
 
     }
 
