@@ -22,8 +22,8 @@ env:
     - CT_REGISTER_MODE=auto
     - RABBITMQ_URL=amqp://0.0.0.0:5672
     - NODE_TLS_REJECT_UNAUTHORIZED=0
-    - ELASTIC_URL=https://0.0.0.0:9200
-    - ELASTIC_TEST_URL=0.0.0.0:9200
+    - ELASTIC_URL=https://127.0.0.1:9200
+    - ELASTIC_TEST_URL=127.0.0.1:9200
     - ELASTIC_USER=admin
     - ELASTIC_PASSWORD=admin
 before_script:
