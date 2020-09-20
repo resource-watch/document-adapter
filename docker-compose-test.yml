@@ -37,6 +37,8 @@ services:
   opendistro:
     container_name: opendistro
     image: amazon/opendistro-for-elasticsearch:0.10.0
+    environment:
+      discovery.type: single-node
     ports:
       - "9200"
       - "9600"
