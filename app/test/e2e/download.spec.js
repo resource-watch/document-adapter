@@ -126,7 +126,6 @@ describe('Dataset download tests', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             {
                 aboveground_biomass_loss__Mg: { type: 'float' },
                 aboveground_co2_emissions__Mg: { type: 'float' },

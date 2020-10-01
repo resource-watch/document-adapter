@@ -128,7 +128,7 @@ describe('GET dataset fields', () => {
             }
         };
 
-        await createIndex('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489', '_doc', fieldsStructure);
+        await createIndex('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489', fieldsStructure);
 
         const datasetId = new Date().getTime();
 

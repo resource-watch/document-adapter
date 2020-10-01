@@ -65,6 +65,70 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
     });
 
+    it('Query an empty dataset should be successful (happy case)', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId);
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
+
+        nock(process.env.CT_URL)
+            .get(`/v1/convert/sql2SQL`)
+            .query({
+                sql: query
+            })
+            .once()
+            .reply(200, {
+                status: 200,
+                data: {
+                    type: 'result',
+                    id: 'undefined',
+                    attributes: {
+                        query: `SELECT * FROM ${datasetId}`,
+                        jsonSql: {
+                            select: [
+                                {
+                                    value: '*',
+                                    alias: null,
+                                    type: 'wildcard'
+                                }
+                            ],
+                            from: datasetId
+                        }
+                    },
+                    relationships: {}
+                }
+            });
+
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            {
+                adm1: { type: 'long' },
+                adm2: { type: 'long' },
+                area: { type: 'float' },
+                iso: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                thresh: { type: 'long' }
+            }
+        );
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(200);
+        queryResponse.body.should.have.property('data').and.be.an('array');
+        queryResponse.body.should.have.property('meta').and.be.an('object');
+
+        queryResponse.body.data.should.have.lengthOf(0);
+    });
+
     it('Basic query to dataset should be successful (happy case)', async () => {
         const datasetId = new Date().getTime();
 
@@ -118,7 +182,6 @@ describe('Query datasets - Simple queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             {
                 adm1: { type: 'long' },
                 adm2: { type: 'long' },
@@ -133,7 +196,6 @@ describe('Query datasets - Simple queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             results
         );
 
@@ -230,7 +292,6 @@ describe('Query datasets - Simple queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             {
                 adm1: { type: 'long' },
                 adm2: { type: 'long' },
@@ -245,7 +306,6 @@ describe('Query datasets - Simple queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             results
         );
 
@@ -347,7 +407,6 @@ describe('Query datasets - Simple queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             {
                 year_data: {
                     properties: {
@@ -359,7 +418,6 @@ describe('Query datasets - Simple queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             results
         );
 
@@ -445,7 +503,6 @@ describe('Query datasets - Simple queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             {
                 A1B_2040s: {
                     type: 'double'
@@ -470,7 +527,6 @@ describe('Query datasets - Simple queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
-            '_doc',
             results.map((elem, index) => ({
                 A1B_2040s: 123.456,
                 A1B_2080s: elem.A1B_2080s,

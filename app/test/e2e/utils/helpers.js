@@ -62,7 +62,7 @@ const createMockGetDataset = (id, anotherData = {}) => {
     return dataset;
 };
 
-const createIndex = async (index, type, mappings) => {
+const createIndex = async (index, mappings) => {
     const body = {
         settings: {
             index: {
@@ -70,9 +70,7 @@ const createIndex = async (index, type, mappings) => {
             }
         },
         mappings: {
-            [type]: {
-                properties: mappings
-            }
+            properties: mappings
         }
     };
 
@@ -86,10 +84,10 @@ const createIndex = async (index, type, mappings) => {
     return response.body;
 };
 
-const insertData = async (index, type, data) => {
+const insertData = async (index, data) => {
     const ESClient = new Client(elasticSearchConfig);
 
-    const body = data.flatMap((doc) => [{ index: { _index: index, _type: type } }, doc]);
+    const body = data.flatMap((doc) => [{ index: { _index: index } }, doc]);
 
     return ESClient.bulk({ body, timeout: '90s', refresh: 'wait_for' });
 };

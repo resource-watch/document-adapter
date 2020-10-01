@@ -9,6 +9,9 @@ class JSONSerializer {
         if (key.indexOf('geohash') >= 0) {
             alias = 'geohash';
         }
+
+        const stripESSuffix = new RegExp('_(\\d+)$', 'g');
+
         alias = alias.replace('.keyword', '');
         for (let i = 0, { length: bucketLength } = buckets; i < bucketLength; i += 1) {
             const keys = Object.keys(buckets[i]).filter((el) => el !== 'doc_count' && el !== 'key');
@@ -30,7 +33,8 @@ class JSONSerializer {
                 };
                 for (let j = 0, lengthSublist = keys.length; j < lengthSublist; j += 1) {
                     if (buckets[i][keys[j]].value) {
-                        obj[keys[j]] = buckets[i][keys[j]].value;
+                        const sanitizedKey = keys[j].toLowerCase().replace(stripESSuffix, '');
+                        obj[sanitizedKey] = buckets[i][keys[j]].value;
                     }
                 }
                 list.push(obj);
@@ -86,11 +90,13 @@ class JSONSerializer {
 
         if (data.aggregations) {
 
+            const stripESSuffix = new RegExp('_(\\d+)$', 'g');
             const keys = Object.keys(data.aggregations);
             const attributes = {};
             if (!data.aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
                 for (let i = 0, { length } = keys; i < length; i += 1) {
-                    attributes[keys[i]] = data.aggregations[keys[i]].value;
+                    const sanitizedKey = keys[i].toLowerCase().replace(stripESSuffix, '');
+                    attributes[sanitizedKey] = data.aggregations[keys[i]].value;
                 }
                 return {
                     data: [attributes]
