@@ -131,6 +131,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             {
                 Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
                 'INDC-vs-NDC': {
@@ -164,6 +165,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             results.map(
                 (e) => ({
                     Country: e.country_iso,
@@ -303,6 +305,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             {
                 Country: { type: 'text', fields: { keyword: { type: 'keyword', ignore_above: 256 } } },
                 'INDC-vs-NDC': {
@@ -336,6 +339,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             data.map(
                 (e) => ({
                     Country: e.country_iso,
@@ -458,6 +462,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await createIndex(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             {
                 createdAt: { type: 'date' },
                 profilePictureUrl: {
@@ -491,6 +496,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         await insertData(
             'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            '_doc',
             dates.map(
                 (e) => ({
                     createdAt: e,

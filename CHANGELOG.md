@@ -1,6 +1,7 @@
 ## 20/09/2020
 
 - Allow ADMIN users to reindex datasets with overwrite=false
+- Reset ES version to 6.x
 - Modify tests to run with Opendistro for ES instance.
 
 ## 04/09/2020

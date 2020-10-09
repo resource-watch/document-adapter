@@ -7,7 +7,6 @@ const Json2sql = require('sql2json').json2sql;
 const passThrough = require('stream').PassThrough;
 const DownloadValidator = require('validators/download.validator');
 const DatasetMiddleware = require('middleware/dataset.middleware');
-const { ElasticsearchClientError } = require('@elastic/elasticsearch/lib/errors');
 
 const ctRegisterMicroservice = require('ct-register-microservice-node');
 
@@ -49,9 +48,6 @@ class QueryRouter {
             }
         } catch (err) {
             logger.error(err);
-            if (err instanceof ElasticsearchClientError && err.meta && err.meta.body) {
-                throw new Error(`${err.message} - ${err.meta.body}`);
-            }
             throw err;
         }
     }
