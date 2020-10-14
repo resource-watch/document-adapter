@@ -1,7 +1,9 @@
 const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset, createIndex, insertData } = require('./utils/helpers');
+const {
+    createMockGetDataset, createIndex, insertData, deleteTestIndeces
+} = require('./utils/helpers');
 
 chai.should();
 
@@ -159,7 +161,9 @@ describe('Query datasets - Errors', () => {
         queryResponse.body.errors[0].detail.should.include('Function [MIN] cannot work with [DATE]. Usage: MIN(NUMBER T) -> T');
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        await deleteTestIndeces();
+
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
             if (pendingMocks.length > 1) {
