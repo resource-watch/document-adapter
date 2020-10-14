@@ -1,3 +1,7 @@
+## 14/10/2020
+
+- Make ES query errors more visible to end users.
+
 ## 20/09/2020
 
 - Allow ADMIN users to reindex datasets with overwrite=false
