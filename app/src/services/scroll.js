@@ -45,6 +45,18 @@ class Scroll {
                 throw new Error('Semantically invalid query', e);
             }
 
+            let jsonErrorMessage = null;
+            if (e.meta && e.meta.body) {
+                try {
+                    jsonErrorMessage = JSON.parse(e.meta.body);
+                    jsonErrorMessage = jsonErrorMessage.error.details;
+                } catch (jsonParsingError) {
+                    logger.debug(`Could not convert ${e.meta.body} error to JSON, proceeding as string`);
+                }
+
+                throw new InvalidQueryError(400, jsonErrorMessage);
+            }
+
             throw e;
         }
 

@@ -1,7 +1,7 @@
 const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset } = require('./utils/helpers');
+const { createMockGetDataset, createIndex, insertData } = require('./utils/helpers');
 
 chai.should();
 
@@ -84,6 +84,79 @@ describe('Query datasets - Errors', () => {
         queryResponse.status.should.equal(400);
         queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
         queryResponse.body.errors[0].detail.should.include('Unsupported query element detected');
+    });
+
+    it('Query with aggregation for invalid type should return meaningful error message and error code', async () => {
+        const datasetId = new Date().getTime();
+
+        const dataset = createMockGetDataset(datasetId);
+        const fieldsStructure = {
+            year_date: { type: 'date' }
+        };
+
+        const results = [
+            {
+                year_date: '2015-01-01T00:00:00'
+            }, {
+                year_date: '2015-06-06T00:00:00'
+            }, {
+                year_date: '2015-03-03T00:00:00'
+            }, {
+                year_date: '2015-02-02T00:00:00'
+            }
+        ];
+
+        await createIndex(dataset.attributes.tableName, fieldsStructure);
+        await insertData(dataset.attributes.tableName, results);
+
+        const query = `SELECT MIN(year_date) AS min, MAX(year_date) AS max FROM ${datasetId}`;
+
+        nock(process.env.CT_URL)
+            .get('/v1/convert/sql2SQL')
+            .query({ sql: query })
+            .reply(200, {
+                data: {
+                    type: 'result',
+                    attributes: {
+                        query: `SELECT MIN(year_date) AS min, MAX(year_date) AS max FROM ${datasetId}`,
+                        jsonSql: {
+                            select: [
+                                {
+                                    type: 'function',
+                                    alias: 'min',
+                                    value: 'MIN',
+                                    arguments: [
+                                        {
+                                            value: 'year_date',
+                                            type: 'literal'
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: 'function',
+                                    alias: 'max',
+                                    value: 'MAX',
+                                    arguments: [
+                                        {
+                                            value: 'year_date',
+                                            type: 'literal'
+                                        }
+                                    ]
+                                }
+                            ],
+                            from: datasetId
+                        }
+                    }
+                }
+            });
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .send();
+
+        queryResponse.status.should.equal(400);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('Function [MIN] cannot work with [DATE]. Usage: MIN(NUMBER T) -> T');
     });
 
     afterEach(() => {
