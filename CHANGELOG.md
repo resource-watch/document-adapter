@@ -1,5 +1,6 @@
 ## 14/10/2020
 
+- Fix issue where aggregated column alias would be forced to lower case.
 - Make ES query errors more visible to end users.
 
 ## 20/09/2020

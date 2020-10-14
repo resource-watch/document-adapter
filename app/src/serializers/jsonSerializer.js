@@ -31,12 +31,15 @@ class JSONSerializer {
                 const obj = {
                     [alias]: buckets[i].key
                 };
-                for (let j = 0, lengthSublist = keys.length; j < lengthSublist; j += 1) {
-                    if (buckets[i][keys[j]].value) {
-                        const sanitizedKey = keys[j].toLowerCase().replace(stripESSuffix, '');
-                        obj[sanitizedKey] = buckets[i][keys[j]].value;
+                keys.forEach((key) => {
+                    if (buckets[i][key].value) {
+                        let sanitizedKey = key;
+                        if (key.match(stripESSuffix)) {
+                            sanitizedKey = key.toLowerCase().replace(stripESSuffix, '');
+                        }
+                        obj[sanitizedKey] = buckets[i][key].value;
                     }
-                }
+                });
                 list.push(obj);
             }
         }
@@ -94,10 +97,13 @@ class JSONSerializer {
             const keys = Object.keys(data.aggregations);
             const attributes = {};
             if (!data.aggregations[keys[0]].buckets && keys[0].indexOf('NESTED') === -1) {
-                for (let i = 0, { length } = keys; i < length; i += 1) {
-                    const sanitizedKey = keys[i].toLowerCase().replace(stripESSuffix, '');
-                    attributes[sanitizedKey] = data.aggregations[keys[i]].value;
-                }
+                keys.forEach((key) => {
+                    let sanitizedKey = key;
+                    if (key.match(stripESSuffix)) {
+                        sanitizedKey = key.toLowerCase().replace(stripESSuffix, '');
+                    }
+                    attributes[sanitizedKey] = data.aggregations[key].value;
+                });
                 return {
                     data: [attributes]
                 };

@@ -434,6 +434,117 @@ describe('Query datasets - Aggregate queries', () => {
         ]);
     });
 
+    it('Query with alias in upper case (x AS Y) in aggregation should be successful', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId);
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `SELECT min(year) AS value_Year FROM ${datasetId} GROUP BY year'`;
+
+        const results = [
+            { year: 2001 },
+            { year: 2001 },
+            { year: 2001 },
+            { year: 2001 },
+            { year: 2002 },
+            { year: 2002 },
+            { year: 2002 },
+            { year: 2002 },
+            { year: 2002 },
+            { year: 2003 },
+            { year: 2003 },
+            { year: 2003 },
+            { year: 2003 },
+            { year: 2003 },
+            { year: 2003 },
+            { year: 2004 },
+            { year: 2004 },
+            { year: 2004 },
+            { year: 2017 }
+        ];
+
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            {
+                year: { type: 'long' }
+            }
+        );
+
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            results
+        );
+
+        nock(process.env.CT_URL)
+            .get('/v1/convert/sql2SQL')
+            .query({ sql: query })
+            .reply(200, {
+                data: {
+                    type: 'result',
+                    attributes: {
+                        query: `SELECT min(year) AS value_Year FROM ${datasetId} GROUP BY year`,
+                        jsonSql: {
+                            select: [
+                                {
+                                    type: 'function',
+                                    alias: 'value_Year',
+                                    value: 'min',
+                                    arguments: [
+                                        {
+                                            value: 'year',
+                                            type: 'literal'
+                                        }
+                                    ]
+                                }
+                            ],
+                            from: datasetId,
+                            group: [
+                                {
+                                    type: 'literal',
+                                    value: 'year'
+                                }
+                            ]
+                        }
+                    }
+                }
+            });
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(200);
+        queryResponse.body.should.have.property('data').and.be.an('array');
+        queryResponse.body.should.have.property('meta').and.be.an('object');
+
+        queryResponse.body.data.should.deep.equal([
+            {
+                value_Year: 2003,
+                year: 2003
+            },
+            {
+                value_Year: 2002,
+                year: 2002
+            },
+            {
+                value_Year: 2001,
+                year: 2001
+            },
+            {
+                value_Year: 2004,
+                year: 2004
+            },
+            {
+                value_Year: 2017,
+                year: 2017
+            }
+        ]);
+    });
+
     it('Query with nested aggregations and aliases to dataset should be successful (happy case)', async () => {
         const datasetId = new Date().getTime();
 
