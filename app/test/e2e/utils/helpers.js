@@ -112,9 +112,17 @@ const deleteTestIndeces = async () => {
     return Promise.all(promises);
 };
 
+const hasOpenScrolls = async () => {
+    const client = new Client(elasticSearchConfig);
+    const res = await client.nodes.stats({ level: 'indices', indexMetric: 'search' });
+    const nScrolls = res.body.nodes[Object.keys(res.body.nodes)[0]].indices.search.scroll_current;
+    return nScrolls > 0;
+};
+
 module.exports = {
     createMockGetDataset,
     createIndex,
     deleteTestIndeces,
-    insertData
+    insertData,
+    hasOpenScrolls,
 };
