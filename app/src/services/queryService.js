@@ -310,6 +310,7 @@ class QueryService {
         const scroll = new Scroll(this.elasticClient, sqlFromJson, elasticQuery, index, datasetId, body, false, cloneUrl, format);
         await scroll.init();
         await scroll.continue();
+        await scroll.clear();
         logger.info('[QueryService - doQuery] Finished query');
     }
 
