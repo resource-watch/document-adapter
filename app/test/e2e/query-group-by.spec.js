@@ -3,7 +3,7 @@ const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
 const {
-    createMockGetDataset, createIndex, deleteTestIndeces, insertData
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
 } = require('./utils/helpers');
 
 chai.should();
@@ -193,6 +193,7 @@ describe('Query datasets - GROUP BY queries', () => {
         queryResponse.body.data.should.have.lengthOf(results.length);
 
         queryResponse.body.data.should.deep.equal(results.map((e) => ({ iso: e.country_iso, ...e })));
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Group by `column` query with more than 10 results per group should be successful', async () => {
@@ -371,6 +372,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 country_iso: e.country_iso
             }))
         );
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Group by date part query to dataset should be successful', async () => {
@@ -517,6 +519,7 @@ describe('Query datasets - GROUP BY queries', () => {
         queryResponse.body.data.should.have.lengthOf(results.length);
 
         queryResponse.body.data.should.deep.equal(results);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     afterEach(async () => {

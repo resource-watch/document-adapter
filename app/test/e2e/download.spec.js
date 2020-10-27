@@ -2,7 +2,9 @@
 const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
-const { createMockGetDataset, createIndex, deleteTestIndeces } = require('./utils/helpers');
+const {
+    createMockGetDataset, createIndex, deleteTestIndeces, hasOpenScrolls
+} = require('./utils/helpers');
 
 chai.should();
 
@@ -175,6 +177,7 @@ describe('Dataset download tests', () => {
 
         response.status.should.equal(200);
         response.body.should.equal('');
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Download with invalid format should return a 400', async () => {
@@ -188,6 +191,7 @@ describe('Dataset download tests', () => {
         response.status.should.equal(400);
         response.body.should.have.property('errors').and.be.an('array');
         response.body.errors[0].should.have.property('detail').and.equal(`- format: format must be in [json,csv]. - `);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     afterEach(() => {

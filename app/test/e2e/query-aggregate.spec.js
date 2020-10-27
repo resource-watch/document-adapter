@@ -3,7 +3,7 @@ const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
 const {
-    createMockGetDataset, createIndex, deleteTestIndeces, insertData
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
 } = require('./utils/helpers');
 
 chai.should();
@@ -87,6 +87,7 @@ describe('Query datasets - Aggregate queries', () => {
         queryResponse.body.should.have.property('meta').and.be.an('object');
 
         queryResponse.body.data.should.have.lengthOf(0);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('count(*) query to dataset should be successful (happy case)', async () => {
@@ -173,6 +174,7 @@ describe('Query datasets - Aggregate queries', () => {
 
         queryResponse.body.data.should.have.lengthOf(1);
         queryResponse.body.data[0].should.have.property('count').and.equal(results.length);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with multiple aggregations to dataset should be successful (happy case)', async () => {
@@ -307,6 +309,7 @@ describe('Query datasets - Aggregate queries', () => {
         queryResponse.body.data[0].should.have.property('min').and.equal(41420.48046875);
         queryResponse.body.data[0].should.have.property('max').and.equal(1137360);
         queryResponse.body.data[0].should.have.property('sum').and.equal(1622953.37890625);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with nested aggregations to dataset should be successful (happy case)', async () => {
@@ -432,6 +435,7 @@ describe('Query datasets - Aggregate queries', () => {
                 iso: 'USA'
             }
         ]);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with alias in upper case (x AS Y) in aggregation should be successful', async () => {
@@ -543,6 +547,7 @@ describe('Query datasets - Aggregate queries', () => {
                 year: 2017
             }
         ]);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with nested aggregations and aliases to dataset should be successful (happy case)', async () => {
@@ -678,6 +683,7 @@ describe('Query datasets - Aggregate queries', () => {
                 the_iso: 'USA'
             }
         ]);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     afterEach(async () => {

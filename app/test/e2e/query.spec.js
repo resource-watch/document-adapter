@@ -3,7 +3,7 @@ const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
 const {
-    createMockGetDataset, createIndex, deleteTestIndeces, insertData
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
 } = require('./utils/helpers');
 
 chai.should();
@@ -127,6 +127,7 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.should.have.property('meta').and.be.an('object');
 
         queryResponse.body.data.should.have.lengthOf(0);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Basic query to dataset should be successful (happy case)', async () => {
@@ -218,7 +219,7 @@ describe('Query datasets - Simple queries', () => {
         }));
 
         resultList.should.deep.equal(results);
-
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with special characters to dataset should be successful (happy case)', async () => {
@@ -327,6 +328,7 @@ describe('Query datasets - Simple queries', () => {
         queryResponse.body.data[0].should.deep.equal({
             thresh: 75, iso: 'US&%', adm1: 27, adm2: 1641, area: 41420.47960515353
         });
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with alias (x AS y) in SELECT clause should be successful (happy case)', async () => {
@@ -465,6 +467,7 @@ describe('Query datasets - Simple queries', () => {
         }));
 
         responseResults.should.deep.equal(results);
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     it('Query with order by mapping from Elasticsearch should be successful (happy case)', async () => {
@@ -653,7 +656,7 @@ describe('Query datasets - Simple queries', () => {
         }));
 
         responseResults.should.deep.equal(resultList);
-
+        (await hasOpenScrolls()).should.equal(false);
     });
 
     afterEach(async () => {
