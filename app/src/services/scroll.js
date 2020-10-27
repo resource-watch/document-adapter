@@ -223,6 +223,14 @@ class Scroll {
         logger.info('Write correctly');
     }
 
+    async clear() {
+        logger.info('Clearing scroll...');
+        return this.elasticClient.clearScroll({
+            // eslint-disable-next-line no-underscore-dangle
+            body: { scroll_id: [this.resultScroll._scroll_id] },
+        });
+    }
+
     static serialize(resultScroll, parsed, format) {
         switch (format) {
 

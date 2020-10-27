@@ -1,3 +1,7 @@
+## 27/10/2020
+
+- Fix issue with number of concurrent scroll usages causing random failures in queries.
+
 ## 14/10/2020
 
 - Fix issue where aggregated column alias would be forced to lower case.
