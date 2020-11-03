@@ -11,133 +11,180 @@
   ],
   "endpoints": [
     {
-      "path": "/v1/query/:dataset",
+      "path": "/v1/query/csv/:dataset",
       "method": "GET",
       "binary": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/query/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
-      "path": "/v1/query/:dataset",
+      "path": "/v1/query/csv/:dataset",
       "method": "POST",
       "binary": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/query/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
-      "path": "/v1/download/:dataset",
+      "path": "/v1/query/json/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/query/json/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/query/tsv/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/query/tsv/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/query/xml/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/query/xml/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/query/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/csv/:dataset",
       "method": "GET",
       "binary": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/download/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
-      "path": "/v1/download/:dataset",
+      "path": "/v1/download/csv/:dataset",
       "method": "POST",
       "binary": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/download/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
-      "path": "/v1/fields/:dataset",
+      "path": "/v1/download/json/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/json/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/tsv/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/tsv/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/xml/:dataset",
+      "method": "GET",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/download/xml/:dataset",
+      "method": "POST",
+      "binary": true,
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/download/:dataset"
+      }
+    },
+    {
+      "path": "/v1/fields/xml:dataset",
       "method": "GET",
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/fields/:dataset"
-      },
-      "filters": [
-        {
-          "name": "dataset",
-          "path": "/v1/dataset/:dataset",
-          "method": "GET",
-          "params": {
-            "dataset": "dataset"
-          },
-          "compare": {
-            "data": {
-              "attributes": {
-                "connectorType": "document"
-              }
-            }
-          }
-        }
-      ]
+      }
+    },
+    {
+      "path": "/v1/fields/tsv/:dataset",
+      "method": "GET",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/fields/:dataset"
+      }
+    },
+    {
+      "path": "/v1/fields/csv/:dataset",
+      "method": "GET",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/fields/:dataset"
+      }
+    },
+    {
+      "path": "/v1/fields/json/:dataset",
+      "method": "GET",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/document/fields/:dataset"
+      }
     },
     {
       "path": "/v1/dataset/:dataset/concat",

@@ -37,7 +37,7 @@ describe('Query datasets - Simple queries', () => {
         const query = `select * from ${datasetId}`;
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -57,7 +57,7 @@ describe('Query datasets - Simple queries', () => {
         const query = `select * from ${datasetId}`;
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -119,7 +119,7 @@ describe('Query datasets - Simple queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -201,7 +201,7 @@ describe('Query datasets - Simple queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -311,7 +311,7 @@ describe('Query datasets - Simple queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}`)
+            .post(`/api/v1/document/query/csv/${datasetId}`)
             .query({
                 sql: query
             })
@@ -453,7 +453,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -599,7 +599,7 @@ describe('Query datasets - Simple queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}`)
+            .post(`/api/v1/document/query/csv/${datasetId}`)
             .query({
                 sql: query
             })

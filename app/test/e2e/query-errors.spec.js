@@ -48,7 +48,7 @@ describe('Query datasets - Errors', () => {
                 'close']);
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(400);
@@ -80,7 +80,7 @@ describe('Query datasets - Errors', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(400);
@@ -153,7 +153,7 @@ describe('Query datasets - Errors', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${query}`)
             .send();
 
         queryResponse.status.should.equal(400);

@@ -49,6 +49,22 @@ describe('GET dataset fields', () => {
         tasksQueueStatus.messageCount.should.equal(0);
     });
 
+    it('Getting the fields for a dataset incorrect provider should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/fields/foo/${datasetId}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+    });
+
     it('Getting the fields for a dataset without connectorType document should fail', async () => {
         const datasetId = new Date().getTime();
 
@@ -59,7 +75,7 @@ describe('GET dataset fields', () => {
         };
 
         const queryResponse = await requester
-            .post(`/api/v1/document/fields/${datasetId}`)
+            .post(`/api/v1/document/fields/csv/${datasetId}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -77,7 +93,7 @@ describe('GET dataset fields', () => {
         };
 
         const queryResponse = await requester
-            .post(`/api/v1/document/fields/${datasetId}`)
+            .post(`/api/v1/document/fields/csv/${datasetId}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -135,7 +151,7 @@ describe('GET dataset fields', () => {
         createMockGetDataset(datasetId);
 
         const response = await requester
-            .post(`/api/v1/document/fields/${datasetId}`)
+            .post(`/api/v1/document/fields/csv/${datasetId}`)
             .send();
 
         response.status.should.equal(200);

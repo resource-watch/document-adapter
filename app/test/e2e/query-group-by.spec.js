@@ -183,7 +183,7 @@ describe('Query datasets - GROUP BY queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -356,7 +356,7 @@ describe('Query datasets - GROUP BY queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${query}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${query}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(200);
@@ -504,7 +504,7 @@ describe('Query datasets - GROUP BY queries', () => {
         );
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}`)
+            .post(`/api/v1/document/query/csv/${datasetId}`)
             .query({
                 sql: query
             })
