@@ -95,7 +95,7 @@ describe('Query datasets - Delete queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/query/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send();
 
         queryResponse.status.should.equal(403);
@@ -153,7 +153,7 @@ describe('Query datasets - Delete queries', () => {
             });
 
         const queryResponse = await requester
-            .post(`/api/v1/document/query/${datasetId}`)
+            .post(`/api/v1/document/query/csv/${datasetId}`)
             .query({
                 sql: query
             })

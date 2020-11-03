@@ -213,8 +213,8 @@ const checkPermissionDelete = async (ctx, next) => {
     await next();
 };
 
-router.post('/query/:dataset', DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
-router.post('/download/:dataset', DownloadValidator.validateDownload, DatasetMiddleware.getDatasetById, toSQLMiddleware, QueryRouter.download);
-router.post('/fields/:dataset', DatasetMiddleware.getDatasetById, QueryRouter.fields);
+router.post('/query/:provider/:dataset', DatasetMiddleware.validateDatasetProvider, DatasetMiddleware.getDatasetById, toSQLMiddleware, checkPermissionDelete, QueryRouter.query);
+router.post('/download/:provider/:dataset', DatasetMiddleware.validateDatasetProvider, DownloadValidator.validateDownload, DatasetMiddleware.getDatasetById, toSQLMiddleware, QueryRouter.download);
+router.post('/fields/:provider/:dataset', DatasetMiddleware.validateDatasetProvider, DatasetMiddleware.getDatasetById, QueryRouter.fields);
 
 module.exports = router;

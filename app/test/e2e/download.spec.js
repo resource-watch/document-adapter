@@ -21,6 +21,26 @@ describe('Dataset download tests', () => {
         }
     });
 
+    it('Download from a dataset with an incorrect provider should fail', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId, { connectorType: 'foo' });
+
+        const requestBody = {
+            loggedUser: null
+        };
+
+        const query = `select * from ${datasetId}`;
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/download/foo/${datasetId}?sql=${encodeURI(query)}`)
+            .send(requestBody);
+
+        queryResponse.status.should.equal(422);
+        queryResponse.body.should.have.property('errors').and.be.an('array').and.have.lengthOf(1);
+        queryResponse.body.errors[0].detail.should.include('This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+    });
+
     it('Download from a dataset without connectorType document should fail', async () => {
         const datasetId = new Date().getTime();
 
@@ -33,7 +53,7 @@ describe('Dataset download tests', () => {
         const query = `select * from ${datasetId}`;
 
         const queryResponse = await requester
-            .post(`/api/v1/document/download/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/download/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -53,7 +73,7 @@ describe('Dataset download tests', () => {
         const query = `select * from ${datasetId}`;
 
         const queryResponse = await requester
-            .post(`/api/v1/document/download/${datasetId}?sql=${encodeURI(query)}`)
+            .post(`/api/v1/document/download/csv/${datasetId}?sql=${encodeURI(query)}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -171,7 +191,7 @@ describe('Dataset download tests', () => {
         );
 
         const response = await requester
-            .post(`/api/v1/document/download/${datasetId}`)
+            .post(`/api/v1/document/download/csv/${datasetId}`)
             .query({ sql: query })
             .send();
 
@@ -184,7 +204,7 @@ describe('Dataset download tests', () => {
         const datasetId = new Date().getTime();
 
         const response = await requester
-            .post(`/api/v1/document/download/${datasetId}`)
+            .post(`/api/v1/document/download/csv/${datasetId}`)
             .query({ sql: '', format: 'potato' })
             .send();
 

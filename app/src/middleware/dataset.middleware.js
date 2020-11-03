@@ -33,6 +33,18 @@ class DatasetMiddleware {
         await next();
     }
 
+    static async validateDatasetProvider(ctx, next) {
+        const { provider } = ctx.params;
+
+        logger.debug('[DatasetRouter - validateDatasetProvider] - Dataset provider', provider);
+
+        if (!['json', 'csv', 'tsv', 'xml'].includes(provider)) {
+            ctx.throw(422, 'This operation is only supported for datasets with provider [\'json\', \'csv\', \'tsv\', \'xml\']');
+        }
+
+        await next();
+    }
+
 }
 
 module.exports = DatasetMiddleware;

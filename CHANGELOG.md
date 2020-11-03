@@ -1,3 +1,7 @@
+## 03/11/2020
+
+- Remove dependency on CTs filter functionality
+
 ## 27/10/2020
 
 - Fix issue with number of concurrent scroll usages causing random failures in queries.
