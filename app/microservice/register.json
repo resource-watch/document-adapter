@@ -16,7 +16,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/csv/:dataset"
       }
     },
     {
@@ -25,7 +25,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/csv/:dataset"
       }
     },
     {
@@ -34,7 +34,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/json/:dataset"
       }
     },
     {
@@ -43,7 +43,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/json/:dataset"
       }
     },
     {
@@ -52,7 +52,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/tsv/:dataset"
       }
     },
     {
@@ -61,7 +61,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/tsv/:dataset"
       }
     },
     {
@@ -70,7 +70,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/xml/:dataset"
       }
     },
     {
@@ -79,7 +79,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/query/:dataset"
+        "path": "/api/v1/document/query/xml/:dataset"
       }
     },
     {
@@ -88,7 +88,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/csv/:dataset"
       }
     },
     {
@@ -97,7 +97,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/csv/:dataset"
       }
     },
     {
@@ -106,7 +106,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/json/:dataset"
       }
     },
     {
@@ -115,7 +115,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/json/:dataset"
       }
     },
     {
@@ -124,7 +124,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/tsv/:dataset"
       }
     },
     {
@@ -133,7 +133,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/tsv/:dataset"
       }
     },
     {
@@ -142,7 +142,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/xml/:dataset"
       }
     },
     {
@@ -151,7 +151,7 @@
       "binary": true,
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/download/:dataset"
+        "path": "/api/v1/document/download/xml/:dataset"
       }
     },
     {
@@ -159,7 +159,7 @@
       "method": "GET",
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/fields/:dataset"
+        "path": "/api/v1/document/fields/xml/:dataset"
       }
     },
     {
@@ -167,7 +167,7 @@
       "method": "GET",
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/fields/:dataset"
+        "path": "/api/v1/document/fields/tsv/:dataset"
       }
     },
     {
@@ -175,7 +175,7 @@
       "method": "GET",
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/fields/:dataset"
+        "path": "/api/v1/document/fields/csv/:dataset"
       }
     },
     {
@@ -183,7 +183,7 @@
       "method": "GET",
       "redirect": {
         "method": "POST",
-        "path": "/api/v1/document/fields/:dataset"
+        "path": "/api/v1/document/fields/json/:dataset"
       }
     },
     {
