@@ -1,23 +1,13 @@
-## 03/11/2020
+# 2.1.0
+
+## 17/11/2020
 
 - Remove dependency on CTs filter functionality
-
-## 27/10/2020
-
 - Fix issue with number of concurrent scroll usages causing random failures in queries.
-
-## 14/10/2020
-
 - Fix issue where aggregated column alias would be forced to lower case.
 - Make ES query errors more visible to end users.
-
-## 20/09/2020
-
 - Allow ADMIN users to reindex datasets with overwrite=false
 - Modify tests to run with Opendistro for ES instance.
-
-## 04/09/2020
-
 - Add username and password support for Elasticsearch connection
 - Remove query v2 endpoint
 
