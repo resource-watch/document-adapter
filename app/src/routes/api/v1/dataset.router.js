@@ -2,7 +2,7 @@ const logger = require('logger');
 const Router = require('koa-router');
 const taskQueueService = require('services/taskQueueService');
 const DatasetMiddleware = require('middleware/dataset.middleware');
-const ctRegisterMicroservice = require('ct-register-microservice-node');
+const { RWAPIMicroservice } = require('rw-api-microservice-node');
 
 const router = new Router({
     prefix: '/document'
@@ -106,7 +106,7 @@ class DatasetRouter {
 
     static async deleteIndex(ctx) {
         logger.info('Deleting index with dataset', ctx.request.body);
-        const response = await ctRegisterMicroservice.requestToMicroservice({
+        const response = await RWAPIMicroservice.requestToMicroservice({
             method: 'GET',
             json: true,
             uri: `/dataset/${ctx.params.dataset}`
