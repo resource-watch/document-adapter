@@ -9,7 +9,7 @@ const DownloadValidator = require('validators/download.validator');
 const DatasetMiddleware = require('middleware/dataset.middleware');
 const { ElasticsearchClientError } = require('@elastic/elasticsearch/lib/errors');
 
-const ctRegisterMicroservice = require('ct-register-microservice-node');
+const { RWAPIMicroservice } = require('rw-api-microservice-node');
 
 const router = new Router({
     prefix: '/document'
@@ -147,7 +147,7 @@ const toSQLMiddleware = async (ctx, next) => {
 
     logger.debug(options);
     try {
-        const result = await ctRegisterMicroservice.requestToMicroservice(options);
+        const result = await RWAPIMicroservice.requestToMicroservice(options);
         ctx.query.sql = result.data.attributes.query;
         ctx.state.parsed = result.data.attributes.jsonSql;
         logger.debug(ctx.query.sql);

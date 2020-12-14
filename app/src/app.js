@@ -7,7 +7,7 @@ const koaLogger = require('koa-logger');
 const loader = require('loader');
 const koaValidate = require('koa-validate');
 const ErrorSerializer = require('serializers/errorSerializer');
-const ctRegisterMicroservice = require('ct-register-microservice-node');
+const { RWAPIMicroservice } = require('rw-api-microservice-node');
 const koaSimpleHealthCheck = require('koa-simple-healthcheck');
 
 // const nock = require('nock');
@@ -49,6 +49,16 @@ app.use(async (ctx, next) => {
 // load custom validator
 koaValidate(app);
 
+app.use(RWAPIMicroservice.bootstrap({
+    name: config.get('service.name'),
+    info: require('../microservice/register.json'),
+    swagger: require('../microservice/public-swagger.json'),
+    logger,
+    baseURL: process.env.CT_URL,
+    url: process.env.LOCAL_URL,
+    token: process.env.CT_TOKEN,
+}));
+
 // load routes
 loader.loadRoutes(app);
 
@@ -57,24 +67,14 @@ loader.loadRoutes(app);
 const port = process.env.PORT || config.get('service.port');
 
 const server = app.listen(process.env.PORT, () => {
-    ctRegisterMicroservice.register({
-        info: require('../microservice/register.json'),
-        swagger: require('../microservice/public-swagger.json'),
-        mode: (process.env.CT_REGISTER_MODE && process.env.CT_REGISTER_MODE === 'auto') ? ctRegisterMicroservice.MODE_AUTOREGISTER : ctRegisterMicroservice.MODE_NORMAL,
-        framework: ctRegisterMicroservice.KOA2,
-        app,
-        logger,
-        name: config.get('service.name'),
-        ctUrl: process.env.CT_URL,
-        url: process.env.LOCAL_URL,
-        token: process.env.CT_TOKEN,
-        active: true,
-    }).then(() => {
-        // nock.recorder.rec();  // Use to record http calls for testing
-    }, (err) => {
-        logger.error(err);
-        process.exit(1);
-    });
+    if (process.env.CT_REGISTER_MODE === 'auto') {
+        RWAPIMicroservice.register().then(() => {
+            logger.info('CT registration process started');
+        }, (error) => {
+            logger.error(error);
+            process.exit(1);
+        });
+    }
 });
 
 logger.info(`Server started in port:${port}`);
