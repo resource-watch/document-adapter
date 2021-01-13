@@ -24,6 +24,7 @@ services:
       ELASTIC_TEST_URL: opendistro:9200
       ELASTIC_USER: admin
       ELASTIC_PASSWORD: admin
+      FASTLY_ENABLED: "false"
     command: test
     depends_on:
       - rabbitmq
