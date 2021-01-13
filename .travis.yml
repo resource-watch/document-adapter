@@ -26,6 +26,7 @@ env:
     - ELASTIC_TEST_URL=127.0.0.1:9200
     - ELASTIC_USER=admin
     - ELASTIC_PASSWORD=admin
+    - FASTLY_ENABLED=false
 before_script:
   - docker run -d -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" amazon/opendistro-for-elasticsearch:1.10.1
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
