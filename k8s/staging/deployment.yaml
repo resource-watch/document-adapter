@@ -118,7 +118,7 @@ spec:
                   key: FASTLY_SERVICEID
                   name: mssecrets
                   optional: true
-          image: vizzuality/document
+          image: gfwdockerhub/document
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
