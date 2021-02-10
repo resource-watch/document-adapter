@@ -92,6 +92,12 @@ const insertData = async (index, data) => {
     return ESClient.bulk({ body, timeout: '90s', refresh: 'wait_for' });
 };
 
+const updateESConfig = async (data) => {
+    const ESClient = new Client(elasticSearchConfig);
+
+    return ESClient.cluster.putSettings({ body: data });
+};
+
 const deleteTestIndeces = async () => {
     const ESClient = new Client(elasticSearchConfig);
 
@@ -125,4 +131,5 @@ module.exports = {
     deleteTestIndeces,
     insertData,
     hasOpenScrolls,
+    updateESConfig
 };

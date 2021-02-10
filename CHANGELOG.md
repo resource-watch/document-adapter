@@ -1,3 +1,7 @@
+## 10/02/2021
+
+- Add error handler and message for the "too_many_buckets" error when using too many "group by" values.
+
 # 2.1.0
 
 ## 17/11/2020

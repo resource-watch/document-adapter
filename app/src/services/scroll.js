@@ -4,6 +4,7 @@ const CSVSerializer = require('serializers/csvSerializer');
 const JSONSerializer = require('serializers/jsonSerializer');
 const IndexNotFound = require('errors/indexNotFound');
 const InvalidQueryError = require('errors/invalidQuery.error');
+const TooManyBucketsError = require('errors/tooManyBuckets.error');
 
 class Scroll {
 
@@ -122,6 +123,9 @@ class Scroll {
             }
             if (err.statusCode === 400) {
                 throw new InvalidQueryError(400, err.body.error.root_cause[0].reason);
+            }
+            if (err.meta.body.error.caused_by.type === 'too_many_buckets_exception') {
+                throw new TooManyBucketsError(400, 'Your are using a "group by" query that produces too many results. Please reduce the number of rows your "group by" query produces (ie. more restrictive "where" clause or use less "group by" criteria)');
             }
             throw err;
         }
