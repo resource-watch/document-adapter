@@ -3,7 +3,7 @@ const nock = require('nock');
 const chai = require('chai');
 const { getTestServer } = require('./utils/test-server');
 const {
-    createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
+    createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls, updateESConfig
 } = require('./utils/helpers');
 
 chai.should();
@@ -522,6 +522,124 @@ describe('Query datasets - GROUP BY queries', () => {
         (await hasOpenScrolls()).should.equal(false);
     });
 
+    it('Group by too many buckets should produce a meanigful error message', async () => {
+        const datasetId = new Date().getTime();
+
+        createMockGetDataset(datasetId);
+
+        const query = `select createdAt from ${datasetId} group by date_histogram('field'="createdAt",'interval'='1d')`;
+
+        nock(process.env.CT_URL)
+            .get('/v1/convert/sql2SQL')
+            .query({ sql: query })
+            .reply(200, {
+                data: {
+                    type: 'result',
+                    attributes: {
+                        query: `SELECT createdAt FROM ${datasetId} GROUP BY date_histogram('field'="createdAt", 'interval'='1d')`,
+                        jsonSql: {
+                            select: [
+                                {
+                                    value: 'createdAt',
+                                    alias: null,
+                                    type: 'literal'
+                                }
+                            ],
+                            from: 'foo',
+                            group: [
+                                {
+                                    type: 'function',
+                                    alias: null,
+                                    value: 'date_histogram',
+                                    arguments: [
+                                        {
+                                            name: 'field',
+                                            type: 'literal',
+                                            value: 'createdAt'
+                                        },
+                                        {
+                                            name: 'interval',
+                                            type: 'string',
+                                            value: '1d'
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            });
+
+        await createIndex(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            {
+                createdAt: { type: 'date' },
+                profilePictureUrl: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                screenName: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                },
+                text: {
+                    type: 'text',
+                    fields: { keyword: { type: 'keyword', ignore_above: 256 } }
+                }
+            }
+        );
+
+        const dates = [
+            '2018-09-07T00:00:01Z',
+            '2018-09-08T00:00:01Z',
+            '2018-09-09T00:00:01Z',
+            '2018-09-10T00:00:01Z',
+            '2018-09-11T00:00:01Z',
+            '2018-09-12T00:00:01Z',
+            '2018-09-13T00:00:01Z',
+            '2018-09-14T00:00:01Z',
+            '2018-09-15T00:00:01Z',
+            '2018-09-16T00:00:01Z',
+            '2018-09-17T00:00:01Z',
+        ];
+
+        await updateESConfig(
+            {
+                transient: {
+                    'search.max_buckets': 1
+                },
+                persistent: {
+                    'search.max_buckets': 1
+                }
+            }
+        );
+
+        await insertData(
+            'test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489',
+            dates.map(
+                (e) => ({
+                    createdAt: e,
+                    profilePictureUrl: 'string',
+                    screenName: 'string',
+                    text: 'string'
+                })
+            )
+        );
+
+        const queryResponse = await requester
+            .post(`/api/v1/document/query/csv/${datasetId}`)
+            .query({
+                sql: query
+            })
+            .send({
+                loggedUser: null
+            });
+
+        queryResponse.status.should.equal(400);
+        queryResponse.body.should.have.property('errors').and.be.an('array');
+        queryResponse.body.errors[0].should.have.property('detail').and.equal('Your are using a "group by" query that produces too many results. Please reduce the number of rows your "group by" query produces (ie. more restrictive "where" clause or use less "group by" criteria)');
+    });
+
     afterEach(async () => {
         await deleteTestIndeces();
 
@@ -531,6 +649,17 @@ describe('Query datasets - GROUP BY queries', () => {
                 throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
             }
         }
+
+        await updateESConfig(
+            {
+                transient: {
+                    'search.max_buckets': 12000
+                },
+                persistent: {
+                    'search.max_buckets': 12000
+                }
+            }
+        );
 
     });
 });
