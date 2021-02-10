@@ -50,7 +50,7 @@ class QueryRouter {
         } catch (err) {
             logger.error(err);
             if (err instanceof ElasticsearchClientError && err.meta && err.meta.body) {
-                throw new Error(`${err.message} - ${err.meta.body}`);
+                throw new Error(`${err.message} - ${JSON.stringify(err.meta.body)}`);
             }
             throw err;
         }

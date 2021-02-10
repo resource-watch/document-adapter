@@ -116,6 +116,7 @@ class Scroll {
             this.total = 0;
 
         } catch (err) {
+            logger.warn(`Error creating scroll. Status code: ${err.statusCode} | Response: ${JSON.stringify(err.body)}`);
             if (err.statusCode === 404) {
                 throw new IndexNotFound(404, 'Table not found');
             }
