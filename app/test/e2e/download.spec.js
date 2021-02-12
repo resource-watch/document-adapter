@@ -24,8 +24,6 @@ describe('Dataset download tests', () => {
     it('Download from a dataset with an incorrect provider should fail', async () => {
         const datasetId = new Date().getTime();
 
-        createMockGetDataset(datasetId, { connectorType: 'foo' });
-
         const requestBody = {
             loggedUser: null
         };

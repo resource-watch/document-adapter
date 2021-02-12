@@ -7,7 +7,7 @@ const config = require('config');
 const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { USERS } = require('./utils/test.constants');
 const { createMockGetDataset } = require('./utils/helpers');
 
 chai.should();
@@ -83,7 +83,7 @@ describe('Dataset append tests', () => {
 
         response.status.should.equal(401);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`User credentials invalid or missing`);
+        response.body.errors[0].should.have.property('detail').and.equal(`Unauthorized`);
     });
 
     it('Append a dataset without a valid dataset should return a 400 error', async () => {
@@ -106,7 +106,7 @@ describe('Dataset append tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -129,7 +129,7 @@ describe('Dataset append tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -152,7 +152,7 @@ describe('Dataset append tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -173,7 +173,7 @@ describe('Dataset append tests', () => {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/append`)
@@ -218,7 +218,7 @@ describe('Dataset append tests', () => {
         const postBody = {
             url: 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/append`)
@@ -261,7 +261,7 @@ describe('Dataset append tests', () => {
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/append`)
@@ -308,7 +308,7 @@ describe('Dataset append tests', () => {
                 'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
             ],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -352,7 +352,7 @@ describe('Dataset append tests', () => {
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/append?append=true`)

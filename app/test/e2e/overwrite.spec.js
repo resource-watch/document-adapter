@@ -7,7 +7,7 @@ const { task } = require('rw-doc-importer-messages');
 const sleep = require('sleep');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { USERS } = require('./utils/test.constants');
 const { createMockGetDataset } = require('./utils/helpers');
 
 chai.should();
@@ -68,8 +68,6 @@ describe('Dataset overwrite tests', () => {
     it('Overwrite a dataset without user should return an error', async () => {
         const datasetId = new Date().getTime();
 
-        createMockGetDataset(datasetId);
-
         const postBody = {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
@@ -83,7 +81,7 @@ describe('Dataset overwrite tests', () => {
 
         response.status.should.equal(401);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`User credentials invalid or missing`);
+        response.body.errors[0].should.have.property('detail').and.equal(`Unauthorized`);
     });
 
     it('Overwrite a dataset with a missing dataset should return a 400 error', async () => {
@@ -106,7 +104,7 @@ describe('Dataset overwrite tests', () => {
             legend: 'new legend',
             sources: ['https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -129,7 +127,7 @@ describe('Dataset overwrite tests', () => {
             legend: 'new legend',
             sources: ['https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -152,7 +150,7 @@ describe('Dataset overwrite tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/data-overwrite`)
@@ -174,7 +172,7 @@ describe('Dataset overwrite tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/data-overwrite`)
@@ -220,7 +218,7 @@ describe('Dataset overwrite tests', () => {
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/data-overwrite`)
@@ -268,7 +266,7 @@ describe('Dataset overwrite tests', () => {
                 'http://api.resourcewatch.org/v1/dataset?page[number]=3&page[size]=10'
             ],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
