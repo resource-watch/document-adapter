@@ -179,11 +179,24 @@ const checkPermissionModify = async (ctx, next) => {
     }
 };
 
+const isAuthenticatedMiddleware = async (ctx, next) => {
+    logger.info(`Verifying if user is authenticated`);
+    const { query, body } = ctx.request;
+
+    const user = { ...(query.loggedUser ? JSON.parse(query.loggedUser) : {}), ...body.loggedUser };
+
+    if (!user || !user.id) {
+        ctx.throw(401, 'Unauthorized');
+        return;
+    }
+    await next();
+};
+
 router.post('/:provider', DatasetRouter.import);
-router.post('/:dataset/data-overwrite', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.overwrite);
-router.post('/:dataset/concat', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.concat);
-router.post('/:dataset/append', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.append);
-router.post('/:dataset/reindex', DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.reindex);
-router.delete('/:dataset', DatasetRouter.deleteIndex);
+router.post('/:dataset/data-overwrite', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.overwrite);
+router.post('/:dataset/concat', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.concat);
+router.post('/:dataset/append', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.append);
+router.post('/:dataset/reindex', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.reindex);
+router.delete('/:dataset', isAuthenticatedMiddleware, DatasetRouter.deleteIndex);
 
 module.exports = router;
