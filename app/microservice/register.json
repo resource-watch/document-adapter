@@ -155,7 +155,7 @@
       }
     },
     {
-      "path": "/v1/fields/xml:dataset",
+      "path": "/v1/fields/xml/:dataset",
       "method": "GET",
       "redirect": {
         "method": "POST",
