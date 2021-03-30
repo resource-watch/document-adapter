@@ -1,3 +1,7 @@
+## 30/03/2021
+
+- Modify API HTTP verbs to match public API method signature.
+
 ## 10/02/2021
 
 - Add error handler and message for the "too_many_buckets" error when using too many "group by" values.
