@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
+const uuid = require('uuid');
 const { getTestServer } = require('./utils/test-server');
 const {
     createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls, updateESConfig
@@ -24,7 +25,7 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by `column` query to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -197,7 +198,7 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by `column` query with more than 10 results per group should be successful', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -376,7 +377,7 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by date part query to dataset should be successful', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -523,7 +524,7 @@ describe('Query datasets - GROUP BY queries', () => {
     });
 
     it('Group by too many buckets should produce a meanigful error message', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -645,9 +646,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await updateESConfig(

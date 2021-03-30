@@ -3,6 +3,7 @@ const nock = require('nock');
 const config = require('config');
 const chai = require('chai');
 const amqp = require('amqplib');
+const uuid = require('uuid');
 const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
@@ -51,7 +52,7 @@ describe('Query datasets - Delete queries', () => {
     });
 
     it('Doing a delete query without being authenticated should return a 403 error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -109,7 +110,7 @@ describe('Query datasets - Delete queries', () => {
             loggedUser: ROLES.ADMIN
         };
 
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -189,9 +190,7 @@ describe('Query datasets - Delete queries', () => {
     after(() => {
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         rabbitmqConnection.close();

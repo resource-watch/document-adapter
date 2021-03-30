@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
+const uuid = require('uuid');
 const { getTestServer } = require('./utils/test-server');
 const {
     createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
@@ -26,7 +27,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query to dataset without connectorType document should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { connectorType: 'foo' });
 
@@ -46,7 +47,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query to dataset without a supported provider should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { provider: 'foo' });
 
@@ -66,7 +67,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query an empty dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -131,7 +132,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Basic query to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -223,7 +224,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query with special characters to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -332,7 +333,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query with alias (x AS y) in SELECT clause should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -471,7 +472,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
     });
 
     it('Query with order by mapping from Elasticsearch should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -664,9 +665,7 @@ describe('Query datasets - Simple queries - HTTP GET verb', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
     });
 });

@@ -4,6 +4,7 @@ const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
+const uuid = require('uuid');
 const sleep = require('sleep');
 const { getTestServer } = require('./utils/test-server');
 const { createMockGetDataset, createIndex, deleteTestIndeces } = require('./utils/helpers');
@@ -50,14 +51,14 @@ describe('GET dataset fields', () => {
     });
 
     it('Getting the fields for a dataset incorrect provider should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         const requestBody = {
             loggedUser: null
         };
 
         const queryResponse = await requester
-            .post(`/api/v1/document/fields/foo/${datasetId}`)
+            .get(`/api/v1/document/fields/foo/${datasetId}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -66,7 +67,7 @@ describe('GET dataset fields', () => {
     });
 
     it('Getting the fields for a dataset without connectorType document should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { connectorType: 'foo' });
 
@@ -75,7 +76,7 @@ describe('GET dataset fields', () => {
         };
 
         const queryResponse = await requester
-            .post(`/api/v1/document/fields/csv/${datasetId}`)
+            .get(`/api/v1/document/fields/csv/${datasetId}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -84,7 +85,7 @@ describe('GET dataset fields', () => {
     });
 
     it('Getting the fields for a dataset without a supported provider should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { provider: 'foo' });
 
@@ -93,7 +94,7 @@ describe('GET dataset fields', () => {
         };
 
         const queryResponse = await requester
-            .post(`/api/v1/document/fields/csv/${datasetId}`)
+            .get(`/api/v1/document/fields/csv/${datasetId}`)
             .send(requestBody);
 
         queryResponse.status.should.equal(422);
@@ -146,12 +147,12 @@ describe('GET dataset fields', () => {
 
         await createIndex('test_index_d1ced4227cd5480a8904d3410d75bf42_1587619728489', fieldsStructure);
 
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
         const response = await requester
-            .post(`/api/v1/document/fields/csv/${datasetId}`)
+            .get(`/api/v1/document/fields/csv/${datasetId}`)
             .send();
 
         response.status.should.equal(200);
@@ -167,9 +168,7 @@ describe('GET dataset fields', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await channel.close();

@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
+const uuid = require('uuid');
 const { getTestServer } = require('./utils/test-server');
 const {
     createMockGetDataset, createIndex, deleteTestIndeces, insertData, hasOpenScrolls
@@ -26,7 +27,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('Query an empty dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -91,7 +92,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('count(*) query to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -178,7 +179,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('Query with multiple aggregations to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -313,7 +314,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('Query with nested aggregations to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -439,7 +440,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('Query with alias in upper case (x AS Y) in aggregation should be successful', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -551,7 +552,7 @@ describe('Query datasets - Aggregate queries', () => {
     });
 
     it('Query with nested aggregations and aliases to dataset should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -691,9 +692,7 @@ describe('Query datasets - Aggregate queries', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
     });
 });

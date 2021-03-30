@@ -1,6 +1,7 @@
 const nock = require('nock');
 const chai = require('chai');
 const amqp = require('amqplib');
+const uuid = require('uuid');
 const config = require('config');
 const { task } = require('rw-doc-importer-messages');
 const sleep = require('sleep');
@@ -67,7 +68,7 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
         const connector = {
             id: datasetId,
             name: `Carto DB Dataset - ${datasetId}`,
@@ -114,7 +115,7 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
         const connector = {
             id: datasetId,
             name: `JSON Dataset - ${datasetId}`,
@@ -161,7 +162,7 @@ describe('Dataset create tests', () => {
         const preQueueStatus = await channel.assertQueue(config.get('queues.tasks'));
         preQueueStatus.messageCount.should.equal(0);
 
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
         const connector = {
             id: datasetId,
             name: `Carto DB Dataset - ${datasetId}`,
@@ -216,9 +217,7 @@ describe('Dataset create tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await channel.close();

@@ -4,6 +4,7 @@ const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
+const uuid = require('uuid');
 const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./utils/test-server');
@@ -66,7 +67,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a dataset without user should return an error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -87,7 +88,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a dataset without a valid dataset should return a 400 error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         nock(process.env.CT_URL)
             .get(`/v1/dataset/${datasetId}`)
@@ -119,7 +120,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a dataset for a different application should return an error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { application: ['fake-app'] });
 
@@ -142,7 +143,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a dataset with an invalid type should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { connectorType: 'carto' });
 
@@ -165,7 +166,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a CSV dataset with data POST body should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -210,7 +211,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a CSV dataset with data from URL/file using the \'url\' deprecated field should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -253,7 +254,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a CSV dataset with data from URL/file using the \'sources\' field should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -296,7 +297,7 @@ describe('Dataset concat tests', () => {
     });
 
     it('Concat a CSV dataset with data from multiple URLs/files should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -348,9 +349,7 @@ describe('Dataset concat tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await channel.close();

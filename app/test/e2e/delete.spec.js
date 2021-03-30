@@ -4,6 +4,7 @@ const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const chai = require('chai');
 const amqp = require('amqplib');
 const config = require('config');
+const uuid = require('uuid');
 const sleep = require('sleep');
 const { getTestServer } = require('./utils/test-server');
 
@@ -63,7 +64,7 @@ describe('Dataset delete tests', () => {
     });
 
     it('Delete dataset index with tableName null should nothing to do and return success (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
             data: {
@@ -78,7 +79,7 @@ describe('Dataset delete tests', () => {
     });
 
     it('Delete dataset index should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
             data: {
@@ -120,9 +121,7 @@ describe('Dataset delete tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await channel.close();

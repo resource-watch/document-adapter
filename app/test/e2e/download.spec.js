@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 const nock = require('nock');
 const chai = require('chai');
+const uuid = require('uuid');
 const { getTestServer } = require('./utils/test-server');
 const {
     createMockGetDataset, createIndex, deleteTestIndeces, hasOpenScrolls
@@ -22,9 +23,7 @@ describe('Dataset download tests', () => {
     });
 
     it('Download from a dataset with an incorrect provider should fail', async () => {
-        const datasetId = new Date().getTime();
-
-        createMockGetDataset(datasetId, { connectorType: 'foo' });
+        const datasetId = uuid.v4();
 
         const requestBody = {
             loggedUser: null
@@ -42,7 +41,7 @@ describe('Dataset download tests', () => {
     });
 
     it('Download from a dataset without connectorType document should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { connectorType: 'foo' });
 
@@ -62,7 +61,7 @@ describe('Dataset download tests', () => {
     });
 
     it('Download from a without a supported provider should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { provider: 'foo' });
 
@@ -82,7 +81,7 @@ describe('Dataset download tests', () => {
     });
 
     it('Download with CSV format and a query that returns no results should be successful', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -201,7 +200,7 @@ describe('Dataset download tests', () => {
     });
 
     it('Download with invalid format should return a 400', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         const response = await requester
             .post(`/api/v1/document/download/csv/${datasetId}`)
@@ -219,9 +218,7 @@ describe('Dataset download tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
     });

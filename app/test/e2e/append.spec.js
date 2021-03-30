@@ -3,6 +3,7 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const chai = require('chai');
 const amqp = require('amqplib');
+const uuid = require('uuid');
 const config = require('config');
 const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
@@ -66,7 +67,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset without user should return an error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -87,7 +88,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset without a valid dataset should return a 400 error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         nock(process.env.CT_URL)
             .get(`/v1/dataset/${datasetId}`)
@@ -119,7 +120,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset for a different application should return an error', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { application: ['fake-app'] });
 
@@ -142,7 +143,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a dataset with an invalid type should fail', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { connectorType: 'carto' });
 
@@ -165,7 +166,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data POST body should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -211,7 +212,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from URL/file using the \'url\' deprecated field should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -254,7 +255,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from URL/file using the \'sources\' field should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -297,7 +298,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with data from multiple files should be successful (happy case)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -345,7 +346,7 @@ describe('Dataset append tests', () => {
     });
 
     it('Append a CSV dataset with append=true should be successful (param is ignored)', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId, { append: true });
 
@@ -394,9 +395,7 @@ describe('Dataset append tests', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
         await channel.close();

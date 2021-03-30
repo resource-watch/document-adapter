@@ -1,5 +1,6 @@
 const nock = require('nock');
 const chai = require('chai');
+const uuid = require('uuid');
 const { getTestServer } = require('./utils/test-server');
 const {
     createMockGetDataset, createIndex, insertData, deleteTestIndeces
@@ -21,7 +22,7 @@ describe('Query datasets - Errors', () => {
     });
 
     it('Invalid query to dataset should return meaningful error message and error code', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -57,7 +58,7 @@ describe('Query datasets - Errors', () => {
     });
 
     it('Query with invalid function call should return meaningful error message and error code', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         createMockGetDataset(datasetId);
 
@@ -89,7 +90,7 @@ describe('Query datasets - Errors', () => {
     });
 
     it('Query with aggregation for invalid type should return meaningful error message and error code', async () => {
-        const datasetId = new Date().getTime();
+        const datasetId = uuid.v4();
 
         const dataset = createMockGetDataset(datasetId);
         const fieldsStructure = {
@@ -166,9 +167,7 @@ describe('Query datasets - Errors', () => {
 
         if (!nock.isDone()) {
             const pendingMocks = nock.pendingMocks();
-            if (pendingMocks.length > 1) {
-                throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
-            }
+            throw new Error(`Not all nock interceptors were used: ${pendingMocks}`);
         }
 
     });
