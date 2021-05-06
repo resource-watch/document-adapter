@@ -52,7 +52,7 @@
     "koa-router": "^7.4.0",
     "koa-simple-healthcheck": "^0.0.1",
     "koa-validate": "^1.0.7",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.21",
     "md5": "2.1.0",
     "randomstring": "1.1.5",
     "request": "^2.88.0",
