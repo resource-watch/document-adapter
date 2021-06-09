@@ -155,7 +155,7 @@
       }
     },
     {
-      "path": "/v1/fields/xml:dataset",
+      "path": "/v1/fields/xml/:dataset",
       "method": "GET",
       "redirect": {
         "method": "GET",
@@ -189,7 +189,6 @@
     {
       "path": "/v1/dataset/:dataset/concat",
       "method": "POST",
-      "authenticated": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/concat"
@@ -198,7 +197,6 @@
     {
       "path": "/v1/dataset/:dataset/reindex",
       "method": "POST",
-      "authenticated": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/reindex"
@@ -207,7 +205,6 @@
     {
       "path": "/v1/dataset/:dataset/append",
       "method": "POST",
-      "authenticated": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/append"
@@ -232,7 +229,6 @@
     {
       "path": "/v1/dataset/:dataset/data-overwrite",
       "method": "POST",
-      "authenticated": true,
       "redirect": {
         "method": "POST",
         "path": "/api/v1/document/:dataset/data-overwrite"

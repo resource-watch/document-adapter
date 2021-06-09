@@ -9,7 +9,7 @@ const { task } = require('rw-doc-importer-messages');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { createMockGetDataset } = require('./utils/helpers');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { USERS } = require('./utils/test.constants');
 
 chai.should();
 
@@ -107,7 +107,7 @@ describe('Query datasets - Delete queries', () => {
 
     it('Doing a delete query while being authenticated should return 204 (happy case)', async () => {
         const requestBody = {
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const datasetId = uuid.v4();

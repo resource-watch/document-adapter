@@ -7,7 +7,7 @@ const { task } = require('rw-doc-importer-messages');
 const sleep = require('sleep');
 const RabbitMQConnectionError = require('errors/rabbitmq-connection.error');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { USERS } = require('./utils/test.constants');
 
 chai.should();
 
@@ -82,7 +82,7 @@ describe('Dataset create tests', () => {
             .post(`/api/v1/document/csv`)
             .send({
                 connector,
-                loggedUser: ROLES.ADMIN
+                loggedUser: USERS.ADMIN
             });
 
         response.status.should.equal(200);
@@ -129,7 +129,7 @@ describe('Dataset create tests', () => {
             .post(`/api/v1/document/json`)
             .send({
                 connector,
-                loggedUser: ROLES.ADMIN
+                loggedUser: USERS.ADMIN
             });
 
         response.status.should.equal(200);
@@ -181,7 +181,7 @@ describe('Dataset create tests', () => {
             .post(`/api/v1/document/json`)
             .send({
                 connector,
-                loggedUser: ROLES.ADMIN
+                loggedUser: USERS.ADMIN
             });
 
         response.status.should.equal(200);

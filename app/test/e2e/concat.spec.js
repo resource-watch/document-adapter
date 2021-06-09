@@ -8,7 +8,7 @@ const uuid = require('uuid');
 const sleep = require('sleep');
 const { task } = require('rw-doc-importer-messages');
 const { getTestServer } = require('./utils/test-server');
-const { ROLES } = require('./utils/test.constants');
+const { USERS } = require('./utils/test.constants');
 const { createMockGetDataset } = require('./utils/helpers');
 
 chai.should();
@@ -69,8 +69,6 @@ describe('Dataset concat tests', () => {
     it('Concat a dataset without user should return an error', async () => {
         const datasetId = uuid.v4();
 
-        createMockGetDataset(datasetId);
-
         const postBody = {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
@@ -84,7 +82,7 @@ describe('Dataset concat tests', () => {
 
         response.status.should.equal(401);
         response.body.should.have.property('errors').and.be.an('array');
-        response.body.errors[0].should.have.property('detail').and.equal(`User credentials invalid or missing`);
+        response.body.errors[0].should.have.property('detail').and.equal(`Unauthorized`);
     });
 
     it('Concat a dataset without a valid dataset should return a 400 error', async () => {
@@ -107,7 +105,7 @@ describe('Dataset concat tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -130,7 +128,7 @@ describe('Dataset concat tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -153,7 +151,7 @@ describe('Dataset concat tests', () => {
             legend: 'new legend',
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
 
         const response = await requester
@@ -174,7 +172,7 @@ describe('Dataset concat tests', () => {
             data: [{ data: 'value' }],
             dataPath: 'new data path',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/concat`)
@@ -218,7 +216,7 @@ describe('Dataset concat tests', () => {
         const postBody = {
             url: 'https://wri-01.carto.com/tables/wdpa_protected_areas/table-new.csv',
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/concat`)
@@ -261,7 +259,7 @@ describe('Dataset concat tests', () => {
         const postBody = {
             sources: ['http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/concat`)
@@ -307,7 +305,7 @@ describe('Dataset concat tests', () => {
                 'http://gfw2-data.s3.amazonaws.com/country-pages/umd_landsat_alerts_adm2_staging.csv'
             ],
             provider: 'csv',
-            loggedUser: ROLES.ADMIN
+            loggedUser: USERS.ADMIN
         };
         const response = await requester
             .post(`/api/v1/document/${datasetId}/concat`)

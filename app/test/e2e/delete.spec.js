@@ -7,6 +7,8 @@ const config = require('config');
 const uuid = require('uuid');
 const sleep = require('sleep');
 const { getTestServer } = require('./utils/test-server');
+const { mockGetUserFromToken } = require('./utils/helpers');
+const { USERS } = require('./utils/test.constants');
 
 chai.should();
 chai.use(deepEqualInAnyOrder);
@@ -64,6 +66,8 @@ describe('Dataset delete tests', () => {
     });
 
     it('Delete dataset index with tableName null should nothing to do and return success (happy case)', async () => {
+        mockGetUserFromToken(USERS.USER);
+
         const datasetId = uuid.v4();
 
         nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
@@ -74,11 +78,15 @@ describe('Dataset delete tests', () => {
             }
         });
 
-        const response = await requester.delete(`/api/v1/document/${datasetId}`);
+        const response = await requester
+            .delete(`/api/v1/document/${datasetId}`)
+            .set('Authorization', `Bearer abcd`);
+
         response.status.should.equal(200);
     });
 
     it('Delete dataset index should be successful (happy case)', async () => {
+        mockGetUserFromToken(USERS.USER);
         const datasetId = uuid.v4();
 
         nock(process.env.CT_URL).get(`/v1/dataset/${datasetId}`).reply(200, {
@@ -89,7 +97,10 @@ describe('Dataset delete tests', () => {
             }
         });
 
-        const response = await requester.delete(`/api/v1/document/${datasetId}`);
+        const response = await requester
+            .delete(`/api/v1/document/${datasetId}`)
+            .set('Authorization', `Bearer abcd`);
+
         response.status.should.equal(200);
 
         let expectedStatusQueueMessageCount = 1;

@@ -1,4 +1,4 @@
-const ROLES = {
+const USERS = {
     USER: {
         id: '1a10d7c6e0a37126611fd7a7',
         role: 'USER',
@@ -53,5 +53,5 @@ const ROLES = {
 };
 
 module.exports = {
-    ROLES
+    USERS
 };
