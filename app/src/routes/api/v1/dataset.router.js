@@ -109,7 +109,7 @@ class DatasetRouter {
         const response = await RWAPIMicroservice.requestToMicroservice({
             method: 'GET',
             json: true,
-            uri: `/dataset/${ctx.params.dataset}`
+            uri: `/v1/dataset/${ctx.params.dataset}`
         });
 
         if (response.data.attributes.tableName) {
@@ -197,6 +197,6 @@ router.post('/:dataset/data-overwrite', isAuthenticatedMiddleware, DatasetMiddle
 router.post('/:dataset/concat', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.concat);
 router.post('/:dataset/append', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.append);
 router.post('/:dataset/reindex', isAuthenticatedMiddleware, DatasetMiddleware.getDatasetById, checkPermissionModify, DatasetRouter.reindex);
-router.delete('/:dataset', isAuthenticatedMiddleware, DatasetRouter.deleteIndex);
+router.delete('/:provider/:dataset', isAuthenticatedMiddleware, DatasetRouter.deleteIndex);
 
 module.exports = router;

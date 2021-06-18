@@ -58,7 +58,7 @@ describe('Query datasets - Delete queries', () => {
 
         const query = `delete from ${datasetId} where 1=1`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -116,7 +116,7 @@ describe('Query datasets - Delete queries', () => {
 
         const query = `delete from ${datasetId} where 1=1`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query

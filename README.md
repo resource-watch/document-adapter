@@ -86,12 +86,9 @@ Follow the instruction above for setting up the runtime environment for Docker e
 
 - **PORT** => TCP port in which the service will run
 - **NODE_PATH** => relative path to the source code. Should be `app/src`
-- **CT_REGISTER_MODE** => if `auto` the microservice automatically registers on Control Tower on start
-- **CT_TOKEN** => 
-- **API_VERSION** => API version identifier that prefixes the URL. Should be `v1`
+- **MICROSERVICE_TOKEN** => 
 - **MONGO_PORT_27017_TCP_ADDR** => IP/Address of the MongoDB server
-- **CT_URL** => Control Tower URL
-- **LOCAL_URL** => Local URL
+- **GATEWAY_URL** => Control Tower URL
 - **RABBITMQ_URL** => RabbitMQ connection URL - if using RabbitMQ with default configurations, you should set this variable to something like `amqp://0.0.0.0:5672/`
 - **ELASTIC_URL** => Elasticsearch connection URL - if using ES with default configurations, you should set this variable to something like `127.0.0.1:9200`
 

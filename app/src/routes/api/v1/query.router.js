@@ -89,10 +89,10 @@ class QueryRouter {
     static getCloneUrl(url, idDataset) {
         return {
             http_method: 'POST',
-            url: `/${process.env.API_VERSION}/dataset/${idDataset}/clone`,
+            url: `/v1/dataset/${idDataset}/clone`,
             body: {
                 dataset: {
-                    datasetUrl: `/${process.env.API_VERSION}${url.replace('/document', '')}`,
+                    datasetUrl: `/v1${url.replace('/document', '')}`,
                     application: ['your', 'apps']
                 }
             }
@@ -115,7 +115,7 @@ const toSQLMiddleware = async (ctx, next) => {
     if (ctx.query.sql || ctx.request.body.sql) {
         logger.debug('Checking sql correct');
         const params = { ...ctx.query, ...ctx.request.body };
-        options.uri = `/convert/sql2SQL?sql=${encodeURIComponent(params.sql)}`;
+        options.uri = `/v1/convert/sql2SQL?sql=${encodeURIComponent(params.sql)}`;
         if (params.experimental) {
             options.uri += `&experimental=${params.experimental}`;
         }
@@ -137,9 +137,9 @@ const toSQLMiddleware = async (ctx, next) => {
         const resultQuery = { ...query };
 
         if (resultQuery) {
-            options.uri = `/convert/fs2SQL${resultQuery}'&tableName=${ctx.request.body.dataset.tableName}`;
+            options.uri = `/v1/convert/fs2SQL${resultQuery}'&tableName=${ctx.request.body.dataset.tableName}`;
         } else {
-            options.uri = `/convert/fs2SQL?tableName=${ctx.request.body.dataset.tableName}`;
+            options.uri = `/v1/convert/fs2SQL?tableName=${ctx.request.body.dataset.tableName}`;
         }
         options.body = body;
         options.method = 'POST';

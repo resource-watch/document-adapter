@@ -88,7 +88,7 @@ describe('Dataset overwrite tests', () => {
     it('Overwrite a dataset with a missing dataset should return a 400 error', async () => {
         const datasetId = uuid.v4();
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/dataset/${datasetId}`)
             .reply(404, {
                 errors: [

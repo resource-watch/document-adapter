@@ -77,7 +77,7 @@ describe('Query datasets - Simple queries - POST HTTP verb', () => {
 
         const query = `select * from ${datasetId}`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -154,7 +154,7 @@ describe('Query datasets - Simple queries - POST HTTP verb', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -246,7 +246,7 @@ describe('Query datasets - Simple queries - POST HTTP verb', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -424,7 +424,7 @@ describe('Query datasets - Simple queries - POST HTTP verb', () => {
             results
         );
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
@@ -541,7 +541,7 @@ describe('Query datasets - Simple queries - POST HTTP verb', () => {
             }))
         );
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {

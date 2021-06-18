@@ -12,10 +12,6 @@ exports.getTestServer = function getTestServer() {
         return requester;
     }
 
-    nock(process.env.CT_URL)
-        .post(`/api/v1/microservice`)
-        .reply(200);
-
     const elasticUri = config.get('elasticsearch.host');
 
     nock(elasticUri, { allowUnmocked: true });

@@ -86,7 +86,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 count: 1
             }, { country_iso: 'VCT', count: 1 }, { country_iso: 'VNM', count: 1 }, { country_iso: 'YEM', count: 1 }];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -259,7 +259,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 count: 1
             }, { country_iso: 'VCT', count: 1 }, { country_iso: 'VNM', count: 1 }, { country_iso: 'YEM', count: 1 }];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -418,7 +418,7 @@ describe('Query datasets - GROUP BY queries', () => {
                 'date_histogram(field=createdAt,interval=1d)': 1537142400000
             }];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
@@ -530,7 +530,7 @@ describe('Query datasets - GROUP BY queries', () => {
 
         const query = `select createdAt from ${datasetId} group by date_histogram('field'="createdAt",'interval'='1d')`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
