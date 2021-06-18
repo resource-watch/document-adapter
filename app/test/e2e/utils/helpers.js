@@ -53,7 +53,7 @@ const createMockGetDataset = (id, anotherData = {}) => {
         }
     };
 
-    nock(process.env.CT_URL)
+    nock(process.env.GATEWAY_URL)
         .get(`/v1/dataset/${id}`)
         .reply(200, {
             data: dataset
@@ -126,7 +126,7 @@ const hasOpenScrolls = async () => {
 };
 
 const mockGetUserFromToken = (userProfile) => {
-    nock(process.env.CT_URL, { reqheaders: { authorization: 'Bearer abcd' } })
+    nock(process.env.GATEWAY_URL, { reqheaders: { authorization: 'Bearer abcd' } })
         .get('/auth/user/me')
         .reply(200, userProfile);
 };

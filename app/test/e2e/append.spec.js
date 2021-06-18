@@ -89,7 +89,7 @@ describe('Dataset append tests', () => {
     it('Append a dataset without a valid dataset should return a 400 error', async () => {
         const datasetId = new Date().getTime();
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/dataset/${datasetId}`)
             .reply(404, {
                 errors: [

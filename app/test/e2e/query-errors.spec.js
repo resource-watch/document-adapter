@@ -31,7 +31,7 @@ describe('Query datasets - Errors', () => {
 
         const query = `potato ${datasetId}`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: `potato ${datasetId}` })
             .reply(400, { errors: [{ status: 400, detail: 'Malformed query' }] }, ['Vary',
@@ -67,7 +67,7 @@ describe('Query datasets - Errors', () => {
 
         const query = `queryResponse.body.errors[0] ${datasetId}`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(400, {
@@ -113,7 +113,7 @@ describe('Query datasets - Errors', () => {
 
         const query = `SELECT MIN(year_date) AS min, MAX(year_date) AS max FROM ${datasetId}`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {

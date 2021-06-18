@@ -36,7 +36,7 @@ describe('Query datasets - Aggregate queries', () => {
 
         const query = `select * from ${datasetId}`;
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -113,7 +113,7 @@ describe('Query datasets - Aggregate queries', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -200,7 +200,7 @@ describe('Query datasets - Aggregate queries', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -339,7 +339,7 @@ describe('Query datasets - Aggregate queries', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
@@ -483,7 +483,7 @@ describe('Query datasets - Aggregate queries', () => {
             results
         );
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get('/v1/convert/sql2SQL')
             .query({ sql: query })
             .reply(200, {
@@ -577,7 +577,7 @@ describe('Query datasets - Aggregate queries', () => {
             }
         ];
 
-        nock(process.env.CT_URL)
+        nock(process.env.GATEWAY_URL)
             .get(`/v1/convert/sql2SQL`)
             .query({
                 sql: query
